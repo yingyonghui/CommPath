@@ -179,3 +179,64 @@ receptorPathPlot(Interact,
     select.ident=select.ident.1, 
     ident.path.dat=ident.path.dat)
 ```
+#### sessionInfo()
+```
+R version 4.0.3 (2020-10-10)
+Platform: x86_64-conda-linux-gnu (64-bit)
+Running under: CentOS Linux 7 (Core)
+
+Matrix products: default
+BLAS/LAPACK: /home/luh/miniconda3/envs/seurat4/lib/libopenblasp-r0.3.17.so
+
+locale:
+ [1] LC_CTYPE=zh_CN.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=zh_CN.UTF-8        LC_COLLATE=zh_CN.UTF-8    
+ [5] LC_MONETARY=zh_CN.UTF-8    LC_MESSAGES=zh_CN.UTF-8   
+ [7] LC_PAPER=zh_CN.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=zh_CN.UTF-8 LC_IDENTIFICATION=C       
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] GSVA_1.38.2     ggplot2_3.3.5   dplyr_1.0.7     reshape2_1.4.4 
+[5] circlize_0.4.13 commpath_0.1.0 
+
+loaded via a namespace (and not attached):
+ [1] Rcpp_1.0.7                  lattice_0.20-44            
+ [3] digest_0.6.27               assertthat_0.2.1           
+ [5] utf8_1.2.2                  R6_2.5.1                   
+ [7] GenomeInfoDb_1.26.7         plyr_1.8.6                 
+ [9] stats4_4.0.3                RSQLite_2.2.8              
+[11] httr_1.4.2                  pillar_1.6.2               
+[13] zlibbioc_1.36.0             GlobalOptions_0.1.2        
+[15] rlang_0.4.11                annotate_1.68.0            
+[17] blob_1.2.2                  S4Vectors_0.28.1           
+[19] Matrix_1.3-4                labeling_0.4.2             
+[21] BiocParallel_1.24.1         stringr_1.4.0              
+[23] RCurl_1.98-1.4              bit_4.0.4                  
+[25] munsell_0.5.0               DelayedArray_0.16.3        
+[27] compiler_4.0.3              pkgconfig_2.0.3            
+[29] BiocGenerics_0.36.1         shape_1.4.6                
+[31] tidyselect_1.1.1            SummarizedExperiment_1.20.0
+[33] tibble_3.1.3                GenomeInfoDbData_1.2.4     
+[35] IRanges_2.24.1              matrixStats_0.60.1         
+[37] XML_3.99-0.7                fansi_0.5.0                
+[39] crayon_1.4.1                withr_2.4.2                
+[41] bitops_1.0-7                grid_4.0.3                 
+[43] xtable_1.8-4                GSEABase_1.52.1            
+[45] gtable_0.3.0                lifecycle_1.0.0            
+[47] DBI_1.1.1                   magrittr_2.0.1             
+[49] scales_1.1.1                graph_1.68.0               
+[51] stringi_1.7.4               cachem_1.0.6               
+[53] farver_2.1.0                XVector_0.30.0             
+[55] ellipsis_0.3.2              generics_0.1.0             
+[57] vctrs_0.3.8                 tools_4.0.3                
+[59] bit64_4.0.5                 Biobase_2.50.0             
+[61] glue_1.4.2                  purrr_0.3.4                
+[63] MatrixGenerics_1.2.1        parallel_4.0.3             
+[65] fastmap_1.1.0               AnnotationDbi_1.52.0       
+[67] colorspace_2.0-2            GenomicRanges_1.42.0       
+[69] memoise_2.0.0              
+```
