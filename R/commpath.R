@@ -54,11 +54,11 @@ circosPlot <- function(Interact, order=NULL, col=NULL, ident=NULL){
 		ident.lig = Interact.num.dat[Interact.num.dat$Cell.To==ident,'Cell.From']
 		line.col[(Interact.num.dat$Cell.To==ident)] <- col[as.character(ident.lig)]
 		
-		link.rank <- 1:nrow(Interact.num.dat)
+		link.zindex <- 1:nrow(Interact.num.dat)
 		ident.line <- (Interact.num.dat$Cell.From==ident) | (Interact.num.dat$Cell.To==ident)
-		link.rank[!ident.line] <- rank(-(Interact.num.dat[!ident.line,'LR.Number']))
-		link.rank[ident.line] <- rank(-(Interact.num.dat[ident.line,'LR.Number']))+length(which(!ident.line))
-		chordDiagram(Interact.num.dat, order=all.ident, grid.col=col, annotationTrack=c("name","grid"), transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow", link.rank=link.rank, col=line.col, preAllocateTracks = list(track.height=max(strwidth(all.ident))), annotationTrackHeight=convert_height(c(1, 2), "mm"))
+		link.zindex[!ident.line] <- rank(-(Interact.num.dat[!ident.line,'LR.Number']))
+		link.zindex[ident.line] <- rank(-(Interact.num.dat[ident.line,'LR.Number']))+length(which(!ident.line))
+		chordDiagram(Interact.num.dat, order=all.ident, grid.col=col, annotationTrack=c("name","grid"), transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow", link.zindex=link.zindex, col=line.col, preAllocateTracks = list(track.height=max(strwidth(all.ident))), annotationTrackHeight=convert_height(c(1, 2), "mm"))
 	}
 }
 
@@ -353,19 +353,34 @@ dotPlot <- function(Interact, ligand.ident=NULL, receptor.ident=NULL, ident.leve
 
 #' To find those pathways in which the genesets show overlap with the marker ligand and receptor genes in our dataset
 #' @param Interact Interact list returned by findLRpairs
-#' @param category Character to indicate which pathway to investigate; one of "go", "kegg", 'wikipathway', and "reactome", or "all" for all pathways
+#' @param category Character to indicate which pathway to investigate; one of "go" (GO terms), "kegg" (for KEGG pathways), 'wiki' (for WikiPathways), and "reactome" (for reactome pathways), or "all" for all pathways
 #' @return Interact list containing the ligand-receptor interaction information and the pathways showing overlap with the marker ligand and receptor genes in the dataset
 #' @export
 findLRpath <- function(Interact, category='all'){
 	options(stringsAsFactors=F)
-	if (category!='all' & category!='go' & category!='kegg' & category!='wikipathway' & category!='reactome'){
-		stop("wrong category selected. Select one of 'go', 'kegg', 'wikipathway', and 'reactome', or 'all' for all pathways")
+	if (category!='all' & category!='go' & category!='kegg' & category!='wiki' & category!='reactome'){
+		stop("wrong category selected. Select one of 'go', 'kegg', 'wiki', and 'reactome', or 'all' for all pathways")
 	}
+
+	### select one category
 	if (category=='all'){
-		path.list <- commpathData$DataPathway[[Interact$species]]
-	}else if(category=='wikipathway'){
+		path.go.list <- commpathData$DataGOterm[[Interact$species]]
+		path.kegg.list <- commpathData$DataKEGGpathway[[Interact$species]]
+		path.wiki.list <- commpathData$DataWikiPathway[[Interact$species]]
+		path.reac.list <- commpathData$DataReactome[[Interact$species]]
+		path.list <- c(path.go.list, path.kegg.list, path.wiki.list, path.reac.list)
+		path.list <- path.list[which(!duplicated(names(path.list)))]
+
+	}else if (category=='go'){
+		path.list <- commpathData$DataGOterm[[Interact$species]]
+	}else if(category=='kegg'){
+		path.list <- commpathData$DataKEGGpathway[[Interact$species]]
+	}else if(category=='wiki'){
 		path.list <- commpathData$DataWikiPathway[[Interact$species]]
+	}else if(category=='reactome'){
+		path.list <- commpathData$DataReactome[[Interact$species]]
 	}
+
 	marker.lig.dat <- Interact$markerL
 	marker.rep.dat <- Interact$markerR
 	lr.gene <- unique(c(marker.lig.dat$gene,marker.rep.dat$gene))
@@ -536,7 +551,7 @@ findReceptor <- function(Interact, select.ident=NULL, select.ligand=NULL){
 #' @param select.receptor Receptor expressed by downstream identity class; if 'NULL', use all receptors that are markers for the selected downstream identity class
 #' @return Dataframe including the interaction information
 #' @export
-findReceptor <- function(Interact, select.ident=NULL, select.receptor=NULL){
+findLigand <- function(Interact, select.ident=NULL, select.receptor=NULL){
 	options(stringsAsFactors=F)
 
 	if (is.null(select.ident) & is.null(select.receptor)){

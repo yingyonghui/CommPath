@@ -69,26 +69,35 @@ Interact <- findLRpairs(marker.dat=sample.marker,
 # plot interaction for all cluster
 circosPlot(Interact=Interact)
 # you may want to highlight the interaction of specific cluster
-ident=1
+ident=6
 circosPlot(Interact=Interact, ident=ident)
 ```
 
 LR相互作用dotplot：
 ```
 # present a dot plot of LR pairs for specific clusters
-receptor.ident=6
-dotPlot(Interact=Interact, receptor.ident=receptor.ident)
+ident=6
+dotPlot(Interact=Interact, ligand.ident=ident)
+dotPlot(Interact=Interact, receptor.ident=ident)
 ```
 
-For specific upstream cells and their ligands, find the downstream cells and their receptors：
+Find interactions between specific cells and others:
 ```
+# For the selected ident and selected ligand, find the downstream cells and their receptors：
 select.ident = 6
 select.ligand = 'Dkk3'
 ident.down.dat <- findReceptor(Interact=Interact, 
     select.ident=select.ident, 
     select.ligand=select.ligand)
-
 head(ident.down.dat)
+
+# For the selected ident and selected receptor, find the upstream cells and their ligands：
+select.ident = 6
+select.receptor = 'C2'
+ident.up.dat <- findLigand(Interact=Interact, 
+    select.ident=select.ident, 
+    select.receptor=select.receptor)
+head(ident.up.dat)
 ```
 #### 通路分析
 ```
