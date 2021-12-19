@@ -103,11 +103,14 @@ findLRmarker <- function(expr.mat, label, species, method='wilcox.test', p.adjus
 			test.res <- apply(expr.mat, 1, function(row.expr){
 				logFC <- log(mean(expm1(row.expr[cell.ident])) +1, base=2) - log(mean(expm1(row.expr[cell.other])) +1, base=2)
 				p.value <- wilcox.test(x=row.expr[cell.ident], y=row.expr[cell.other])$p.value
-				c(logFC, p.value)
+
+				pct.1 <- length(which(row.expr[cell.ident] > 0))/length(cell.ident)
+				pct.2 <- length(which(row.expr[cell.other] > 0))/length(cell.other)
+				c(logFC, p.value, pct.1, pct.2)
 			})
 
 			test.res <- as.data.frame(t(test.res))
-			colnames(test.res) <- c('avg_log2FC','p_val')
+			colnames(test.res) <- c('avg_log2FC','p_val', 'pct.1', 'pct.2')
 			test.res$p_val_adj <- p.adjust(test.res$p_val, method=p.adjust)
 			test.res$cluster <- each.level
 			test.res$gene <- rownames(test.res)
@@ -124,11 +127,14 @@ findLRmarker <- function(expr.mat, label, species, method='wilcox.test', p.adjus
 			test.res <- apply(expr.mat, 1, function(row.expr){
 				logFC <- log(mean(expm1(row.expr[cell.ident])) +1, base=2) - log(mean(expm1(row.expr[cell.other])) +1, base=2)
 				p.value <- t.test(x=row.expr[cell.ident], y=row.expr[cell.other])$p.value
-				c(logFC, p.value)
+
+				pct.1 <- length(which(row.expr[cell.ident] > 0))/length(cell.ident)
+				pct.2 <- length(which(row.expr[cell.other] > 0))/length(cell.other)
+				c(logFC, p.value, pct.1, pct.2)
 			})
 
 			test.res <- as.data.frame(t(test.res))
-			colnames(test.res) <- c('avg_log2FC','p_val')
+			colnames(test.res) <- c('avg_log2FC','p_val', 'pct.1', 'pct.2')
 			test.res$p_val_adj <- p.adjust(test.res$p_val, method=p.adjust)
 			test.res$cluster <- each.level
 			test.res$gene <- rownames(test.res)
@@ -755,7 +761,6 @@ pathPlot <- function(Interact, gsva.mat, all.test.dat, order=NULL, n=10, hide.is
 #' @param p.thre p.thre
 #' @param ident.size ident.size
 #' @return String with idents pasted
-#' @export
 receptorPathPlot <- function(Interact, select.ident, ident.path.dat, top.n.receptor=5, top.n.path=10, order=NULL, p.thre = 0.05, ident.size=1, receptor.size=1, label.dist=0.4, label.size=1, line.size=1, ident.line.alpha=1, ident.line.width=1, path.line.width=1, path.line.alpha=0.8, path.size=1){
 	options(stringsAsFactors=F)
 
@@ -871,3 +876,176 @@ receptorPathPlot <- function(Interact, select.ident, ident.path.dat, top.n.recep
 	pathplot.theme
 
 }
+
+
+#' To present the interact and variable pathways in a line plot, for a specific ident
+#' @param Interact Interact list returned by findLRpairs
+#' @param select.ident select.ident
+#' @param ident.path.dat ident.path.dat for the selected ident
+#' @param top.n.receptor top n receptor with the largest log2FCs to plot
+#' @param order order of source clusters
+#' @param top.n.path top n pathways with the smallest adjusted p values to plot
+#' @param p.thre threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
+#' @param dot.ident.col color of the dots representing source clusters
+#' @param dot.receptor.col color of the dots representing reptors
+#' @param bar.path.col color of the bars reprsenting pathways
+#' @param dot.ident.size size of the dots representing source clusters
+#' @param dot.receptor.size size of the dots representing receptors
+#' @param label.ident.dist distance between the cluster labels and the dots
+#' @param label.ident.size text size of the cluster labels
+#' @param label.receptor.size text size of the cluster labels
+#' @param label.pathway.size text size of pathway labels
+#' @param label.title.size text size of pathway labels
+#' @param line.ident.width text size of pathway labels
+#' @param line.path.width width of lines connecting receptors and pathways
+#' @return Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors
+#' @export
+receptorPathPlot2 <- function(Interact, select.ident, ident.path.dat, top.n.receptor=5, order=NULL, top.n.path=10, p.thre = 0.05, dot.ident.col=NULL, dot.receptor.col=NULL, bar.path.col=NULL, dot.ident.size=1, dot.receptor.size=1, label.ident.dist=0.3, label.ident.size=1, label.receptor.size=1, label.pathway.size=1, label.title.size=1, line.ident.width=1, line.path.width=1){
+	options(stringsAsFactors=F)
+	if ('t' %in% colnames(ident.path.dat)){
+		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
+	}else if ('W' %in% colnames(ident.path.dat)){
+		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & median.diff > 0)
+	}else{
+		stop('please input the integrate ident.path.dat computed from diffPath')
+	}
+	ident.path.dat <- ident.path.dat[order(ident.path.dat$p.val.adj, decreasing=TRUE),]
+
+	all.sig.path <- ident.path.dat$description
+
+	### preprocess and extract useful information
+	up.ident <- as.vector(unlist(sapply(ident.path.dat$cell.up, function(x){ strsplit(x, split=';') })))
+	cur.rep <- as.vector(unlist(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') })))
+
+	n.elem.each.row <- as.vector(unlist(lapply(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') }),length)))
+	path.all <- rep(ident.path.dat$description, times=n.elem.each.row)
+	plot.dat <- data.frame(up.ident=up.ident, cur.rep=cur.rep, path.name=path.all)
+	
+	### select the highly expressed receptors
+	markerR.dat <- Interact$markerR
+	#markerR.dat <- markerR.dat[markerR.dat$cluster==select.ident, ]
+	markerR.dat <- subset(markerR.dat, subset=cluster==select.ident)
+	if (nrow(markerR.dat)==0){
+		stop('there is no marker receptor for the selected ident')
+	}
+
+	markerR.dat <- markerR.dat[order(markerR.dat$avg_log2FC, decreasing=TRUE), ]
+	if (top.n.receptor > nrow(markerR.dat)){
+		warning(paste0('there is(are) ', nrow(markerR.dat),' marker receptor(s) in the selected ident, and the input top.n.receptor is ', top.n.receptor))
+		top.n.receptor <- nrow(markerR.dat)
+	}
+	top.receptor.dat <- markerR.dat[1:top.n.receptor,]
+	plot.dat <- subset(plot.dat, cur.rep %in% top.receptor.dat$gene)
+	
+	### to select the top n pathways associated with the selected receptors
+	path.uniq.name <- unique(plot.dat$path.name)
+	### those pathways with a larger position index in the all.sig.path are more significant
+	### the following codes is to get the pathways with the top n largest position index
+	path.position <- match(path.uniq.name, all.sig.path)
+	path.position <- path.position[order(path.position, decreasing=TRUE)]
+	if (top.n.path > length(path.position)){
+		warning(paste0('there is(are) ', length(path.position),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+		top.n.path <- length(path.position)
+	}
+	path.position <- path.position[1:top.n.path]
+	top.path <- all.sig.path[path.position]
+	plot.dat$path.name[which(!(plot.dat$path.name %in% top.path))] <- NA
+
+	### data for plot of idents and receptors
+	plot.ident.dat <- unique(plot.dat[,c('up.ident','cur.rep')])
+	up.ident <- plot.ident.dat$up.ident
+	cur.rep <- plot.ident.dat$cur.rep
+	### the idents which release ligands
+	up.uniq.ident <- unique(up.ident)
+	### to check the order parameter
+	if (!is.null(order)){
+		up.uniq.ident <- orderCheck(up.uniq.ident, order)
+	}
+	up.uniq.ident <- up.uniq.ident[order(up.uniq.ident, decreasing=TRUE)]
+	n.ident <- length(up.uniq.ident)
+	if (is.null(dot.ident.col)){
+		dot.ident.col <- rev(scales::hue_pal(c=100)(n.ident))
+	}else if(length(dot.ident.col) < n.ident){
+		stop(paste0('there is(are) ',n.ident,' cluster(s), but only ',length(dot.ident.col),' colors provide.'))
+	}else{
+		dot.ident.col <- rev(dot.ident.col[1:n.ident])
+	}
+	lig.coor <- 1:n.ident
+
+	### the receptor and their coordinate
+	cur.uniq.rep <- factor(unique(cur.rep))
+	cur.uniq.rep <- cur.uniq.rep[order(cur.uniq.rep, decreasing=TRUE)]
+	n.rep <- length(cur.uniq.rep)
+	rep.coor <- seq(from=1, to=n.ident, length.out=n.rep)
+	#rep.col <- rev(scales::hue_pal(c=100)(n.rep))
+
+	logfc <- top.receptor.dat[match(cur.uniq.rep, top.receptor.dat$gene),'avg_log2FC']
+	rep.size <- 5 * dot.receptor.size * logfc
+	rep.pct <-  top.receptor.dat[match(cur.uniq.rep, top.receptor.dat$gene),'pct.1']
+	rep.pval <-  -log10(top.receptor.dat[match(cur.uniq.rep, top.receptor.dat$gene),'p_val_adj'])
+	if (all(is.infinite(rep.pval))){ 
+		rep.pval <- rep(0, length(rep.pval))
+	}else if (is.infinite(max(rep.pval))){
+		secend.max <- max(rep.pval[which(is.finite(rep.pval))])
+		rep.pval[which(is.infinite(rep.pval))] <- secend.max + min(rep.pval) * 0.1
+	}
+
+	if (is.null(dot.receptor.col)){
+		dot.receptor.col <- circlize::colorRamp2(breaks=seq(min(rep.pval),max(rep.pval), length=2),colors=c("#feb24c", "#bd0026"))(rep.pval)
+	}else if(length(dot.receptor.col)==1){
+		dot.receptor.col <- dot.receptor.col
+	}else{
+		dot.receptor.col <- circlize::colorRamp2(breaks=seq(min(rep.pval),max(rep.pval), length=length(dot.receptor.col)),colors=dot.receptor.col)(rep.pval)
+	}
+	
+	### lines between ligand idents and receptors
+	line.y.coor <- match(up.ident, up.uniq.ident)
+	line.yend.coor <- rep.coor[match(cur.rep, cur.uniq.rep)]
+	line.col <- dot.ident.col[match(up.ident, up.uniq.ident)]
+
+	### pathways coordinate and color
+	plot.path.dat <- subset(plot.dat, subset=!(is.na(path.name)), select=c('cur.rep','path.name') )
+	plot.path.dat <- unique(plot.path.dat)
+	path.name <- plot.path.dat$path.name
+	path.uniq.name <- unique(path.name)
+	path.uniq.name <- factor(path.uniq.name, levels=top.path)
+	path.uniq.name <- path.uniq.name[order(path.uniq.name, decreasing=TRUE)]
+	width <- max(sapply(as.vector(path.uniq.name),nchar))/20
+	pathway.coor <- seq(from=1, to=n.ident, length.out=length(path.uniq.name))
+	
+	### lines between receptors and pathways
+	cur.rep <- plot.path.dat$cur.rep
+	path.line.y.coor <- rep.coor[match(cur.rep, cur.uniq.rep)]
+	path.line.yend.coor <- pathway.coor[match(path.name, path.uniq.name)]
+	path.line.col <- dot.receptor.col[match(cur.rep, cur.uniq.rep)]
+
+	#### rect for pathway
+	path.rect.length <- ident.path.dat[match(path.uniq.name,ident.path.dat$description),'mean.diff']
+	path.rect.pval <-  -log10(ident.path.dat[match(path.uniq.name,ident.path.dat$description),'p.val.adj'])
+	if (is.null(bar.path.col)){
+		bar.path.col <- circlize::colorRamp2(breaks=seq(min(path.rect.pval),max(path.rect.pval), length=2),colors=c("#feb24c", "#bd0026"))(path.rect.pval)
+	}else if(length(bar.path.col)==1){
+		bar.path.col <- bar.path.col
+	}else{
+		bar.path.col <- circlize::colorRamp2(breaks=seq(min(path.rect.pval),max(path.rect.pval), length=length(bar.path.col)),colors=bar.path.col)(path.rect.pval)
+	}
+
+	pathplot.theme <- theme(axis.title=element_blank(), axis.text=element_blank(),axis.ticks=element_blank(), axis.line=element_blank(), panel.background=element_rect(fill="white"))
+	
+	ggplot() + 
+	scale_x_continuous(limits=c(0.5-label.ident.dist, width)) + 
+	geom_point(aes(x=1,y=lig.coor),size=8*dot.ident.size,color=dot.ident.col) + 
+	annotate('text', hjust=0, x=1-label.ident.dist, y=1:n.ident,label=up.uniq.ident, size=5*label.ident.size) +
+	geom_segment(aes(x=1, xend=2, y=line.y.coor,yend=line.yend.coor), size=line.ident.width, color=line.col, show.legend=F) +
+	geom_segment(aes(x=2, xend=3, y=path.line.y.coor,yend=path.line.yend.coor),size=line.path.width, color=path.line.col, show.legend=F) + 
+	geom_point(aes(x=2,y=rep.coor),size=rep.size,color=dot.receptor.col) + 
+	annotate('text', hjust=0.5, x=2, y=rep.coor-0.4,label=cur.uniq.rep, size=5*label.receptor.size) +
+	annotate('text', hjust=0.5, x=1:2, y=max(lig.coor)+0.8,label=c('Source', 'Receptor'), size=5*label.title.size) +
+	annotate('text', hjust=0, x=3, y=max(lig.coor)+0.8,label=c('Pathway'), size=5*label.title.size) +
+	geom_rect(aes(xmin=3, xmax=3+path.rect.length, ymin=pathway.coor-0.3, ymax=pathway.coor+0.3), size=1, fill=bar.path.col, alpha=1, show.legend=F) +
+	geom_text(aes(x=3.1+path.rect.length, y=pathway.coor), hjust=0, label=path.uniq.name, size=5*label.pathway.size) +
+	pathplot.theme
+
+}
+
+

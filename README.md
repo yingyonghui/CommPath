@@ -175,7 +175,7 @@ ident.path.dat <- diffPath(Interact=Interact,
 save.image('before.lineplot.RData')
 load('before.lineplot.RData')
 
-receptorPathPlot(Interact, 
+receptorPathPlot2(Interact, 
     select.ident=select.ident.1, 
     ident.path.dat=ident.path.dat)
 ```
