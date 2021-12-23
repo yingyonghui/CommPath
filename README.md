@@ -27,6 +27,7 @@ library(GSVA)
 
 ```
 data("commpathSample",package='commpath')
+data("hcc.sample.data",package='commpath')
 ```
 ***sample.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed
 
@@ -43,6 +44,7 @@ Firstly we're supposed to identify marker genes for each identity class of cells
 expr.mat = sample.expr
 label = sample.label
 species = 'mmusculus'
+species = 'hsapiens'
 method = 'wilcox.test'
 sample.marker <- findLRmarker(expr.mat, label, species, method)
 ```
@@ -51,7 +53,6 @@ sample.marker <- findLRmarker(expr.mat, label, species, method)
 ```
 # find significant LR pairs
 marker.dat = sample.marker
-species = 'mmusculus'
 logFC.thre = 0
 p.thre = 0.05
 Interact <- findLRpairs(marker.dat=sample.marker, 
@@ -69,14 +70,14 @@ Interact <- findLRpairs(marker.dat=sample.marker,
 # plot interaction for all cluster
 circosPlot(Interact=Interact)
 # you may want to highlight the interaction of specific cluster
-ident=6
+ident='Endothelial'
 circosPlot(Interact=Interact, ident=ident)
 ```
 
 LR相互作用dotplot：
 ```
 # present a dot plot of LR pairs for specific clusters
-ident=6
+ident='Endothelial'
 dotPlot(Interact=Interact, ligand.ident=ident)
 dotPlot(Interact=Interact, receptor.ident=ident)
 ```
@@ -86,6 +87,10 @@ Find interactions between specific cells and others:
 # For the selected ident and selected ligand, find the downstream cells and their receptors：
 select.ident = 6
 select.ligand = 'Dkk3'
+
+select.ident = 'Endothelial'
+select.ligand = 'CCL14'
+
 ident.down.dat <- findReceptor(Interact=Interact, 
     select.ident=select.ident, 
     select.ligand=select.ligand)
@@ -94,6 +99,10 @@ head(ident.down.dat)
 # For the selected ident and selected receptor, find the upstream cells and their ligands：
 select.ident = 6
 select.receptor = 'C2'
+
+select.ident = 'Endothelial'
+select.receptor = 'ITGB1'
+
 ident.up.dat <- findLigand(Interact=Interact, 
     select.ident=select.ident, 
     select.receptor=select.receptor)
@@ -103,7 +112,7 @@ head(ident.up.dat)
 ```
 # find pathways in which genesets show overlap 
 # with the ligands and receptors in the example dataset
-Interact <- findLRpath(Interact=Interact, category='all')
+Interact <- findLRpath(Interact=Interact, category='kegg')
 ```
 Now genesets show overlap with the ligands and receptors in the exsample dataset are saved in Interact[['pathwayLR']]
 
@@ -122,6 +131,7 @@ Pathway differential enrichment analysis：
 # and the receptor and ligand in the pathway
 ident.label = sample.label
 select.ident.1 = 6
+select.ident.1 = 'Endothelial'
 method = 't.test'
 ident.path.dat <- diffPath(Interact=Interact, 
     gsva.mat=gsva.mat, 
@@ -149,33 +159,31 @@ Column ***receptor.in.path*** shows the marker receptors expressed by the curren
 
 Column ***ligand.in.path*** shows the marker ligands released by the current identity class and these ligands are also included in the current pathway.
 
-Then we can find the second interactions mediated by specific pathways by identifying the downstream receptor of ligands in the ***ligand.in.path*** columns via findReceptor:
-```
-select.ident = 6
-select.ligand = 'Dkk3'
-ident.down.dat <- findReceptor(Interact=Interact, 
-    select.ident=select.ident, 
-    select.ligand=select.ligand)
-
-head(ident.down.dat)
-```
+Then we can find the second interactions mediated by specific pathways by identifying the downstream receptor of ligands in the ***ligand.in.path*** columns via findReceptor function described above:
 #### 通路介导的细胞交互
 ```
 ### first we identify differentially enriched pathways associated with receptors in the selected ident
 ident.label = sample.label
 select.ident.1 = 6
+select.ident.1 = 'Endothelial'
 method = 't.test'
 ident.path.dat <- diffPath(Interact=Interact, 
     gsva.mat=gsva.mat, 
     ident.label=ident.label, 
-    select.ident.1=6,
+    select.ident.1=select.ident.1,
     method=method)
     
 # visualization of the identified pathways
 save.image('before.lineplot.RData')
 load('before.lineplot.RData')
 
-receptorPathPlot2(Interact, 
+# plot to identify receptors and the associated enriched pathways
+receptorPathPlot(Interact, 
+    select.ident=select.ident.1, 
+    ident.path.dat=ident.path.dat)
+
+# plot to identify receptors and the associated enriched pathways, and the downstream clusters
+pathInterPlot(Interact, 
     select.ident=select.ident.1, 
     ident.path.dat=ident.path.dat)
 ```

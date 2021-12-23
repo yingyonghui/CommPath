@@ -9,6 +9,7 @@ dotPlot(
   ligand.ident = NULL,
   receptor.ident = NULL,
   ident.levels = NULL,
+  top.n.inter = 10,
   return.data = FALSE
 )
 }
@@ -20,6 +21,8 @@ dotPlot(
 \item{receptor.ident}{Vector containing the receptor ident}
 
 \item{ident.levels}{Vector of levels of the identities}
+
+\item{top.n.inter}{Show the dotplot for the top n LR pairs with the largest product of Log2FC}
 
 \item{return.data}{Logical value indicating whether to return the data for the plot or not}
 }
