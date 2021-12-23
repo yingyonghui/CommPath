@@ -136,7 +136,7 @@ method = 't.test'
 ident.path.dat <- diffPath(Interact=Interact, 
     gsva.mat=gsva.mat, 
     ident.label=ident.label, 
-    select.ident.1=6,
+    select.ident.1=select.ident.1,
     method=method)
 
 head(ident.path.dat)
