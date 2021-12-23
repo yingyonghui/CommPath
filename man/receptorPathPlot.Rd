@@ -9,19 +9,21 @@ receptorPathPlot(
   select.ident,
   ident.path.dat,
   top.n.receptor = 5,
-  top.n.path = 10,
   order = NULL,
+  top.n.path = 10,
   p.thre = 0.05,
-  ident.size = 1,
-  receptor.size = 1,
-  label.dist = 0.4,
-  label.size = 1,
-  line.size = 1,
-  ident.line.alpha = 1,
-  ident.line.width = 1,
-  path.line.width = 1,
-  path.line.alpha = 0.8,
-  path.size = 1
+  dot.ident.col = NULL,
+  dot.receptor.col = NULL,
+  bar.path.col = NULL,
+  dot.ident.size = 1,
+  dot.receptor.size = 1,
+  label.ident.dist = 0.3,
+  label.ident.size = 1,
+  label.receptor.size = 1,
+  label.pathway.size = 1,
+  label.title.size = 1,
+  line.ident.width = 1,
+  line.path.width = 1
 )
 }
 \arguments{
@@ -31,16 +33,40 @@ receptorPathPlot(
 
 \item{ident.path.dat}{ident.path.dat for the selected ident}
 
-\item{top.n.receptor}{top.n.receptor}
+\item{top.n.receptor}{top n receptor with the largest log2FCs to plot}
 
-\item{order}{order}
+\item{order}{order of source clusters}
 
-\item{p.thre}{p.thre}
+\item{top.n.path}{top n pathways with the smallest adjusted p values to plot}
 
-\item{ident.size}{ident.size}
+\item{p.thre}{threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered}
+
+\item{dot.ident.col}{color of the dots representing source clusters}
+
+\item{dot.receptor.col}{color of the dots representing reptors}
+
+\item{bar.path.col}{color of the bars reprsenting pathways}
+
+\item{dot.ident.size}{size of the dots representing source clusters}
+
+\item{dot.receptor.size}{size of the dots representing receptors}
+
+\item{label.ident.dist}{distance between the cluster labels and the dots}
+
+\item{label.ident.size}{text size of the cluster labels}
+
+\item{label.receptor.size}{text size of the cluster labels}
+
+\item{label.pathway.size}{text size of pathway labels}
+
+\item{label.title.size}{text size of pathway labels}
+
+\item{line.ident.width}{text size of pathway labels}
+
+\item{line.path.width}{width of lines connecting receptors and pathways}
 }
 \value{
-String with idents pasted
+Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors
 }
 \description{
 To present the interact and variable pathways in a line plot, for a specific ident
