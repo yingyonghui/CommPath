@@ -12,16 +12,15 @@ pathInterPlot(
   order = NULL,
   top.n.path = 10,
   p.thre = 0.05,
+  top.n.ligand = 10,
   dot.ident.col = NULL,
   dot.down.ident.col = NULL,
   dot.receptor.col = NULL,
   bar.pathway.col = NULL,
+  bar.pathway.width = 10,
   dot.ident.size = 1,
   dot.receptor.size = 1,
-  label.ident.dist = 0.5,
-  label.ident.size = 1,
-  label.receptor.size = 1,
-  label.pathway.size = 1,
+  label.text.size = 1,
   label.title.size = 1,
   line.ident.width = 1,
   line.path.width = 1,
@@ -43,6 +42,8 @@ pathInterPlot(
 
 \item{p.thre}{threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered}
 
+\item{top.n.ligand}{top n receptor with the largest log2FCs to plot}
+
 \item{dot.ident.col}{color of the dots representing upstream clusters}
 
 \item{dot.down.ident.col}{color of the dots representing downstream clusters}
@@ -51,19 +52,15 @@ pathInterPlot(
 
 \item{bar.pathway.col}{color of the bars reprsenting pathways}
 
+\item{bar.pathway.width}{width of the bars reprsenting pathways}
+
 \item{dot.ident.size}{size of the dots representing source clusters}
 
 \item{dot.receptor.size}{size of the dots representing receptors}
 
-\item{label.ident.dist}{distance between the cluster labels and the dots}
+\item{label.text.size}{text size in the plot}
 
-\item{label.ident.size}{text size of the cluster labels}
-
-\item{label.receptor.size}{text size of the cluster labels}
-
-\item{label.pathway.size}{text size of pathway labels}
-
-\item{label.title.size}{text size of pathway labels}
+\item{label.title.size}{text size of the title annotation of the plot}
 
 \item{line.ident.width}{text size of pathway labels}
 
