@@ -95,7 +95,7 @@ findLRmarker <- function(expr.mat, label, species, method='wilcox.test', p.adjus
 		stop("there is no ligand or receptor detected in the expression matrix!")
 	}
 
-	if (!is.factor(label)){ label <- as.factor(label) }
+	if (!is.factor(label)){ label <- factor(label) }
 	ident.level <- levels(label)
 	
 	label <- as.character(label)
@@ -556,6 +556,121 @@ diffAllPath <- function(Interact, gsva.mat, ident.label, method='t.test'){
 	}
 
 	return(all.test.dat)
+}
+
+#' To plot a heatmap of those differentially enriched pathways for each clustet
+#' @param gsva.mat Matrix containing the pathway enrichment sorces, with rows representing pathways and columns representing cells. Pathway scores are usually computed from gsva, or other methods aiming to measure the pathway enrichment in cells
+#' @param ident.label Vector indicating the identity labels of cells, and the order of labels are required to match order of cells (columns) in the gsva.mat
+#' @param all.path.dat data.frame of differential enrichment test result from diffAllPath
+#' @param top.n.pathway Show the heatmap of top n most significant pathways
+#' @param sort Sort criteria used to select the top n pathways, either p.val.adj, p.val, mean.diff, or median.diff
+#' @param col Vector of colors used to generate a series of gradient colors to show the enrichment score of pathways; provide a vector containing at least two colors
+#' @param show.legend Whether to show the legend or not; default is FALSE
+#' @param cell.label.size Text size of the label of cell types
+#' @param cell.label.angle Rotation angle of the label of cell types
+#' @param pathway.label.size Text size of the label of pathways
+#' @param scale Whether to scale the enrichment sorces matrix among cells or not; default is TRUE
+#' @param truncation Truncation fold value; scores > (the third quartiles + truncation * interquartile range) and scores < (the first quartiles - truncation * interquartile range) will be adjusted; either a value to indicate the specific truncation value or 'none' to indicate no truncation; default is 1.5
+#' @return Heatmap plot showing the top enriched patways in each cluster
+#' @export
+pathHeatmap <- function(gsva.mat, ident.label, all.path.dat, top.n.pathway=10, sort='p.val.adj', col=NULL, show.legend=FALSE, cell.label.size=NULL, cell.label.angle=0, pathway.label.size=NULL, scale=TRUE, truncation=1.5){
+	### select the highly enriched pathways
+	if ('mean.diff' %in% colnames(all.path.dat)){
+		all.path.dat <- subset(all.path.dat, mean.diff > 0)
+	}else if('median.diff' %in% colnames(all.path.dat)){
+		all.path.dat <- subset(all.path.dat, median.diff > 0)
+	}else{
+		stop('please input the intact test result computed from diffAllPath')
+	}
+
+	### select top n pathways
+	if (sort=='p.val.adj' | sort=='p.val'){
+		all.path.dat <- all.path.dat[order(all.path.dat[[sort]], decreasing=FALSE), ]
+	}else if (sort=='mean.diff' | sort=='median.diff'){
+		all.path.dat <- all.path.dat[order(all.path.dat[[sort]], decreasing=TRUE), ]
+	}else{
+		stop('select one sort criteria from p.val.adj, p.val, mean.diff, and median.diff')
+	}
+
+	if (!is.factor(ident.label)){
+		ident.label <- factor(ident.label)
+	}
+	all.ident <- levels(ident.label)
+
+	path <- sapply(all.ident, function(each.label){
+		ident.path.dat <- subset(all.path.dat, cluster==each.label)
+		if (top.n.pathway > nrow(ident.path.dat)){
+			top.n.pathway <- nrow(ident.path.dat)
+			warning(paste0('there is(are) ',nrow(ident.path.dat),' significant pathway(s) for cluster ',each.label,', and the input top.n.pathway is ',top.n.pathway))
+		}
+		ident.path.dat[1:top.n.pathway, 'description']
+	})
+	path <- unique(as.character(path))
+	
+	gsva.mat <- gsva.mat[path,]
+
+	### scale or not
+	if (scale){
+		gsva.scale.mat <- t(scale(t(gsva.mat)))
+	}else{
+		gsva.scale.mat <- gsva.mat
+	}
+
+	gsva.dat <- melt(gsva.scale.mat, varnames=c('Pathway','Cell'),value.name="Score",  na.rm=TRUE)
+	gsva.dat$Pathway <- factor(as.character(gsva.dat$Pathway), levels=rev(path))
+	gsva.dat$Cell <- as.character(gsva.dat$Cell)
+
+	cell.anno.dat <- data.frame(Cellname=colnames(gsva.scale.mat),Celltype=ident.label,stringsAsFactors=F)
+	gsva.dat$Celltype <- cell.anno.dat[match(gsva.dat$Cell, cell.anno.dat$Cellname),'Celltype']
+	
+	if (is.numeric(truncation)){
+		IQR <- quantile(gsva.dat$Score, 0.75) - quantile(gsva.dat$Score, 0.25)
+		max.score <- quantile(gsva.dat$Score, 0.75) + IQR * truncation
+		min.score <- quantile(gsva.dat$Score, 0.25) - IQR * truncation
+		gsva.dat[gsva.dat$Score > max.score, 'Score'] <- max.score
+		gsva.dat[gsva.dat$Score < min.score, 'Score'] <- min.score
+	}else if(truncation!='none'){
+		stop('either a specific value or "none" is needed for the truncation parameter')
+	}
+	
+	### basic plot
+	path.heatmap <- ggplot(data=gsva.dat, aes(x=Cell, y=Pathway, fill=Score)) + 
+		geom_tile() +
+		facet_grid(facets=~Celltype,scales="free",space="free",switch='x') +
+		labs(x='',y='') +
+		theme(axis.text.x=element_blank(),
+			axis.text.y=element_text(colour='black'),
+			axis.ticks=element_blank(),
+			axis.line=element_blank(),
+			strip.background = element_blank(),
+			strip.text.x=element_text(colour="black", angle=cell.label.angle))
+
+	### gradient color
+	if (is.null(col)){
+		colours <- c("#440154" ,"#21908C", "#FDE725")
+	}else if(length(col)==1){
+		stop('select at least 2 colors to generate a series of gradient colors')
+	}else{
+		colours <- col
+	}
+	path.heatmap <- path.heatmap + scale_fill_gradientn(colours=colours)
+
+	### show legend or not
+	if (show.legend){
+		path.heatmap <- path.heatmap + theme(legend.title=element_text(colour='black',size=14),
+			legend.text=element_text(colour='black',size=14))
+	}else{
+		path.heatmap <- path.heatmap + theme(legend.position='none')
+	}
+
+	### cell and pathway label
+	if (!is.null(cell.label.size)){
+		path.heatmap <- path.heatmap + theme(strip.text.x=element_text(size=cell.label.size))
+	}
+	if (!is.null(pathway.label.size)){
+		path.heatmap <- path.heatmap + theme(axis.text.y=element_text(size=pathway.label.size))
+	}
+	return(path.heatmap)
 }
 
 #' To find the downstream identity class of specific ligand released by specific upstream identity class
@@ -1165,5 +1280,5 @@ pathInterPlot <- function(Interact, select.ident, ident.path.dat, top.n.receptor
 	pathplot.theme
 
 	return(plot)
-
 }
+

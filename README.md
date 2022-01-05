@@ -25,7 +25,7 @@ library(GSVA)
 ```
 #### Load the built-in sample dataset in commpath
 ```
-data("hcc.sample.data",package='commpath')
+data("HCC.sample.data",package='commpath')
 ```
 ***sample.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed
 
