@@ -558,7 +558,7 @@ diffAllPath <- function(Interact, gsva.mat, ident.label, method='t.test'){
 	return(all.test.dat)
 }
 
-#' To plot a heatmap of those differentially enriched pathways for each clustet
+#' To plot a heatmap of those differentially enriched pathways for each cluster
 #' @param gsva.mat Matrix containing the pathway enrichment sorces, with rows representing pathways and columns representing cells. Pathway scores are usually computed from gsva, or other methods aiming to measure the pathway enrichment in cells
 #' @param ident.label Vector indicating the identity labels of cells, and the order of labels are required to match order of cells (columns) in the gsva.mat
 #' @param all.path.dat data.frame of differential enrichment test result from diffAllPath

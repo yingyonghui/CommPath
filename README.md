@@ -115,9 +115,6 @@ gsva analysis：
 # to save time, we have precomputed gsva score and saved it in the varible *gsva.mat*
 # gsva.mat <- gsva(sample.expr, Interact[['pathwayLR']], min.sz=10, parallel.sz=10)
 ```
-gsva pathway heatmap, to display the highly variable pathways among all cells (待实现)
-
-
 Pathway differential enrichment analysis：
 ```
 # to find the different enriched pathways for cells in the selected identity class 
@@ -151,7 +148,15 @@ Column ***receptor.in.path*** shows the marker receptors expressed by the curren
 
 Column ***ligand.in.path*** shows the marker ligands released by the current identity class and these ligands are also included in the current pathway.
 
-Then we can find the second interactions mediated by specific pathways by identifying the downstream receptor of ligands in the ***ligand.in.path*** columns via findReceptor function described above:
+Then we use **pathHeatmap** to plot a heatmap of those differentially enriched pathways for each cluster to display the highly variable pathways:
+```
+pathHeatmap(gsva.mat,
+       ident.label,
+       all.path.dat,
+       top.n.pathway = 10,
+       sort = "p.val.adj")
+```
+
 #### Cell-cell interaction flow via pathways
 ```
 ### first we identify differentially enriched pathways associated with receptors in the selected ident
