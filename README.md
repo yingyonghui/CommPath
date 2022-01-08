@@ -1,10 +1,10 @@
-# commpath
-commpath is an R package for inference and analysis of ligand-receptor interactions from single cell RNA sequencing data
+# Commpath
+Commpath is an R package for inference and analysis of ligand-receptor interactions from single cell RNA sequencing data
 ## Installation
-commpath R package can be easily installed from Github using devtools:
+Commpath R package can be easily installed from Github using devtools:
 ```
-devtools::install_github("yingyonghui/commpath")
-library(commpath)
+devtools::install_github("yingyonghui/Commpath")
+library(Commpath)
 ```
 ### Dependencies
 - [circlize](https://cran.r-project.org/web/packages/circlize/index.html)
@@ -25,7 +25,7 @@ library(GSVA)
 ```
 #### Load the built-in sample dataset in commpath
 ```
-data("HCC.sample.data",package='commpath')
+data("HCC.sample.data",package='Commpath')
 ```
 ***sample.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed
 
@@ -33,52 +33,59 @@ data("HCC.sample.data",package='commpath')
 
 ***sample.marker*** : data frame of marker genes for each identity class, usually calculated by FindAllMarkers from [Seurat](https://satijalab.org/seurat/)
 
-***gsva.mat*** : precomputed gsva scores for the example dataset
+***gsva.mat*** : precomputed gsva scores of pathways for the example dataset
 #### Identification of marker ligands and receptors
+We start Commpath analysis by creating a Commpath object, which is a S4 object and consists of five slots including (i) data, a matrix containing the normalized expression values by gene * cell; (ii) meta.info, a list containing  the meta information about cells and some important parameters used during the  analysis; (iii) LR.marker, a data.frame containing the result of differential expression test of ligands and receptors; (iv) interact, a list containing the  information of LR interaction among clusters; (vi) pathway, a list containing the information of pathways related to the ligands and receptors.
+```
+### to create a Commpath object
+object <- createCommpath(expr.mat=sample.expr, 
+		cell.info=sample.label, 
+		species='hsapiens')
+		
+# type ?createCommpath to get more information about each parameter
+?createCommpath
+```
 Firstly we're supposed to identify marker ligands and receptors (ligands and receptors that are significantly highly expressed) for each identity class of cells in the expression matrix. commpath provide **findLRmarker** to identify these markers by *t.test* or *wilcox.test*.
 ```
+# to identify marker ligands and receptors
+# object <- findLRmarker(object, method='wilcox.test')
 # to save time, we have pre-identified marker ligands and receptors
 # and saved it in the varible sample.marker
-expr.mat = sample.expr
-label = sample.label
-species = 'hsapiens'
-method = 'wilcox.test'
-sample.marker <- findLRmarker(expr.mat, label, species, method)
+object@LR.marker <- sample.marker
 ```
 
 #### Identification of ligand-receptor (L-R) associations
 ```
 # find significant L-R pairs
-marker.dat = sample.marker
 logFC.thre = 0
 p.thre = 0.05
-Interact <- findLRpairs(marker.dat=sample.marker, 
-    species=species, 
-    logFC.thre=logFC.thre, 
-    p.thre=p.thre)
-
-# type ?findLRpairs to get more information about each parameter
-?findLRpairs
+object <- findLRpairs(object,
+		logFC.thre=logFC.thre, 
+		p.thre=p.thre)
 ```
-The function **findLRpairs** returns an list object (here we name it as ***Interact***). The number of significant L-R pairs is stored in Interact[['InteractNumer']]，and the detailed information of each L-R pair is stored in Interact[['InteractGeneUnfold']]
+The number of significant L-R pairs is then stored in object@interact[['InteractNumer']]，and the detailed information of each L-R pair is stored in object@interact[['InteractGeneUnfold']]
 
 Then you can visualize the interaction through a circos plot:
 ```
 # plot interaction for all cluster
-circosPlot(Interact=Interact)
+circosPlot(object)
+```
+
+
+```
 # you may want to highlight the interaction of specific cluster
 # here we take the endothelial cell as an example
 ident='Endothelial'
-circosPlot(Interact=Interact, ident=ident)
+circosPlot(object, ident=ident)
 ```
 
-For a specific cluster users may be interested in, commpath also provides dot plots to investigate its upstream clusters which release specific ligands and its downstream clusters which expressed specific receptors: 
+For a specific cluster of interest, commpath also provides dot plots to investigate its upstream clusters which release specific ligands and its downstream clusters which expressed specific receptors: 
 ```
 ident='Endothelial'
 # to investigate the upstream clusters which release specific ligands to the interested cluster
-dotPlot(Interact=Interact, receptor.ident=ident)
+dotPlot(object, receptor.ident=ident)
 # to investigate the downstream clusters which expressed specific receptors for the interested cluster
-dotPlot(Interact=Interact, ligand.ident=ident)
+dotPlot(object, ligand.ident=ident)
 ```
 
 Also commpath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand) 
@@ -87,7 +94,7 @@ Also commpath provides function **findLigand** (**findReceptor**) to find the up
 select.ident = 'Endothelial'
 select.receptor = 'ITGB1'
 
-ident.up.dat <- findLigand(Interact=Interact, 
+ident.up.dat <- findLigand(object, 
     select.ident=select.ident, 
     select.receptor=select.receptor)
 head(ident.up.dat)
@@ -96,7 +103,7 @@ head(ident.up.dat)
 select.ident = 'Endothelial'
 select.ligand = 'CCL14'
 
-ident.down.dat <- findReceptor(Interact=Interact, 
+ident.down.dat <- findReceptor(object, 
     select.ident=select.ident, 
     select.ligand=select.ligand)
 head(ident.down.dat)
@@ -105,36 +112,32 @@ head(ident.down.dat)
 ```
 # find pathways in which genesets show overlap 
 # with the ligands and receptors in the example dataset
-Interact <- findLRpath(Interact=Interact, category='kegg')
+object <- findLRpath(object, category='kegg')
 ```
-Now genesets show overlap with the ligands and receptors in the exsample dataset are saved in Interact[['pathwayLR']]
+Now genesets show overlap with the ligands and receptors in the exsample dataset are saved in object@interact[['pathwayLR']]
 
-gsva analysis：
+Scoring the pathways：
 ```
-# to compute gsva score by gsva function from the GSVA package
+# to compute pathway activation score by the gsva algorithm or an average manner 
+# object <- scorePath(object, method='gsva', min.sz=10, parallel.sz=10)
 # to save time, we have precomputed gsva score and saved it in the varible *gsva.mat*
-# gsva.mat <- gsva(sample.expr, Interact[['pathwayLR']], min.sz=10, parallel.sz=10)
+object@pathway$acti.score <- gsva.mat
 ```
-Pathway differential enrichment analysis：
+Pathway differential activation analysis：
 ```
-# to find the different enriched pathways for cells in the selected identity class 
+# to find the different activated pathways for cells in the selected identity class 
 # and the receptor and ligand in the pathway
 ident.label = sample.label
 select.ident.1 = 'Endothelial'
 method = 't.test'
-ident.path.dat <- diffPath(Interact=Interact, 
-    gsva.mat=gsva.mat, 
-    ident.label=ident.label, 
+ident.path.dat <- diffPath(object, 
     select.ident.1=select.ident.1,
     method=method)
 
 head(ident.path.dat)
 
 # perform diffPath for all clusters
-all.path.dat <- diffAllPath(Interact=Interact, 
-gsva.mat=gsva.mat, 
-ident.label=ident.label, 
-method=method)
+all.path.dat <- diffAllPath(object, method=method)
 # get all significant pathways
 all.path.dat <- subset(all.path.dat, p.val.adj < 0.05)
 
@@ -150,8 +153,7 @@ Column ***ligand.in.path*** shows the marker ligands released by the current ide
 
 Then we use **pathHeatmap** to plot a heatmap of those differentially enriched pathways for each cluster to display the highly variable pathways:
 ```
-pathHeatmap(gsva.mat,
-       ident.label,
+pathHeatmap(object,
        all.path.dat,
        top.n.pathway = 10,
        sort = "p.val.adj")
@@ -159,26 +161,25 @@ pathHeatmap(gsva.mat,
 
 #### Cell-cell interaction flow via pathways
 ```
-### first we identify differentially enriched pathways associated with receptors in the selected ident
+### first we identify differentially activated pathways associated with receptors in the selected ident
 ident.label = sample.label
 select.ident.1 = 'Endothelial'
 method = 't.test'
-ident.path.dat <- diffPath(Interact=Interact, 
-    gsva.mat=gsva.mat, 
-    ident.label=ident.label, 
+ident.path.dat <- diffPath(object, 
     select.ident.1=select.ident.1,
     method=method)
-    
+
+# save.image('before.lineplot.hcc.RData')
+# load('before.lineplot.hcc.RData')
+
 # visualization of the identified pathways
-save.image('before.lineplot.hcc.RData')
-load('before.lineplot.hcc.RData')
-# plot to identify receptors and the associated enriched pathways
-receptorPathPlot(Interact, 
+# plot to identify receptors and the associated activated pathways
+receptorPathPlot(object, 
     select.ident=select.ident.1, 
     ident.path.dat=ident.path.dat)
 
-# plot to identify receptors, the associated enriched pathways, and the downstream clusters
-pathInterPlot(Interact, 
+# plot to identify receptors, the associated activated pathways, and the downstream clusters
+pathInterPlot(object, 
     select.ident=select.ident.1, 
     ident.path.dat=ident.path.dat)
 ```
