@@ -231,7 +231,7 @@ findLRpath <- function(object, category='all'){
 #' @export
 scorePath <- function(object, method='gsva', min.size=10, ...){
 	sample.expr <- object@data
-	path.list <- object@Pathway$pathwayLR
+	path.list <- object@pathway$pathwayLR
 	
 	if (method=='gsva'){
 		gsva.mat <- GSVA::gsva(sample.expr, path.list, min.sz=min.size, ...)
