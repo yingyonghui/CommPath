@@ -3,6 +3,7 @@
 export(circosPlot)
 export(createCommpath)
 export(diffAllPath)
+export(diffCommpath)
 export(diffPath)
 export(dotPlot)
 export(findLRmarker)

@@ -34,3 +34,15 @@ createCommpath <- function(expr.mat, cell.info, species){
 
 	return(object)
 }
+
+
+#' show method for Commpath
+#' @param object A Commpath object
+#' @docType methods
+#
+setMethod(f="show", signature="Commpath", definition=function(object) {
+	cat("An object of class", class(object), "with\n",
+		nrow(x = object@data), "genes *", ncol(x = object@data), "samples.\n"
+	)
+	invisible(x = NULL)
+})

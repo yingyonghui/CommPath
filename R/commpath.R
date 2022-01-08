@@ -487,3 +487,12 @@ pathTest <- function(gsva.ident.mat, group, select.ident.1, select.ident.2=NULL,
 	return(test.res.dat)
 }
 
+#' To compare two Commpath object
+#' @param object.1 The first Commpath object
+#' @param object.2 The second Commpath object for comparison
+#' @param select.ident Identity class of interest
+#' @return Network plot showing difference between two Commpath object
+#' @export
+diffCommpath <- function(object.1, object.2, select.ident){
+
+}

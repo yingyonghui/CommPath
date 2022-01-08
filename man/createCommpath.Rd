@@ -9,7 +9,7 @@ createCommpath(expr.mat, cell.info, species)
 \arguments{
 \item{expr.mat}{Matrix or data frame of expression matrix, with genes in rows and cells in columns}
 
-\item{cell.info}{data.frame of mata information of cells, and the row names should match the column names of expr.mat}
+\item{cell.info}{data.frame of mata information of cells, and the row names should match the column names of expr.mat; a column named as "Cluster" should be included in the data.frame and this column would indicate the identity classes of cells in the expression matrix}
 
 \item{species}{Species}
 }

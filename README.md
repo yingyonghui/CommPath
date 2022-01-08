@@ -119,7 +119,7 @@ Now genesets show overlap with the ligands and receptors in the exsample dataset
 Scoring the pathways：
 ```
 # to compute pathway activation score by the gsva algorithm or an average manner 
-# object <- scorePath(object, method='gsva', min.sz=10, parallel.sz=10)
+# object <- scorePath(object, method='gsva', min.size=10, parallel.sz=10)
 # to save time, we have precomputed gsva score and saved it in the varible *gsva.mat*
 object@pathway$acti.score <- gsva.mat
 ```
