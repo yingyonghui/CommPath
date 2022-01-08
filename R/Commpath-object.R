@@ -15,21 +15,14 @@ Commpath <- methods::setClass("Commpath",
 
 #' To create a Commpath object
 #' @param expr.mat Matrix or data frame of expression matrix, with genes in rows and cells in columns
-#' @param cell.info data.frame of mata information of cells, and the row names should match the column names of expr.mat
+#' @param cell.info data.frame of mata information of cells, and the row names should match the column names of expr.mat; a column named as "Cluster" should be included in the data.frame and this column would indicate the identity classes of cells in the expression matrix
 #' @param species Species
 #' @return Commpath object
 #' @export
 createCommpath <- function(expr.mat, cell.info, species){
-	### if cell.info is a vector of labels
-	cell.info <- data.frame(Cluster=cell.info)
-	rownames(cell.info) <- colnames(expr.mat)
-
-	# if (length(species)>1){
-	# 	stop("select one species once")
-	# }
-	# if (!(species %in% c('hsapiens', 'mmusculus', 'rnorvegicus'))){
-	# 	stop("select one species from 'hsapiens', 'mmusculus', and 'rnorvegicus'")
-	# }
+	if ((length(species) > 1) | (!(species %in% c('hsapiens', 'mmusculus', 'rnorvegicus')))){
+		stop("select one species from 'hsapiens', 'mmusculus', and 'rnorvegicus'")
+	}
 
 	object <- methods::new(Class="Commpath",
 		data = expr.mat,
@@ -38,5 +31,6 @@ createCommpath <- function(expr.mat, cell.info, species){
 		interact = list(),
 		pathway = list()
 	)
+
 	return(object)
 }
