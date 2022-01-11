@@ -79,6 +79,7 @@ ident='Endothelial'
 dotPlot(object, receptor.ident=ident)
 ```
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/dotPlot-ligand.png" height=300, width=400>
+
 ```
 # to investigate the downstream clusters which expressed specific receptors for the interested cluster
 dotPlot(object, ligand.ident=ident)
