@@ -179,6 +179,7 @@ receptorPathPlot(object,
     ident.path.dat=ident.path.dat)
 ```
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/receptorPathPlot.png" height=300, width=380>
+
 ```
 # plot to identify receptors, the associated activated pathways, and the downstream clusters
 pathInterPlot(object, 
@@ -186,6 +187,7 @@ pathInterPlot(object,
     ident.path.dat=ident.path.dat)
 ```
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathInterPlot.png" height=300, width=600>
+
 #### sessionInfo()
 ```
 R version 4.0.3 (2020-10-10)
