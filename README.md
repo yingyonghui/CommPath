@@ -62,7 +62,7 @@ Then you can visualize the interaction through a circos plot:
 # plot interaction for all cluster
 circosPlot(object)
 ```
-
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/circosPlot.png" height=300, width=300>
 
 ```
 # you may want to highlight the interaction of specific cluster
@@ -70,15 +70,20 @@ circosPlot(object)
 ident='Endothelial'
 circosPlot(object, ident=ident)
 ```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/circosPlot-Endothelial.png" height=300, width=300>
 
 For a specific cluster of interest, commpath also provides dot plots to investigate its upstream clusters which release specific ligands and its downstream clusters which expressed specific receptors: 
 ```
 ident='Endothelial'
 # to investigate the upstream clusters which release specific ligands to the interested cluster
 dotPlot(object, receptor.ident=ident)
+```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/dotPlot-ligand.png" height=300, width=400>
+```
 # to investigate the downstream clusters which expressed specific receptors for the interested cluster
 dotPlot(object, ligand.ident=ident)
 ```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/dotPlot-receptor.png" height=300, width=400>
 
 Also commpath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand) 
 ```
@@ -151,8 +156,10 @@ pathHeatmap(object,
        top.n.pathway = 10,
        sort = "p.val.adj")
 ```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathHeatmap.png" height=350, width=600>
 
 #### Cell-cell interaction flow via pathways
+
 ```
 ### first we identify differentially activated pathways associated with receptors in the selected ident
 ident.label = sample.label
@@ -170,12 +177,15 @@ ident.path.dat <- diffPath(object,
 receptorPathPlot(object, 
     select.ident=select.ident.1, 
     ident.path.dat=ident.path.dat)
-
+```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/receptorPathPlot.png" height=300, width=380>
+```
 # plot to identify receptors, the associated activated pathways, and the downstream clusters
 pathInterPlot(object, 
     select.ident=select.ident.1, 
     ident.path.dat=ident.path.dat)
 ```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathInterPlot.png" height=300, width=600>
 #### sessionInfo()
 ```
 R version 4.0.3 (2020-10-10)
