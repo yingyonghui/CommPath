@@ -7,13 +7,11 @@
 findLRpairs(object, logFC.thre = 0, p.thre = 0.05)
 }
 \arguments{
+\item{object}{Commpath object}
+
 \item{logFC.thre}{logFC threshold, marker genes with a logFC > logFC.thre will be considered}
 
 \item{p.thre}{p threshold, marker genes with a adjust p value < p.thre will be considered}
-
-\item{marker.dat}{Data frame containing information of marker genes}
-
-\item{species}{Species, either 'hsapiens', 'mmusculus', or 'rnorvegicus'}
 }
 \value{
 List containing the ligand-receptor interaction information

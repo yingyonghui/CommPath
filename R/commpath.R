@@ -9,7 +9,7 @@ data('CommpathData', package=('Commpath'))
 findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 
 	species <- object@meta.info$species
-	expr.mat <- object@data
+	expr.mat <- as.matrix(object@data)
 	label <- object@meta.info$cell.info[,'Cluster']
 	
 	lr.pair.dat <- CommpathData$DataLR[[species]]
@@ -46,6 +46,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 
 			test.res <- as.data.frame(t(test.res))
 			colnames(test.res) <- c('avg_log2FC','p_val', 'pct.1', 'pct.2')
+			test.res <- subset(test.res, pct.1>0 | pct.2>0)
 			test.res$p_val_adj <- p.adjust(test.res$p_val, method=p.adjust)
 			test.res$cluster <- each.level
 			test.res$gene <- rownames(test.res)
@@ -70,6 +71,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 
 			test.res <- as.data.frame(t(test.res))
 			colnames(test.res) <- c('avg_log2FC','p_val', 'pct.1', 'pct.2')
+			test.res <- subset(test.res, pct.1>0 | pct.2>0)
 			test.res$p_val_adj <- p.adjust(test.res$p_val, method=p.adjust)
 			test.res$cluster <- each.level
 			test.res$gene <- rownames(test.res)
@@ -84,8 +86,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 }
 
 #' To find marker ligands and marker receptors
-#' @param marker.dat Data frame containing information of marker genes
-#' @param species Species, either 'hsapiens', 'mmusculus', or 'rnorvegicus' 
+#' @param object Commpath object
 #' @param logFC.thre logFC threshold, marker genes with a logFC > logFC.thre will be considered
 #' @param p.thre p threshold, marker genes with a adjust p value < p.thre will be considered
 #' @return List containing the ligand-receptor interaction information
@@ -168,6 +169,16 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 
 	marker.lig.dat <- unique(marker.lig.dat)
 	marker.rep.dat <- unique(marker.rep.dat)
+
+	fc.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.lig.dat, gene == x['Ligand'] & cluster == x['Cell.From'])[1,'avg_log2FC'] }))
+	pval.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.lig.dat, gene == x['Ligand'] & cluster == x['Cell.From'])[1,'p_val_adj'] }))
+	fc.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.rep.dat, gene == x['Receptor'] & cluster == x['Cell.To'])[1,'avg_log2FC'] }))
+	pval.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.rep.dat, gene == x['Receptor'] & cluster == x['Cell.To'])[1,'p_val_adj'] }))
+
+	lr.unfold.dat$Log2FC.LR <- fc.lig * fc.rep
+	lr.unfold.dat$P.val.LR <- 1-(1-pval.lig)*(1-pval.rep)
+	lr.unfold.dat$P.val.adj.LR <- p.adjust(lr.unfold.dat$P.val.LR, method='BH')
+
 	Interact <- list(InteractNumer=Interact.num.dat,InteractGene=Interact.gene.dat, InteractGeneUnfold=lr.unfold.dat, markerL=marker.lig.dat, markerR=marker.rep.dat)
 
 	object@interact <- Interact
@@ -230,7 +241,7 @@ findLRpath <- function(object, category='all'){
 #' @return Commpath object with pathways activation scores stored in the slot pathway
 #' @export
 scorePath <- function(object, method='gsva', min.size=10, ...){
-	sample.expr <- object@data
+	sample.expr <- as.matrix(object@data)
 	path.list <- object@pathway$pathwayLR
 	
 	if (method=='gsva'){
@@ -341,9 +352,7 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 
 
 #' To find different enriched pathways in each identity class 
-#' @param Interact Interact list returned by findLRpath
-#' @param gsva.mat Matrix containing the pathway enrichment sorces, with rows representing pathways and columns representing cells. Pathway scores are usually computed from gsva, or other methods aiming to measure the pathway enrichment in cells
-#' @param ident.label Vector indicating the identity labels of cells, and the order of labels are required to match order of cells (columns) in the gsva.mat
+#' @param object Commpath object
 #' @param method Method used for differential enrichment analysis, either 't.test' of 'wilcox.test'
 #' @return Dataframe including the statistic result comparing the pathway enrichment sorces between cells in each cluster and all other clusters, the significant recetor and ligand in the pathways, and the corresponding up stream identity class and ligand
 #' @export
@@ -487,12 +496,118 @@ pathTest <- function(gsva.ident.mat, group, select.ident.1, select.ident.2=NULL,
 	return(test.res.dat)
 }
 
-#' To compare two Commpath object
+
+#' To conduct defferential expression test in select.ident between two Commpath objects
 #' @param object.1 The first Commpath object
 #' @param object.2 The second Commpath object for comparison
 #' @param select.ident Identity class of interest
-#' @return Network plot showing difference between two Commpath object
+#' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
+#' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
+#' @param only.posi only logFC > 0
+#' @param only.sig only p_val_adj < 0.05
+#' @return data.frame of differentially expressed geens between the same clusters in two Commpath object
 #' @export
-diffCommpath <- function(object.1, object.2, select.ident){
+diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
+	obj.1 <- subsetCommpath(object.1, ident.keep=select.ident)
+	obj.2 <- subsetCommpath(object.2, ident.keep=select.ident)
+	expr.mat.1 <- obj.1@data
+	expr.mat.2 <- obj.2@data
+	if (ncol(expr.mat.1) < 3){
+		stop(paste0('there is(are) ',ncol(expr.mat.1),' cell(s) in object.1\nselect other one ident and try again'))
+	}
+	if (ncol(expr.mat.2) < 3){
+		stop(paste0('there is(are) ',ncol(expr.mat.2),' cell(s) in object.2\nselect other one ident and try again'))
+	}
+	gene.keep <- intersect(rownames(expr.mat.1), rownames(expr.mat.2))
+	expr.mat.1 <- expr.mat.1[gene.keep, ]
+	cell.ident <- colnames(expr.mat.1)
+	expr.mat.2 <- expr.mat.2[gene.keep, ]
+	cell.other <- colnames(expr.mat.2)
 
+	if (method!='wilcox.test' & method!='t.test'){
+		stop("select t.test or wilcox.test to conduct differential analysis")
+	}
+	if(method=='wilcox.test'){
+		test.res <- apply(cbind(expr.mat.1, expr.mat.2), 1, function(row.expr){
+			logFC <- log(mean(expm1(row.expr[cell.ident])) +1, base=2) - log(mean(expm1(row.expr[cell.other])) +1, base=2)
+			p.value <- wilcox.test(x=row.expr[cell.ident], y=row.expr[cell.other])$p.value
+			pct.1 <- length(which(row.expr[cell.ident] > 0))/length(cell.ident)
+			pct.2 <- length(which(row.expr[cell.other] > 0))/length(cell.other)
+			c(logFC, p.value, pct.1, pct.2)
+		})
+	}else{
+		test.res <- apply(cbind(expr.mat.1, expr.mat.2), 1, function(row.expr){
+			logFC <- log(mean(expm1(row.expr[cell.ident])) +1, base=2) - log(mean(expm1(row.expr[cell.other])) +1, base=2)
+			p.value <- t.test(x=row.expr[cell.ident], y=row.expr[cell.other])$p.value
+
+			pct.1 <- length(which(row.expr[cell.ident] > 0))/length(cell.ident)
+			pct.2 <- length(which(row.expr[cell.other] > 0))/length(cell.other)
+			c(logFC, p.value, pct.1, pct.2)
+	})
+	}
+
+	test.res <- as.data.frame(t(test.res))
+	colnames(test.res) <- c('avg_log2FC','p_val', 'pct.1', 'pct.2')
+	test.res <- subset(test.res, pct.1>0 | pct.2>0)
+	test.res$p_val_adj <- p.adjust(test.res$p_val, method=p.adjust)
+	if (only.posi){
+		test.res <- subset(test.res, avg_log2FC > 0)
+	}
+	if (only.sig){
+		test.res <- subset(test.res, p_val_adj < 0.05)
+	}
+	return(test.res)
 }
+
+
+#' To compare two Commpath objects
+#' @param object.1 The first Commpath object
+#' @param object.2 The second Commpath object for comparison
+#' @param select.ident Identity class of interest
+#' @param diff.obj.marker diff.obj.marker computed by diffCommpathMarker
+#' @return data.frame of differentially expressed geens between the same clusters in two Commpath object
+#' @export
+diffCommpathPlot <- function(object.1, object.2, select.ident, diff.obj.marker=NULL, top.n.receptor=5, order=NULL, top.n.path=10, p.thre=0.05, dot.ident.col=NULL, dot.receptor.col=NULL, bar.pathway.col=NULL, bar.pathway.width=10, dot.ident.size=1, dot.receptor.size=1, label.text.size=1, label.title.size=1, line.ident.width=1, line.path.width=1){
+	diff.obj.marker <- diffCommpathMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
+
+	### check the input and select significant pathways
+	if (is.null(ident.path.dat)){
+		ident.path.dat <- diffPath(object, select.ident.1=select.ident.1)
+	}
+	if ('t' %in% colnames(ident.path.dat)){
+		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
+	}else if ('W' %in% colnames(ident.path.dat)){
+		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & median.diff > 0)
+	}else{
+		stop('please input the integrate ident.path.dat computed from diffPath')
+	}
+	ident.path.dat <- ident.path.dat[order(ident.path.dat$p.val.adj, decreasing=TRUE),]
+	all.sig.path <- ident.path.dat$description
+
+	### preprocess and extract useful information
+	plot.dat <- extract.info(ident.path.dat)
+	# subset the plot.dat to exclude those markers not differentially expressed between two objects
+	markerR.dat <- subset(object.1@interact$markerR, subset=(cluster==select.ident & gene %in% plot.dat$cur.rep))
+	if (nrow(markerR.dat)==0){
+		stop('there is no marker receptor for the selected ident compared to other clusters')
+	}
+	plot.dat <- subset(plot.dat, cur.rep %in% rownames(diff.obj.marker))
+	markerR.dat <- subset(object.1@interact$markerR, subset=(cluster==select.ident & gene %in% plot.dat$cur.rep))
+	if (nrow(markerR.dat)==0){
+		stop('there is no marker receptor for the selected ident between two objects')
+	}
+
+	markerR.dat <- markerR.dat[order(abs(markerR.dat$avg_log2FC), decreasing=TRUE), ]
+	if (top.n.receptor > nrow(markerR.dat)){
+		warning(paste0('there is(are) ', nrow(markerR.dat),' marker receptor(s) in the selected ident between two objects, and the input top.n.receptor is ', top.n.receptor))
+		top.n.receptor <- nrow(markerR.dat)
+	}
+	top.receptor.dat <- markerR.dat[1:top.n.receptor,]
+	plot.dat <- subset(plot.dat, cur.rep %in% top.receptor.dat$gene)
+	
+
+	up.ident <- plot.dat$up.ident
+	cur.rep <- plot.dat$cur.rep
+	return(diff.obj.marker)
+}
+

@@ -7,13 +7,9 @@
 diffAllPath(object, method = "t.test")
 }
 \arguments{
+\item{object}{Commpath object}
+
 \item{method}{Method used for differential enrichment analysis, either 't.test' of 'wilcox.test'}
-
-\item{Interact}{Interact list returned by findLRpath}
-
-\item{gsva.mat}{Matrix containing the pathway enrichment sorces, with rows representing pathways and columns representing cells. Pathway scores are usually computed from gsva, or other methods aiming to measure the pathway enrichment in cells}
-
-\item{ident.label}{Vector indicating the identity labels of cells, and the order of labels are required to match order of cells (columns) in the gsva.mat}
 }
 \value{
 Dataframe including the statistic result comparing the pathway enrichment sorces between cells in each cluster and all other clusters, the significant recetor and ligand in the pathways, and the corresponding up stream identity class and ligand

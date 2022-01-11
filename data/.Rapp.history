@@ -10,3 +10,13 @@ load("/Users/haolu/Desktop/commpath-S4/data/CommpathData.RData")
 ls()
 CommpathData <- commpathData
 save(CommpathData, file='CommpathData.RData')
+load("/Users/haolu/Documents/GitHub/Commpath/data/HCC.sample.data.RData")
+ls()
+sample.label
+cell.info <- data.frame(Cluster=sample.label)
+cell.info$Cluster
+rownames(cell.info) <- colnames(sample.expr)
+cell.info$Cluster
+head(cell.info)
+ls()
+save(sample.expr, cell.info,gsva.mat,sample.marker, file='HCC.sample.data.RData')

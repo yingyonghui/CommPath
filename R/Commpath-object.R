@@ -1,3 +1,5 @@
+#setClassUnion(name='exprMatrix', members=c("matrix", "dgCMatrix"))
+
 #' To define the Commpath object and the key slots
 #' @slot data normalized expression matrix
 #' @slot meta.info vector of cell labels
@@ -6,7 +8,7 @@
 #' @slot pathway list containing information of pathways associated with ligands and receptors
 #' @exportClass Commpath
 Commpath <- methods::setClass("Commpath",
-	slots = c(data = 'matrix',
+	slots = c(data = 'ANY',
 	meta.info = 'list',
 	LR.marker = 'data.frame',
 	interact = 'list',
@@ -25,7 +27,7 @@ createCommpath <- function(expr.mat, cell.info, species){
 	}
 
 	object <- methods::new(Class="Commpath",
-		data = expr.mat,
+		data = as(expr.mat, "dgCMatrix"),
 		meta.info = list(cell.info=cell.info, species=species, logFC.thre=NULL, p.thre=NULL),
 		LR.marker = data.frame(),
 		interact = list(),
@@ -36,13 +38,13 @@ createCommpath <- function(expr.mat, cell.info, species){
 }
 
 
-#' show method for Commpath
+#' Show method for Commpath
 #' @param object A Commpath object
 #' @docType methods
-#
 setMethod(f="show", signature="Commpath", definition=function(object) {
 	cat("An object of class", class(object), "with\n",
 		nrow(x = object@data), "genes *", ncol(x = object@data), "samples.\n"
 	)
 	invisible(x = NULL)
 })
+

@@ -83,7 +83,6 @@ circosPlot <- function(object, order=NULL, col=NULL, ident=NULL, name.vert=FALSE
 #' @export
 dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, return.data=FALSE){
 	options(stringsAsFactors=F)
-	#colorRampPalette(c("#440154" ,"#21908C", "#FDE725"))(100)
 	if (is.null(ligand.ident) & is.null(receptor.ident)){
 		stop("either ligand.ident or ligand.ident need to be asigned")
 	}
@@ -92,107 +91,26 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 	}
 
 	# get the InteractGene dataframe
-	inter.gene.dat <- object@interact$InteractGene
-	if (length(ligand.ident)==1){
-		inter.gene.dat$Xaxis <- inter.gene.dat$Cell.To
-		#shape <- 16
-	}else{
-		inter.gene.dat$Xaxis <- inter.gene.dat$Cell.From
-		#shape <- 17
-	}
-
-	logFC.thre <- object@meta.info$logFC.thre
-	p.thre <- object@meta.info$p.thre
-
-	inter.ident.dat <- inter.gene.dat
+	inter.gene.dat <- object@interact$InteractGeneUnfold
+	
 	if (!is.null(receptor.ident)){
-		if (!all(receptor.ident %in% inter.ident.dat$Cell.To)){
-			stop(paste0('select receptor.ident from ',pasteIdent(inter.ident.dat$Cell.To)))
+		if (!all(receptor.ident %in% inter.gene.dat$Cell.To)){
+			stop(paste0('select receptor.ident from ',pasteIdent(inter.gene.dat$Cell.To)))
 		}
-		inter.ident.dat <- inter.ident.dat[inter.ident.dat$Cell.To %in% receptor.ident,]
+		inter.gene.dat <- inter.gene.dat[inter.gene.dat$Cell.To %in% receptor.ident,]
 	}
 	if (!is.null(ligand.ident)){
-		if (!all(ligand.ident %in% inter.ident.dat$Cell.From)){
-			stop(paste0('select ligand.ident from ',pasteIdent(inter.ident.dat$Cell.From)))
+		if (!all(ligand.ident %in% inter.gene.dat$Cell.From)){
+			stop(paste0('select ligand.ident from ',pasteIdent(inter.gene.dat$Cell.From)))
 		}
-		inter.ident.dat <- inter.ident.dat[inter.ident.dat$Cell.From %in% ligand.ident,]
+		inter.gene.dat <- inter.gene.dat[inter.gene.dat$Cell.From %in% ligand.ident,]
 	}
 
-	lr.ident.pair <- inter.ident.dat$LR.Info
-	lr.ident.pair <- unlist(sapply(lr.ident.pair,function(x){strsplit(x,split=';')}))
-	names(lr.ident.pair) <- NULL
-	lr.ident.pair <- unique(lr.ident.pair)
+	inter.gene.dat$LR.Info <- paste(inter.gene.dat$Ligand, ' --> ', inter.gene.dat$Receptor)
 
-	lr.ident.split.pair <- sapply(lr.ident.pair, function(x){strsplit(x,split='--')})
-	ident.ligs <- unlist(lapply(lr.ident.split.pair,function(x){x[1]}))
-	ident.reps <- unlist(lapply(lr.ident.split.pair,function(x){x[2]}))
 
-	inter.ident.unfold.dat <- bind_rows(replicate(length(lr.ident.split.pair), inter.ident.dat, simplify = FALSE))
-	inter.ident.unfold.dat$Lig <- rep(ident.ligs, each=nrow(inter.ident.dat))
-	inter.ident.unfold.dat$Rep <- rep(ident.reps, each=nrow(inter.ident.dat))
-	inter.ident.unfold.dat$LR.Info <- paste0(inter.ident.unfold.dat$Lig,' --> ',inter.ident.unfold.dat$Rep)
-	### fc.lr and p.lr are to save the measured FC and pval of each LR pair
-	markerL.dat <- object@interact$markerL 
-	markerR.dat <- object@interact$markerR 
-	fc.lr <- c()
-	p.lr <- c()
-	for (each.row in 1:nrow(inter.ident.unfold.dat)){
-		#print(each.row)
-		current.from <- inter.ident.unfold.dat[each.row,'Cell.From']
-		current.to <- inter.ident.unfold.dat[each.row,'Cell.To']
-		current.lig <- inter.ident.unfold.dat[each.row,'Lig']
-		current.rep <- inter.ident.unfold.dat[each.row,'Rep']
-
-		fc.lig <- subset(markerL.dat, cluster==current.from & gene==current.lig)[,'avg_log2FC']
-		p.lig <- subset(markerL.dat, cluster==current.from & gene==current.lig)[,'p_val_adj']
-
-		fc.rep <- subset(markerR.dat, cluster==current.to & gene==current.rep)[,'avg_log2FC']
-		p.rep <- subset(markerR.dat, cluster==current.to & gene==current.rep)[,'p_val_adj']
-
-		### if the ligand have a FC > logFC.thre and a p.adj < p.thre
-		### and if the receptor have a FC > logFC.thre and a p.adj < p.thre
-		if ((length(fc.lig)>0) & (length(fc.rep)>0)){
-			if ((fc.lig > logFC.thre) &  (fc.rep > logFC.thre) & (p.lig < p.thre) & (p.rep < p.thre)){
-				fc.lr <- c(fc.lr, fc.lig*fc.rep)
-				p.lr <- c(p.lr, 1-(1-p.lig)*(1-p.rep))
-			}
-		}else{
-			fc.lr <- c(fc.lr, NA)
-			p.lr <- c(p.lr, NA)
-		}
-		
-	}
-
-	inter.ident.unfold.dat$Log2FC_LR <- fc.lr
-	inter.ident.unfold.dat$P_LR <- p.lr
-	inter.ident.unfold.dat$Log10_P_adj <- -log10(p.adjust(p.lr, method='BH'))
-
-	if (return.data){
-		return(inter.ident.unfold.dat[,c('Cell.From', 'Cell.To', 'LR.Info', 'Log2FC_LR', 'P_LR', 'Log10_P_adj')])
-	}
-
-	if (length(ligand.ident)==1){
-		x.title <- paste0('Receptor clusters for cluster ',ligand.ident)
-	}else{
-		x.title <- paste0('Ligand clusters to cluster ',receptor.ident)
-	}
-
-	### you may want to adjust the order of the clusters in the x axis
-	inter.ident.unfold.dat$Xaxis <- as.character(inter.ident.unfold.dat$Xaxis)
-	if (!is.null(ident.levels)){
-		x.levels <- ident.levels[ident.levels %in% inter.ident.unfold.dat$Xaxis]
-		if (all(inter.ident.unfold.dat$Xaxis %in% x.levels)){
-			inter.ident.unfold.dat$Xaxis <- factor(inter.ident.unfold.dat$Xaxis, levels=x.levels)
-		}else{
-			ident.missed <- unique(inter.ident.unfold.dat$Xaxis[!(inter.ident.unfold.dat$Xaxis %in% x.levels)])
-			ident.missed <- pasteIdent(ident.missed)
-			stop(paste0('the ident class ',ident.missed,' may be missed in the input ident.levels'))
-		}
-	}
-
-	inter.ident.unfold.dat <- inter.ident.unfold.dat[,c('Xaxis', 'LR.Info', 'Log2FC_LR', 'Log10_P_adj')]
-
-	max.fc <- by(data=inter.ident.unfold.dat$Log2FC_LR, INDICES = inter.ident.unfold.dat$LR.Info, function(x){max(x,na.rm=T)})
+	### to find those LR pairs with largest Log2FC.LR
+	max.fc <- by(data=inter.gene.dat$Log2FC.LR, INDICES=inter.gene.dat$LR.Info, function(x){max(x,na.rm=T)})
 	max.LRname.fc <- names(max.fc)[order(max.fc, decreasing=TRUE)]
 	
 	if (top.n.inter > length(max.LRname.fc)){
@@ -201,19 +119,63 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 	}
 
 	max.LRname.fc <- max.LRname.fc[1:top.n.inter]
-	inter.ident.unfold.dat <- subset(inter.ident.unfold.dat, LR.Info %in% max.LRname.fc)
+	inter.gene.dat <- subset(inter.gene.dat, LR.Info %in% max.LRname.fc)
 
-	inter.ident.unfold.dat[which(inter.ident.unfold.dat$Log10_P_adj > 30), 'Log10_P_adj'] <- 30
-	plot <- ggplot(inter.ident.unfold.dat,aes(Xaxis,LR.Info)) + 
-		geom_point(aes(size=Log2FC_LR,col=Log10_P_adj)) +
-		#scale_colour_gradient(low="green",high="red") + 
-		scale_color_gradientn(values = seq(0,1,0.2),colours=c("#0570b0", "grey", "#d7301f")) + 
-		labs(color='-log10(p.adj)',size='Log2FC',x=x.title,y="") + 
-		theme(axis.text=element_text(colour='black',size=12),
-		axis.title=element_text(colour='black',size=12),
-		panel.background=element_rect(fill="white",color="black"),
-		panel.grid=element_line(size=0.5,colour='gray')
-		)
+	if (return.data){
+		return(inter.gene.dat[,c('Cell.From', 'Cell.To', 'LR.Info', 'Log2FC.LR', 'P.val.LR', 'P.val.adj.LR')])
+	}
+	
+	inter.gene.dat$Log10.P.adj <- p.remove.inf(inter.gene.dat$P.val.adj.LR)
+	if(all(inter.gene.dat$Log10.P.adj==0)){inter.gene.dat$Log10.P.adj='Infinite'}
+
+	#inter.gene.dat[which(inter.gene.dat$Log10.P.adj > 30), 'Log10.P.adj'] <- 30
+	
+	### adjust the x label and title
+	if (length(ligand.ident)==1){
+		inter.gene.dat$Xaxis <- inter.gene.dat$Cell.To
+		x.title <- paste0('Receptor clusters for cluster ',ligand.ident)
+	}else{
+		inter.gene.dat$Xaxis <- inter.gene.dat$Cell.From
+		x.title <- paste0('Ligand clusters to cluster ',receptor.ident)
+	}
+	### you may want to adjust the order of the clusters in the x axis
+	inter.gene.dat$Xaxis <- as.character(inter.gene.dat$Xaxis)
+	if (is.null(ident.levels)){
+		all.ident <- object@meta.info$cell.info$Cluster
+		if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
+		ident.levels <- levels(all.ident)
+	}
+	x.levels <- ident.levels[ident.levels %in% inter.gene.dat$Xaxis]
+	if (all(inter.gene.dat$Xaxis %in% x.levels)){
+		inter.gene.dat$Xaxis <- factor(inter.gene.dat$Xaxis, levels=x.levels)
+	}else{
+		ident.missed <- unique(inter.gene.dat$Xaxis[!(inter.gene.dat$Xaxis %in% x.levels)])
+		ident.missed <- pasteIdent(ident.missed)
+		stop(paste0('the ident class ',ident.missed,' may be missed in the input ident.levels'))
+	}
+
+	if (all(inter.gene.dat$Log10.P.adj=='Infinite')){
+		plot <- ggplot(data=inter.gene.dat,aes(x=Xaxis,y=LR.Info)) + 
+			geom_point(aes(size=Log2FC.LR,col='Infinite')) +
+			scale_color_manual(values='red') + 
+			labs(color='-log10(p.adj)',size='Log2FC.LR',x=x.title,y="") + 
+			theme(axis.text=element_text(colour='black',size=12),
+			axis.title=element_text(colour='black',size=12),
+			panel.background=element_rect(fill="white",color="black"),
+			panel.grid=element_line(size=0.5,colour='gray')
+			)
+		warning('adjusted p values for all LR pairs are 0')
+	}else{
+		plot <- ggplot(data=inter.gene.dat,aes(x=Xaxis,y=LR.Info)) + 
+			geom_point(aes(size=Log2FC.LR,col=Log10.P.adj)) +
+			scale_color_gradientn(values = seq(0,1,0.2),colours=c("#0570b0", "grey", "#d7301f")) + 
+			labs(color='-log10(p.adj)',size='Log2FC.LR',x=x.title,y="") + 
+			theme(axis.text=element_text(colour='black',size=12),
+			axis.title=element_text(colour='black',size=12),
+			panel.background=element_rect(fill="white",color="black"),
+			panel.grid=element_line(size=0.5,colour='gray')
+			)
+	}
 	return(plot)
 }
 
@@ -356,10 +318,13 @@ pathHeatmap <- function(object, all.path.dat, top.n.pathway=10, sort='p.val.adj'
 #' @param line.path.width width of lines connecting receptors and pathways
 #' @return Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors
 #' @export
-receptorPathPlot <- function(object, select.ident, ident.path.dat, top.n.receptor=5, order=NULL, top.n.path=10, p.thre=0.05, dot.ident.col=NULL, dot.receptor.col=NULL, bar.pathway.col=NULL, bar.pathway.width=10, dot.ident.size=1, dot.receptor.size=1, label.text.size=1, label.title.size=1, line.ident.width=1, line.path.width=1){
+receptorPathPlot <- function(object, select.ident, ident.path.dat=NULL, top.n.receptor=5, order=NULL, top.n.path=10, p.thre=0.05, dot.ident.col=NULL, dot.receptor.col=NULL, bar.pathway.col=NULL, bar.pathway.width=10, dot.ident.size=1, dot.receptor.size=1, label.text.size=1, label.title.size=1, line.ident.width=1, line.path.width=1){
 	options(stringsAsFactors=F)
 
 	### check the input and select significant pathways
+	if (is.null(ident.path.dat)){
+		ident.path.dat <- diffPath(object, select.ident.1=select.ident.1)
+	}
 	if ('t' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
 	}else if ('W' %in% colnames(ident.path.dat)){
@@ -371,13 +336,9 @@ receptorPathPlot <- function(object, select.ident, ident.path.dat, top.n.recepto
 	all.sig.path <- ident.path.dat$description
 
 	### preprocess and extract useful information
-	up.ident <- as.vector(unlist(sapply(ident.path.dat$cell.up, function(x){ strsplit(x, split=';') })))
-	cur.rep <- as.vector(unlist(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') })))
-
-	n.elem.each.row <- as.vector(unlist(lapply(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') }),length)))
-	path.all <- rep(ident.path.dat$description, times=n.elem.each.row)
-	plot.dat <- data.frame(up.ident=up.ident, cur.rep=cur.rep, path.name=path.all)
-	
+	plot.dat <- extract.info(ident.path.dat)
+	up.ident <- plot.dat$up.ident
+	cur.rep <- plot.dat$cur.rep
 	### select the highly expressed receptors
 	markerR.dat <- subset(object@interact$markerR, subset=(cluster==select.ident & gene %in% cur.rep))
 	if (nrow(markerR.dat)==0){
@@ -552,7 +513,7 @@ receptorPathPlot <- function(object, select.ident, ident.path.dat, top.n.recepto
 #' @param dot.pathway.size width of lines connecting receptors and pathways
 #' @return Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors
 #' @export
-pathInterPlot <- function(Interact, select.ident, ident.path.dat, top.n.receptor=5, order=NULL, top.n.path=10, p.thre = 0.05, top.n.ligand=10, dot.ident.col=NULL, dot.down.ident.col=NULL, dot.receptor.col=NULL, bar.pathway.col=NULL, bar.pathway.width=10, dot.ident.size=1, dot.receptor.size=1, label.text.size=1, label.title.size=1, line.ident.width=1, line.path.width=1, dot.pathway.size=1){
+pathInterPlot <- function(object, select.ident, ident.path.dat=NULL, top.n.receptor=5, order=NULL, top.n.path=10, p.thre = 0.05, top.n.ligand=10, dot.ident.col=NULL, dot.down.ident.col=NULL, dot.receptor.col=NULL, bar.pathway.col=NULL, bar.pathway.width=10, dot.ident.size=1, dot.receptor.size=1, label.text.size=1, label.title.size=1, line.ident.width=1, line.path.width=1, dot.pathway.size=1){
 	options(stringsAsFactors=F)
 	Interact.num.dat <- subset(object@interact$InteractNumer, LR.Number!=0)
 	all.ident <- unique(c(Interact.num.dat$Cell.From,Interact.num.dat$Cell.To))
@@ -566,6 +527,9 @@ pathInterPlot <- function(Interact, select.ident, ident.path.dat, top.n.receptor
 	names(all.col) <- as.character(all.ident)
 
 	### check the input and select significant pathways
+	if (is.null(ident.path.dat)){
+		ident.path.dat <- diffPath(object, select.ident.1=select.ident.1)
+	}
 	if ('t' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
 	}else if ('W' %in% colnames(ident.path.dat)){
@@ -577,13 +541,9 @@ pathInterPlot <- function(Interact, select.ident, ident.path.dat, top.n.receptor
 	all.sig.path <- ident.path.dat$description
 
 	### preprocess and extract useful information
-	up.ident <- as.vector(unlist(sapply(ident.path.dat$cell.up, function(x){ strsplit(x, split=';') })))
-	cur.rep <- as.vector(unlist(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') })))
-
-	n.elem.each.row <- as.vector(unlist(lapply(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') }),length)))
-	path.all <- rep(ident.path.dat$description, times=n.elem.each.row)
-	plot.dat <- data.frame(up.ident=up.ident, cur.rep=cur.rep, path.name=path.all)
-	
+	plot.dat <- extract.info(ident.path.dat)
+	up.ident <- plot.dat$up.ident
+	cur.rep <- plot.dat$cur.rep
 	### select the highly expressed receptors
 	markerR.dat <- subset(object@interact$markerR, subset=(cluster==select.ident & gene %in% cur.rep))
 	markerR.dat <- markerR.dat[order(markerR.dat$avg_log2FC, decreasing=TRUE), ]

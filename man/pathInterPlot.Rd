@@ -5,9 +5,9 @@
 \title{To present the interactions for a selected cluster, including both the upstream and downstream clusters which are connected by specific pathways in the selected cluster}
 \usage{
 pathInterPlot(
-  Interact,
+  object,
   select.ident,
-  ident.path.dat,
+  ident.path.dat = NULL,
   top.n.receptor = 5,
   order = NULL,
   top.n.path = 10,
@@ -28,6 +28,8 @@ pathInterPlot(
 )
 }
 \arguments{
+\item{object}{Commpath object}
+
 \item{select.ident}{select.ident}
 
 \item{ident.path.dat}{ident.path.dat for the selected ident}
@@ -65,8 +67,6 @@ pathInterPlot(
 \item{line.path.width}{width of lines connecting receptors and pathways}
 
 \item{dot.pathway.size}{width of lines connecting receptors and pathways}
-
-\item{object}{Commpath object}
 }
 \value{
 Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors

@@ -7,7 +7,7 @@
 receptorPathPlot(
   object,
   select.ident,
-  ident.path.dat,
+  ident.path.dat = NULL,
   top.n.receptor = 5,
   order = NULL,
   top.n.path = 10,

@@ -7,6 +7,7 @@ devtools::install_github("yingyonghui/Commpath")
 library(Commpath)
 ```
 ### Dependencies
+- [Matrix](https://cran.r-project.org/web/packages/Matrix/index.html)
 - [circlize](https://cran.r-project.org/web/packages/circlize/index.html)
 - [ggplot2](https://cran.r-project.org/web/packages/ggplot2/index.html)
 - [dplyr](https://cran.r-project.org/web/packages/dplyr/index.html)
@@ -14,22 +15,13 @@ library(Commpath)
 - [GSVA](https://www.bioconductor.org/packages/release/bioc/html/GSVA.html)
 
 ## Tutorials
-#### Dependencies:
-
-```
-library(circlize)
-library(reshape2)
-library(dplyr)
-library(ggplot2)
-library(GSVA)
-```
 #### Load the built-in sample dataset in commpath
 ```
 data("HCC.sample.data",package='Commpath')
 ```
 ***sample.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed
 
-***sample.label*** : vector  of identity classes of cells in the expression matrix
+***cell.info*** : vector  of identity classes of cells in the expression matrix
 
 ***sample.marker*** : data frame of marker genes for each identity class, usually calculated by FindAllMarkers from [Seurat](https://satijalab.org/seurat/)
 
@@ -39,7 +31,7 @@ We start Commpath analysis by creating a Commpath object, which is a S4 object a
 ```
 ### to create a Commpath object
 object <- createCommpath(expr.mat=sample.expr, 
-		cell.info=sample.label, 
+		cell.info=cell.info, 
 		species='hsapiens')
 		
 # type ?createCommpath to get more information about each parameter
@@ -118,7 +110,8 @@ Now genesets show overlap with the ligands and receptors in the exsample dataset
 
 Scoring the pathways：
 ```
-# to compute pathway activation score by the gsva algorithm or an average manner 
+# to compute pathway activation score by the gsva algorithm or an average manner
+# library(GSVA)
 # object <- scorePath(object, method='gsva', min.size=10, parallel.sz=10)
 # to save time, we have precomputed gsva score and saved it in the varible *gsva.mat*
 object@pathway$acti.score <- gsva.mat

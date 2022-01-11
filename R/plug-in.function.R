@@ -79,3 +79,30 @@ factor.to.character <- function(x){
 	x[['Cell.To']] <- as.character(x[['Cell.To']])
 	return(x)
 }
+
+#' To subset a Commpath object
+#' @param object Commpath object
+#' @param ident.keep idents to keep
+#' @param subset.slot slot to subset
+#' @return a subset Commpath object
+#' @export
+subsetCommpath <- function(object, ident.keep, subset.slot=c('data','meta.info')){
+	cell.info <- object@meta.info$cell.info
+	cell.info <- subset(cell.info, Cluster==ident.keep)
+	object@meta.info$cell.info <- cell.info
+	object@data <- object@data[, rownames(cell.info)]
+	return(object)
+}
+
+#' To extract information from ident.path.dat
+#' @param ident.path.dat ident.path.dat
+#' @return data.frame
+extract.info <- function(ident.path.dat){
+	up.ident <- as.vector(unlist(sapply(ident.path.dat$cell.up, function(x){ strsplit(x, split=';') })))
+	cur.rep <- as.vector(unlist(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') })))
+
+	n.elem.each.row <- as.vector(unlist(lapply(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') }),length)))
+	path.all <- rep(ident.path.dat$description, times=n.elem.each.row)
+	plot.dat <- data.frame(up.ident=up.ident, cur.rep=cur.rep, path.name=path.all)
+	return(plot.dat)
+}

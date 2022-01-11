@@ -3,7 +3,7 @@
 \docType{methods}
 \name{show,Commpath-method}
 \alias{show,Commpath-method}
-\title{show method for Commpath}
+\title{Show method for Commpath}
 \usage{
 \S4method{show}{Commpath}(object)
 }
@@ -11,5 +11,5 @@
 \item{object}{A Commpath object}
 }
 \description{
-show method for Commpath
+Show method for Commpath
 }
