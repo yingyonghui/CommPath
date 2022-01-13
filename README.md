@@ -160,6 +160,7 @@ pathHeatmap(object,
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathHeatmap.png" height=350, width=600>
 
 #### Cell-cell interaction flow via pathways
+
 ```
 ### first we identify differentially activated pathways associated with receptors in the selected ident
 ident.label = sample.label
