@@ -17,7 +17,7 @@ library(Commpath)
 ## Tutorials
 #### Load the built-in sample dataset in commpath
 ```
-data("HCC.sample.data",package='Commpath')
+data("HCC.tumor.3k",package='Commpath')
 ```
 ***sample.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed
 
