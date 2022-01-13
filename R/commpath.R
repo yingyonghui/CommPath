@@ -241,13 +241,26 @@ findLRpath <- function(object, category='all'){
 #' @return Commpath object with pathways activation scores stored in the slot pathway
 #' @export
 scorePath <- function(object, method='gsva', min.size=10, ...){
-	sample.expr <- as.matrix(object@data)
+	expr.mat <- as.matrix(object@data)
 	path.list <- object@pathway$pathwayLR
 	
 	if (method=='gsva'){
-		gsva.mat <- GSVA::gsva(sample.expr, path.list, min.sz=min.size, ...)
+		acti.score <- GSVA::gsva(expr.mat, path.list, min.sz=min.size, ...)
+	}else if(method=='average'){
+		acti.score <- t(as.data.frame(lapply(path.list, function(eachPath){
+			overlap.gene <- intersect(eachPath, rownames(expr.mat))
+			if (length(overlap.gene) < 10){
+				return(rep(NA, ncol(expr.mat)))
+			}else{
+				return(colMeans(expr.mat[overlap.gene, ]))
+			}
+		})))
+		rownames(acti.score) <- names(path.list)
+		acti.score <- acti.score[which(!is.na(acti.score[,1])), ]
+	}else{
+		stop('select "gsva" or "average" for pathway scoring')
 	}
-	object@pathway$acti.score <- gsva.mat
+	object@pathway$acti.score <- acti.score
 
 	return(object)
 }
@@ -258,12 +271,16 @@ scorePath <- function(object, method='gsva', min.size=10, ...){
 #' @param select.ident.1 Identity class to define cells for group 1
 #' @param select.ident.2 Identity class to define cells for group 2 for comparison; if 'NULL', use all other cells for comparison
 #' @param method Method used for differential enrichment analysis, either 't.test' of 'wilcox.test'
+#' @param only.posi only save the information of pathways showing up regulation
+#' @param only.sig only save the information of pathways showing significant differences
 #' @return Dataframe including the statistic result comparing the pathway enrichment sorces between group 1 and group 2, the significant recetor and ligand of group 1 in the pathways, and the corresponding up stream identity class which interact with group 1 by releasing specific ligand
 #' @export
-diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test'){
+diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test', only.posi=FALSE, only.sig=FALSE){
 	options(stringsAsFactors=F)
-	gsva.mat <- object@pathway$acti.score
+	acti.score <- object@pathway$acti.score
 	ident.label <- object@meta.info$cell.info$Cluster
+	
+	### input parameter check
 	if (method!='t.test' & method!='wilcox.test'){
 		stop("select t.test or wilcox.test to conduct differential analysis")
 	}else if(method=='t.test'){
@@ -274,71 +291,33 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 		colnames(test.res.dat) <- c('median.diff','median.1','median.2','W','p.val','p.val.adj','description','cell.up','ligand.up','receptor.in.path','ligand.in.path')
 	}
 
+	### find those pathways showing overlap with the ligands and receptors in select ident
 	path.lr.list <- object@pathway$pathwayLR
 	if (is.null(path.lr.list)){
 		stop("no pathway detected, run findLRpath befor diffPath")
 	}
-	# marker.lig.dat <- Interact$markerL
-	# marker.lig.dat <- marker.lig.dat[marker.lig.dat$cluster==select.ident,]
-	marker.ident1.rep.dat <- subset(object@interact$InteractGeneUnfold, Cell.To %in% select.ident.1)
+	marker.lig.rep <- subset(object@interact$InteractGeneUnfold, Cell.From %in% select.ident.1)[, 'Ligand']
+	marker.lig.rep <- unique(c(marker.lig.rep, subset(object@interact$InteractGeneUnfold, Cell.To %in% select.ident.1)[, 'Receptor']))
 
-	if (nrow(marker.ident1.rep.dat)==0){
-		warning(paste0("there is no significant receptor for cluster ", select.ident.1))
-		return(test.res.dat)
-	}
-
-	### find those pathways in which genesets hava overlap with the marker receptors of the selected cluster
-	ident.rep.gene <- marker.ident1.rep.dat$Receptor
-	which.overlap.list <-lapply(path.lr.list, function(x){
-		overlap.idx <-  x %in% ident.rep.gene
-			if(any(overlap.idx)){ 
-				return(paste(x[overlap.idx],collapse=',')) 
-			}else{
-				return(FALSE)
-		}
-	})
-	if (all(which.overlap.list=='FALSE')){
-		warning(paste0("there is no pathway showing overlap with the receptors in cluster ",select.ident.1))
-		return(test.res.dat)
-	}
-	overlap.rep.list <- which.overlap.list[which(which.overlap.list!='FALSE')]
-	### since we set min.sz in the gsva function, there are some pathways not calculated in the gsva process, we shall remove those pathways
-	overlap.rep.list <- overlap.rep.list[names(overlap.rep.list) %in% rownames(gsva.mat)]
-
-	### t.test or wilcox.text for the pathways for the selected cluster
-	gsva.ident.mat <- gsva.mat[names(overlap.rep.list),]
-	group <- as.character(ident.label)
-	test.res.dat <- pathTest(gsva.ident.mat, group, select.ident.1, select.ident.2, method)
-
+	which.overlap.list <- unlist(
+		lapply(path.lr.list, function(x){ 
+			if(any(x %in% marker.lig.rep)){ return(TRUE) }else{ return(FALSE) }
+		}))
+	path.overlap.list <- path.lr.list[which(which.overlap.list)]
 	
-	### to find the upstream ident and ligand the ident.1 recieved
-	test.res.dat$cell.up <- NA
-	test.res.dat$ligand.up <- NA
-	test.res.dat$receptor.in.path <- unlist(overlap.rep.list)
-	for (each.row in 1:nrow(test.res.dat)){
-		each.rep <- test.res.dat[each.row,'receptor.in.path']
-		rep.vec <- strsplit(each.rep, split=',')[[1]]
-		
-		up.cell.inte <- c()
-		up.lig.inte <- c()
-		cur.rep.inte <- c()
-		for (each.rep in rep.vec){
-			each.unfold.rep <- subset(marker.ident1.rep.dat, Receptor==each.rep)
-			up.cell.inte <- c(up.cell.inte,paste(each.unfold.rep$Cell.From, collapse=';'))
-			up.lig.inte <- c(up.lig.inte,paste(each.unfold.rep$Ligand, collapse=';'))		
-			cur.rep.inte <- c(cur.rep.inte,paste(each.unfold.rep$Receptor, collapse=';'))		
-		}
-		test.res.dat[each.row,'cell.up'] <- paste(up.cell.inte, collapse=';')
-		test.res.dat[each.row,'ligand.up'] <- paste(up.lig.inte, collapse=';')
-		test.res.dat[each.row,'receptor.in.path'] <- paste(cur.rep.inte, collapse=';')
-	}
+	### test for overlaping pathways
+	### since we set min.sz in the gsva function, there are some pathways not calculated in the gsva process, we shall remove those pathways
+	path.overlap.list <- path.overlap.list[names(path.overlap.list) %in% rownames(acti.score)]
+	acti.ident.score <- acti.score[names(path.overlap.list),]
+	group <- as.character(ident.label)
+	test.res.dat <- pathTest(acti.ident.score, group, select.ident.1, select.ident.2, method, only.posi=only.posi, only.sig=only.sig)
 
 	### to find the ligand in the same pathway
-	marker.lig.dat <- object@interact$markerL
-	ident.lig.vec <- marker.lig.dat[marker.lig.dat$cluster %in% select.ident.1,'gene']
+	marker.lig.dat <- subset(object@interact$InteractGeneUnfold, Cell.From %in% select.ident.1)
+	ident.lig.vec <- unique(marker.lig.dat[,'Ligand'])
 	### for each pathway in the DEG result, find which pathway show overlap with marker ligands of the selected ident
 	ident.lig.in.path <- sapply(test.res.dat$description, function(eachPath){
-		each.set <- path.lr.list[[eachPath]]
+		each.set <- path.overlap.list[[eachPath]]
 		if (any(ident.lig.vec %in% each.set)){
 			return(paste(ident.lig.vec[ident.lig.vec %in% each.set],collapse=';'))
 		}else{
@@ -346,6 +325,20 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 		}
 	})
 	test.res.dat$ligand.in.path <- unlist(ident.lig.in.path)
+
+	### to find the receptor in the same pathway
+	marker.rep.dat <- subset(object@interact$InteractGeneUnfold, Cell.To %in% select.ident.1)
+	ident.rep.vec <- unique(marker.rep.dat[,'Receptor'])
+	### for each pathway in the DEG result, find which pathway show overlap with marker receptors of the selected ident
+	ident.rep.in.path <- sapply(test.res.dat$description, function(eachPath){
+		each.set <- path.overlap.list[[eachPath]]
+		if (any(ident.rep.vec %in% each.set)){
+			return(paste(ident.rep.vec[ident.rep.vec %in% each.set],collapse=';'))
+		}else{
+			return(NA)
+		}
+	})
+	test.res.dat$receptor.in.path <- unlist(ident.rep.in.path)
 
 	return(test.res.dat)
 }
@@ -362,11 +355,16 @@ diffAllPath <- function(object, method='t.test'){
 	}else{
 		all.test.dat <- data.frame(matrix(NA,0,11))
 	}
-	all.rep.ident <- unique(object@interact$InteractGene$Cell.To)
-	for (each.ident in all.rep.ident){
+	all.ident <- unique(object@meta.info$cell.info$Cluster)
+	all.ident <- convert.to.factor(all.ident)
+	unique.label <- levels(all.ident)
+	for (each.ident in unique.label){
 		message(paste0('Identifying pathways for cluster ',each.ident,'...'))
 		test.res.dat <- diffPath(object, select.ident.1=each.ident, select.ident.2=NULL, method=method)
-		if (nrow(test.res.dat)==0){ next }
+		if (nrow(test.res.dat)==0){ 
+			warning(paste0('there is no significant up or down regulated pathway for cluster ',each.ident))
+			next 
+		}
 		test.res.dat$cluster <- each.ident
 		all.test.dat <- rbind(all.test.dat, test.res.dat)
 	}
@@ -387,13 +385,13 @@ findReceptor <- function(object, select.ident=NULL, select.ligand=NULL){
 	if (is.null(select.ident) & is.null(select.ligand)){
 		stop("either a select.ident or a select.ligand need to be asigned")
 	}
-	InteractGeneUnfold <- object@interact$InteractGeneUnfold
-	if (is.null(select.ligand)){
-		ident.down.dat <- subset(InteractGeneUnfold, Cell.From==select.ident)
-	}else if(is.null(select.ident)){
-		ident.down.dat <- subset(InteractGeneUnfold, Ligand==select.ligand)
-	}else{
-		ident.down.dat <- subset(InteractGeneUnfold, Cell.From==select.ident & Ligand==select.ligand)
+	ident.down.dat <- object@interact$InteractGeneUnfold
+
+	if (!is.null(select.ligand)){
+		ident.down.dat <- subset(ident.down.dat, Ligand %in% select.ligand)
+	}
+	if (!is.null(select.ident)){
+		ident.down.dat <- subset(ident.down.dat, Cell.From %in% select.ident)
 	}
 
 	if (nrow(ident.down.dat)==0){
@@ -416,13 +414,13 @@ findLigand <- function(object, select.ident=NULL, select.receptor=NULL){
 		stop("either a select.ident or a select.receptor need to be asigned")
 	}
 
-	InteractGeneUnfold <- object@interact$InteractGeneUnfold
-	if (is.null(select.receptor)){
-		ident.up.dat <- subset(InteractGeneUnfold, Cell.To==select.ident)
-	}else if(is.null(select.ident)){
-		ident.up.dat <- subset(InteractGeneUnfold, Receptor==select.receptor)
-	}else{
-		ident.up.dat <- subset(InteractGeneUnfold, Cell.To==select.ident & Receptor==select.receptor)
+	ident.up.dat <- object@interact$InteractGeneUnfold
+	if (!is.null(select.receptor)){
+		ident.up.dat <- subset(ident.up.dat, Receptor %in% select.receptor)
+	}
+
+	if (!is.null(select.ident)){
+		ident.up.dat <- subset(ident.up.dat, Cell.To %in% select.ident)
 	}
 
 	if (nrow(ident.up.dat)==0){
@@ -433,20 +431,22 @@ findLigand <- function(object, select.ident=NULL, select.receptor=NULL){
 
 
 #' Differential enrichment analysis by t.test or wilcox.txt
-#' @param gsva.ident.mat Matrix of pathway scores, pathway * cell
+#' @param acti.ident.score Matrix of pathway scores, pathway * cell
 #' @param group Vector of group labels of cells
 #' @param select.ident.1 Identity class 1
 #' @param select.ident.2 Identity class 2 for comparison
 #' @param method Method for hypothesis test, either 't.test' or 'wilcox.test'
+#' @param only.posi only save the information of pathways showing up regulation
+#' @param only.sig only save the information of pathways showing significant differences
 #' @return Dataframe including the statistic result
 #' @export
-pathTest <- function(gsva.ident.mat, group, select.ident.1, select.ident.2=NULL, method='t.test'){
+pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NULL, method='t.test', only.posi=FALSE, only.sig=FALSE){
 	if(method=='t.test'){
 		if (is.null(select.ident.2)){
-			t.result <- apply(gsva.ident.mat,1,function(geneExpr){
+			t.result <- apply(acti.ident.score,1,function(geneExpr){
 				t.test(x=geneExpr[group %in% select.ident.1],y=geneExpr[!(group %in% select.ident.1)])})
 		}else{
-			t.result <- apply(gsva.ident.mat,1,function(geneExpr){
+			t.result <- apply(acti.ident.score,1,function(geneExpr){
 				t.test(x=geneExpr[group %in% select.ident.1],y=geneExpr[group %in% select.ident.2])})
 		}
 		# t = testRes$statistic, df = testRes$parameter, mean.1 = testRes$estimate[1], mean.2 = testRes$estimate[2], pVal = testRes$p.value
@@ -457,10 +457,10 @@ pathTest <- function(gsva.ident.mat, group, select.ident.1, select.ident.2=NULL,
 		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','p.val')
 	}else{
 		if (is.null(select.ident.2)){
-			wil.result <- apply(gsva.ident.mat,1,function(geneExpr){
+			wil.result <- apply(acti.ident.score,1,function(geneExpr){
 				wilcox.test(x=geneExpr[group %in% select.ident.1],y=geneExpr[!(group %in% select.ident.1)])})
 
-			wil.median <- apply(gsva.ident.mat, 1, function(geneExpr){
+			wil.median <- apply(acti.ident.score, 1, function(geneExpr){
 				median.1 <- median(geneExpr[group %in% select.ident.1])
 				median.2 <- median(geneExpr[!(group %in% select.ident.1)])
 				median.diff <- median.1 - median.2
@@ -470,9 +470,9 @@ pathTest <- function(gsva.ident.mat, group, select.ident.1, select.ident.2=NULL,
 			colnames(wil.median) <- c('median.diff','median.1','median.2')
 
 		}else{
-			wil.result <- apply(gsva.ident.mat,1,function(geneExpr){
+			wil.result <- apply(acti.ident.score,1,function(geneExpr){
 				wilcox.test(x=geneExpr[group %in% select.ident.1],y=geneExpr[group %in% select.ident.2])})
-			wil.median <- apply(gsva.ident.mat, 1, function(geneExpr){
+			wil.median <- apply(acti.ident.score, 1, function(geneExpr){
 				median.1 <- median(geneExpr[group %in% select.ident.1])
 				median.2 <- median(geneExpr[group %in% select.ident.2])
 				median.diff <- median.1 - median.2
@@ -492,7 +492,19 @@ pathTest <- function(gsva.ident.mat, group, select.ident.1, select.ident.2=NULL,
 	}
 	
 	test.res.dat$p.val.adj <- p.adjust(test.res.dat$p.val, method='BH')
-	test.res.dat$description <- rownames(gsva.ident.mat)
+	test.res.dat$description <- rownames(acti.ident.score)
+
+	if (only.posi){
+		if (method=='t.test'){
+			test.res.dat <- subset(test.res.dat, mean.diff > 0)
+		}else{
+			test.res.dat <- subset(test.res.dat, median.diff > 0)
+		}
+	}
+
+	if (only.sig){
+		test.res.dat <- subset(test.res.dat, p.val.adj < 0.05)
+	}
 	return(test.res.dat)
 }
 
@@ -550,6 +562,7 @@ diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.
 	colnames(test.res) <- c('avg_log2FC','p_val', 'pct.1', 'pct.2')
 	test.res <- subset(test.res, pct.1>0 | pct.2>0)
 	test.res$p_val_adj <- p.adjust(test.res$p_val, method=p.adjust)
+	test.res$gene <- rownames(test.res)
 	if (only.posi){
 		test.res <- subset(test.res, avg_log2FC > 0)
 	}
@@ -557,57 +570,5 @@ diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.
 		test.res <- subset(test.res, p_val_adj < 0.05)
 	}
 	return(test.res)
-}
-
-
-#' To compare two Commpath objects
-#' @param object.1 The first Commpath object
-#' @param object.2 The second Commpath object for comparison
-#' @param select.ident Identity class of interest
-#' @param diff.obj.marker diff.obj.marker computed by diffCommpathMarker
-#' @return data.frame of differentially expressed geens between the same clusters in two Commpath object
-#' @export
-diffCommpathPlot <- function(object.1, object.2, select.ident, diff.obj.marker=NULL, top.n.receptor=5, order=NULL, top.n.path=10, p.thre=0.05, dot.ident.col=NULL, dot.receptor.col=NULL, bar.pathway.col=NULL, bar.pathway.width=10, dot.ident.size=1, dot.receptor.size=1, label.text.size=1, label.title.size=1, line.ident.width=1, line.path.width=1){
-	diff.obj.marker <- diffCommpathMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
-
-	### check the input and select significant pathways
-	if (is.null(ident.path.dat)){
-		ident.path.dat <- diffPath(object, select.ident.1=select.ident.1)
-	}
-	if ('t' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
-	}else if ('W' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & median.diff > 0)
-	}else{
-		stop('please input the integrate ident.path.dat computed from diffPath')
-	}
-	ident.path.dat <- ident.path.dat[order(ident.path.dat$p.val.adj, decreasing=TRUE),]
-	all.sig.path <- ident.path.dat$description
-
-	### preprocess and extract useful information
-	plot.dat <- extract.info(ident.path.dat)
-	# subset the plot.dat to exclude those markers not differentially expressed between two objects
-	markerR.dat <- subset(object.1@interact$markerR, subset=(cluster==select.ident & gene %in% plot.dat$cur.rep))
-	if (nrow(markerR.dat)==0){
-		stop('there is no marker receptor for the selected ident compared to other clusters')
-	}
-	plot.dat <- subset(plot.dat, cur.rep %in% rownames(diff.obj.marker))
-	markerR.dat <- subset(object.1@interact$markerR, subset=(cluster==select.ident & gene %in% plot.dat$cur.rep))
-	if (nrow(markerR.dat)==0){
-		stop('there is no marker receptor for the selected ident between two objects')
-	}
-
-	markerR.dat <- markerR.dat[order(abs(markerR.dat$avg_log2FC), decreasing=TRUE), ]
-	if (top.n.receptor > nrow(markerR.dat)){
-		warning(paste0('there is(are) ', nrow(markerR.dat),' marker receptor(s) in the selected ident between two objects, and the input top.n.receptor is ', top.n.receptor))
-		top.n.receptor <- nrow(markerR.dat)
-	}
-	top.receptor.dat <- markerR.dat[1:top.n.receptor,]
-	plot.dat <- subset(plot.dat, cur.rep %in% top.receptor.dat$gene)
-	
-
-	up.ident <- plot.dat$up.ident
-	cur.rep <- plot.dat$cur.rep
-	return(diff.obj.marker)
 }
 

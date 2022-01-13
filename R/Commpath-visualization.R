@@ -9,7 +9,6 @@
 circosPlot <- function(object, order=NULL, col=NULL, ident=NULL, name.vert=FALSE){
 	options(stringsAsFactors=F)
 
-
 	Interact.num.dat <- object@interact$InteractNumer
 	Interact.num.dat = Interact.num.dat[Interact.num.dat$LR.Number!=0,]
 	all.ident <- unique(c(Interact.num.dat$Cell.From,Interact.num.dat$Cell.To))
@@ -108,7 +107,6 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 
 	inter.gene.dat$LR.Info <- paste(inter.gene.dat$Ligand, ' --> ', inter.gene.dat$Receptor)
 
-
 	### to find those LR pairs with largest Log2FC.LR
 	max.fc <- by(data=inter.gene.dat$Log2FC.LR, INDICES=inter.gene.dat$LR.Info, function(x){max(x,na.rm=T)})
 	max.LRname.fc <- names(max.fc)[order(max.fc, decreasing=TRUE)]
@@ -181,7 +179,7 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 
 #' To plot a heatmap of those differentially enriched pathways for each cluster
 #' @param object Commpath object
-#' @param all.path.dat data.frame of differential enrichment test result from diffAllPath
+#' @param all.path.dat data.frame of differential enrichment test result from diffAllPath; if NULL, diffAllPath would be run to get the all.path.dat
 #' @param top.n.pathway Show the heatmap of top n most significant pathways
 #' @param sort Sort criteria used to select the top n pathways, either p.val.adj, p.val, mean.diff, or median.diff
 #' @param col Vector of colors used to generate a series of gradient colors to show the enrichment score of pathways; provide a vector containing at least two colors
@@ -193,7 +191,11 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 #' @param truncation Truncation fold value; scores > (the third quartiles + truncation * interquartile range) and scores < (the first quartiles - truncation * interquartile range) will be adjusted; either a value to indicate the specific truncation value or 'none' to indicate no truncation; default is 1.5
 #' @return Heatmap plot showing the top enriched patways in each cluster
 #' @export
-pathHeatmap <- function(object, all.path.dat, top.n.pathway=10, sort='p.val.adj', col=NULL, show.legend=FALSE, cell.label.size=NULL, cell.label.angle=0, pathway.label.size=NULL, scale=TRUE, truncation=1.5){
+pathHeatmap <- function(object, all.path.dat=NULL, top.n.pathway=10, sort='p.val.adj', col=NULL, show.legend=FALSE, cell.label.size=NULL, cell.label.angle=0, pathway.label.size=NULL, scale=TRUE, truncation=1.5){
+	if (is.null(all.path.dat)){
+		all.path.dat <- diffAllPath(object)
+	}
+
 	### select the highly enriched pathways
 	if ('mean.diff' %in% colnames(all.path.dat)){
 		all.path.dat <- subset(all.path.dat, mean.diff > 0)
@@ -301,7 +303,7 @@ pathHeatmap <- function(object, all.path.dat, top.n.pathway=10, sort='p.val.adj'
 #' To present the interact and variable pathways in a line plot, for a specific ident
 #' @param object Commpath object
 #' @param select.ident select.ident
-#' @param ident.path.dat ident.path.dat for the selected ident
+#' @param ident.path.dat ident.path.dat for the selected ident; if NULL, diffPath would be run to get the ident.path.dat
 #' @param top.n.receptor top n receptor with the largest log2FCs to plot
 #' @param order order of source clusters
 #' @param top.n.path top n pathways with the smallest adjusted p values to plot
@@ -318,12 +320,17 @@ pathHeatmap <- function(object, all.path.dat, top.n.pathway=10, sort='p.val.adj'
 #' @param line.path.width width of lines connecting receptors and pathways
 #' @return Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors
 #' @export
-receptorPathPlot <- function(object, select.ident, ident.path.dat=NULL, top.n.receptor=5, order=NULL, top.n.path=10, p.thre=0.05, dot.ident.col=NULL, dot.receptor.col=NULL, bar.pathway.col=NULL, bar.pathway.width=10, dot.ident.size=1, dot.receptor.size=1, label.text.size=1, label.title.size=1, line.ident.width=1, line.path.width=1){
+# path.order='p.val.adj';top.n.receptor=10; order=NULL; top.n.path=5; p.thre=0.05; dot.ident.col=NULL; dot.receptor.col=NULL; bar.pathway.col=NULL; bar.pathway.width=10; dot.ident.size=1; dot.receptor.size=1; label.text.size=1; label.title.size=1; line.ident.width=1; line.path.width=1
+
+receptorPathPlot <- function(object, select.ident, ident.path.dat=NULL, path.order='p.val.adj',top.n.receptor=5, order=NULL, top.n.path=10, p.thre=0.05, dot.ident.col=NULL, dot.receptor.col=NULL, bar.pathway.col=NULL, bar.pathway.width=10, dot.ident.size=1, dot.receptor.size=1, label.text.size=1, label.title.size=1, line.ident.width=1, line.path.width=1){
 	options(stringsAsFactors=F)
+	all.ident <- object@meta.info$cell.info$Cluster
+	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
+	ident.label <- levels(all.ident)
 
 	### check the input and select significant pathways
 	if (is.null(ident.path.dat)){
-		ident.path.dat <- diffPath(object, select.ident.1=select.ident.1)
+		ident.path.dat <- diffPath(object, select.ident.1=select.ident)
 	}
 	if ('t' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
@@ -332,8 +339,54 @@ receptorPathPlot <- function(object, select.ident, ident.path.dat=NULL, top.n.re
 	}else{
 		stop('please input the integrate ident.path.dat computed from diffPath')
 	}
-	ident.path.dat <- ident.path.dat[order(ident.path.dat$p.val.adj, decreasing=TRUE),]
-	all.sig.path <- ident.path.dat$description
+
+	if (nrow(ident.path.dat)==0){ paste0(stop('there is no significantly up-regulatged pathways for cluster ', select.ident )) }
+
+	### remove pathways with NA receptor
+	ident.path.dat <- subset(ident.path.dat, !is.na(receptor.in.path))
+	if (nrow(ident.path.dat)==0){ paste0(stop('there is no marker receptor in the significantly up-regulatged pathways for cluster ', select.ident )) }
+
+	if (path.order=='p.val.adj'){
+		ident.path.dat <- ident.path.dat[order(ident.path.dat[,'p.val.adj'], decreasing=FALSE),]
+	}
+
+	if (top.n.path > nrow(ident.path.dat)){
+		warning(paste0('there is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+		top.n.path <- nrow(ident.path.dat)
+	}
+	ident.path.dat <- ident.path.dat[1:top.n.path, ]
+	all.sig.path <- as.vector(ident.path.dat$description)
+
+	### data for plot of receptors and upstream clusters
+	receptor.in.path <- ident.path.dat[, 'receptor.in.path']
+	# if (all(is.na(receptor.in.path))){
+	# 	stop('there is no marker receptor in the selected pathways\nselect more pathways and try again')
+	# }
+	names(receptor.in.path) <- all.sig.path
+	# receptor.in.path <- receptor.in.path[which(!is.na(receptor.in.path))]
+	cur.rep <- as.vector(unlist(sapply(receptor.in.path, function(x) {strsplit(x, split=';')})))
+	path.times <- sapply(receptor.in.path, function(x) {length(strsplit(x, split=';')[[1]])})
+	cur.path <- rep(names(path.times), times=path.times)
+	plot.receptor.to.pathway.dat <- data.frame(cur.rep=cur.rep, cur.path=cur.path)
+
+	### select the top n receptors
+	cur.uniq.rep <- unique(plot.receptor.to.pathway.dat$cur.rep)
+	cur.rep.LR.dens <- cluster.lr.dens(cur.uniq.rep, object, select.ident, ident.label, find='ligand')
+	cur.rep.max.LR.dens <- apply(cur.rep.LR.dens, 2, function(x){max(x, na.rm=TRUE)})
+	cur.rep.max.LR.dens <- cur.rep.max.LR.dens[order(cur.rep.max.LR.dens, decreasing=TRUE)]
+	
+	if (length(cur.uniq.rep) < top.n.receptor){
+		warning(paste0('there is(are) ', length(cur.uniq.lig),' marker ligand(s) in the selected ident associated with the selected pathways, and the input top.n.ligand is ', top.n.ligand))
+		top.n.receptor <- length(cur.uniq.rep)
+	}
+	
+	top.rep.name <- names(cur.rep.max.LR.dens)[1:top.n.receptor]
+	top.rep.LR.dens <- cur.rep.LR.dens[, top.rep.name]
+	plot.receptor.to.pathway.dat <- subset(plot.receptor.to.pathway.dat, cur.rep %in% top.rep.name)
+	plot.ident.to.receprtor.dat <- melt(top.rep.LR.dens, varnames=c('Cell.From','Receptor'),value.name="LR.Dens",  na.rm=TRUE)
+	plot.ident.to.receprtor.dat <- factor.to.character(plot.ident.to.receprtor.dat)
+
+
 
 	### preprocess and extract useful information
 	plot.dat <- extract.info(ident.path.dat)
@@ -444,7 +497,6 @@ receptorPathPlot <- function(object, select.ident, ident.path.dat=NULL, top.n.re
 	line.rep.to.path.yend.coor <- plyr::mapvalues(line.rep.to.path.yend.coor, from=pathway.coor, to=pathway.new.coor, warn_missing=FALSE)
 	
 	pathplot.theme <- theme(axis.title=element_blank(), axis.text=element_blank(),axis.ticks=element_blank(), axis.line=element_blank(), panel.background=element_rect(fill="white"))
-	
 
 	### point
 	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
@@ -485,8 +537,6 @@ receptorPathPlot <- function(object, select.ident, ident.path.dat=NULL, top.n.re
 	pathplot.theme
 
 	return(plot)
-
-
 }
 
 
@@ -523,12 +573,11 @@ pathInterPlot <- function(object, select.ident, ident.path.dat=NULL, top.n.recep
 		all.ident <- all.ident[order(all.ident)]
 	}
 	all.col <- scales::hue_pal(c=100)(length(all.ident))
-	#all.col[1:4] <- c('red','black','green','blue')
 	names(all.col) <- as.character(all.ident)
 
 	### check the input and select significant pathways
 	if (is.null(ident.path.dat)){
-		ident.path.dat <- diffPath(object, select.ident.1=select.ident.1)
+		ident.path.dat <- diffPath(object, select.ident.1=select.ident)
 	}
 	if ('t' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
@@ -789,3 +838,4 @@ pathInterPlot <- function(object, select.ident, ident.path.dat=NULL, top.n.recep
 
 	return(plot)
 }
+

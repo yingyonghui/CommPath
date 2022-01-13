@@ -4,10 +4,12 @@
 \alias{factor.to.character}
 \title{This is a plug-in function, aimming to convert the variables in a data.frame from factor to character}
 \usage{
-factor.to.character(x)
+factor.to.character(x, column = c(1, 2))
 }
 \arguments{
 \item{x}{data.frame with columns named as Cell.From and Cell.To}
+
+\item{column}{which column}
 }
 \value{
 data.frame with variables converted to character

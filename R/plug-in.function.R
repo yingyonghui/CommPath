@@ -23,7 +23,6 @@ p.remove.inf <- function(pvalues, scale=0.1){
 	return(pvalues)
 }
 
-
 #' this is a plug-in function, aiming to get the color for the dots representing receptors and ligands
 #' @param LRpvalue pvalues of ligands or receptors
 #' @param user.set.col colors set by user
@@ -35,6 +34,21 @@ LRcolor <- function(LRpvalue, user.set.col){
 		dot.col <- user.set.col
 	}else{
 		dot.col <- circlize::colorRamp2(breaks=seq(min(LRpvalue),max(LRpvalue), length=length(user.set.col)),colors=user.set.col)(LRpvalue)
+	}
+	return(dot.col)
+}
+
+#' this is a plug-in function, aiming to get the color for the dots representing receptors and ligands
+#' @param logfc logfc of ligands or receptors
+#' @param user.set.col colors set by user
+#' @return Colors matching each p value
+LRcolor.up.down <- function(logfc, user.set.col){
+	if (is.null(user.set.col)){
+		dot.col <- ifelse(logfc > 0, 'red', 'green')
+	}else if(length(user.set.col)==1){
+		dot.col <- ifelse(logfc > 0, user.set.col, 'green')
+	}else{
+		dot.col <- ifelse(logfc > 0, user.set.col[1], user.set.col[length(user.set.col)])
 	}
 	return(dot.col)
 }
@@ -73,10 +87,12 @@ orderCheck <- function(all.ident, order){
 
 #' This is a plug-in function, aimming to convert the variables in a data.frame from factor to character
 #' @param x data.frame with columns named as Cell.From and Cell.To
+#' @param column which column
 #' @return data.frame with variables converted to character
-factor.to.character <- function(x){
-	x[['Cell.From']] <- as.character(x[['Cell.From']])
-	x[['Cell.To']] <- as.character(x[['Cell.To']])
+factor.to.character <- function(x, column=c(1, 2)){
+	for (each.col in column){
+		x[, each.col] <- as.character(x[, each.col])
+	}
 	return(x)
 }
 
@@ -106,3 +122,37 @@ extract.info <- function(ident.path.dat){
 	plot.dat <- data.frame(up.ident=up.ident, cur.rep=cur.rep, path.name=path.all)
 	return(plot.dat)
 }
+
+#' To extract top n element
+#' @param x vector of elements with names
+#' @param n top a
+#' @return top n elements in x
+order.and.top <- function(x, n){
+	x <- x[order(x, decreasing=TRUE)]
+	return(x[1:n])
+}
+
+
+#' To get interaction density between clusters and receptors
+cluster.lr.dens <- function(top.rep.name, object, select.ident, ident.label, find) {
+	if(find=='ligand'){
+		top.rep.LR.dens <- sapply(top.rep.name, function(eachrep){
+			up.ligand.dat <- findLigand(object, select.ident=select.ident, select.receptor=eachrep)
+			max.cluster.sum.LR <- by(data=up.ligand.dat$Log2FC.LR, INDICES=up.ligand.dat$Cell.From, sum)
+			each.cluster.dens <- max.cluster.sum.LR[ident.label]
+			names(each.cluster.dens) <- ident.label
+			return(each.cluster.dens)
+		})
+	}else if(find=='receptor'){
+		top.rep.LR.dens <- sapply(top.rep.name, function(eachrep){
+			up.ligand.dat <- findReceptor(object, select.ident=select.ident, select.ligand=eachrep)
+			max.cluster.sum.LR <- by(data=up.ligand.dat$Log2FC.LR, INDICES=up.ligand.dat$Cell.To, sum)
+			each.cluster.dens <- max.cluster.sum.LR[ident.label]
+			names(each.cluster.dens) <- ident.label
+			return(each.cluster.dens)
+		})
+	}
+	
+	return(top.rep.LR.dens)
+}
+

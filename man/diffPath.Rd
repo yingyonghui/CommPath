@@ -4,7 +4,14 @@
 \alias{diffPath}
 \title{To find different enriched pathway between two group cells}
 \usage{
-diffPath(object, select.ident.1, select.ident.2 = NULL, method = "t.test")
+diffPath(
+  object,
+  select.ident.1,
+  select.ident.2 = NULL,
+  method = "t.test",
+  only.posi = FALSE,
+  only.sig = FALSE
+)
 }
 \arguments{
 \item{object}{Commpath object}
@@ -14,6 +21,10 @@ diffPath(object, select.ident.1, select.ident.2 = NULL, method = "t.test")
 \item{select.ident.2}{Identity class to define cells for group 2 for comparison; if 'NULL', use all other cells for comparison}
 
 \item{method}{Method used for differential enrichment analysis, either 't.test' of 'wilcox.test'}
+
+\item{only.posi}{only save the information of pathways showing up regulation}
+
+\item{only.sig}{only save the information of pathways showing significant differences}
 }
 \value{
 Dataframe including the statistic result comparing the pathway enrichment sorces between group 1 and group 2, the significant recetor and ligand of group 1 in the pathways, and the corresponding up stream identity class which interact with group 1 by releasing specific ligand

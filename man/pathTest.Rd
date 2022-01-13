@@ -5,15 +5,17 @@
 \title{Differential enrichment analysis by t.test or wilcox.txt}
 \usage{
 pathTest(
-  gsva.ident.mat,
+  acti.ident.score,
   group,
   select.ident.1,
   select.ident.2 = NULL,
-  method = "t.test"
+  method = "t.test",
+  only.posi = FALSE,
+  only.sig = FALSE
 )
 }
 \arguments{
-\item{gsva.ident.mat}{Matrix of pathway scores, pathway * cell}
+\item{acti.ident.score}{Matrix of pathway scores, pathway * cell}
 
 \item{group}{Vector of group labels of cells}
 
@@ -22,6 +24,10 @@ pathTest(
 \item{select.ident.2}{Identity class 2 for comparison}
 
 \item{method}{Method for hypothesis test, either 't.test' or 'wilcox.test'}
+
+\item{only.posi}{only save the information of pathways showing up regulation}
+
+\item{only.sig}{only save the information of pathways showing significant differences}
 }
 \value{
 Dataframe including the statistic result

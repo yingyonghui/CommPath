@@ -8,6 +8,7 @@ receptorPathPlot(
   object,
   select.ident,
   ident.path.dat = NULL,
+  path.order = "p.val.adj",
   top.n.receptor = 5,
   order = NULL,
   top.n.path = 10,
@@ -29,7 +30,7 @@ receptorPathPlot(
 
 \item{select.ident}{select.ident}
 
-\item{ident.path.dat}{ident.path.dat for the selected ident}
+\item{ident.path.dat}{ident.path.dat for the selected ident; if NULL, diffPath would be run to get the ident.path.dat}
 
 \item{top.n.receptor}{top n receptor with the largest log2FCs to plot}
 
