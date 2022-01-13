@@ -20,3 +20,8 @@ cell.info$Cluster
 head(cell.info)
 ls()
 save(sample.expr, cell.info,gsva.mat,sample.marker, file='HCC.sample.data.RData')
+load("/Users/haolu/Documents/GitHub/Commpath/data/CommpathData.RData")
+ls()
+CommpathData <- commpathData
+getwd()
+save(CommpathData, file='CommpathData.RData')

@@ -19,19 +19,19 @@ library(Commpath)
 ```
 data("HCC.tumor.3k",package='Commpath')
 ```
-***sample.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed
+***tumor.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed
 
-***cell.info*** : vector  of identity classes of cells in the expression matrix
+***tumor.label*** : data frame containing the meta infomation of cells
 
-***sample.marker*** : data frame of marker genes for each identity class, usually calculated by FindAllMarkers from [Seurat](https://satijalab.org/seurat/)
+***tumor.marker*** : data frame of marker genes for each identity class, usually calculated by FindAllMarkers from [Seurat](https://satijalab.org/seurat/)
 
-***gsva.mat*** : precomputed gsva scores of pathways for the example dataset
+***tumor.gsva*** : precomputed gsva scores of pathways for the example dataset
 #### Identification of marker ligands and receptors
 We start Commpath analysis by creating a Commpath object, which is a S4 object and consists of five slots including (i) data, a matrix containing the normalized expression values by gene * cell; (ii) meta.info, a list containing  the meta information about cells and some important parameters used during the  analysis; (iii) LR.marker, a data.frame containing the result of differential expression test of ligands and receptors; (iv) interact, a list containing the  information of LR interaction among clusters; (vi) pathway, a list containing the information of pathways related to the ligands and receptors.
 ```
 ### to create a Commpath object
-object <- createCommpath(expr.mat=sample.expr, 
-		cell.info=cell.info, 
+object <- createCommpath(expr.mat=tumor.expr, 
+		cell.info=tumor.label, 
 		species='hsapiens')
 		
 # type ?createCommpath to get more information about each parameter
@@ -43,7 +43,7 @@ Firstly we're supposed to identify marker ligands and receptors (ligands and rec
 # object <- findLRmarker(object, method='wilcox.test')
 # to save time, we have pre-identified marker ligands and receptors
 # and saved it in the varible sample.marker
-object@LR.marker <- sample.marker
+object@LR.marker <- tumor.marker
 ```
 
 #### Identification of ligand-receptor (L-R) associations
@@ -121,6 +121,7 @@ Scoring the pathways：
 # object <- scorePath(object, method='gsva', min.size=10, parallel.sz=10)
 # to save time, we have precomputed gsva score and saved it in the varible *gsva.mat*
 object@pathway$acti.score <- gsva.mat
+# normal.gsva <- object@pathway$acti.score
 ```
 Pathway differential activation analysis：
 ```
