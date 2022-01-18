@@ -1,2 +1,20 @@
 load("/Users/haolu/Documents/GitHub/commpath/before.lineplot.RData")
-load("/Users/haolu/Documents/GitHub/commpath/before.lineplot.RData")
+load("/Users/haolu/Documents/GitHub/Commpath/HCC.tumor.3k.RData")
+ls()
+load("/Users/haolu/Documents/GitHub/Commpath/HCC.normal.3k.RData")
+ls()
+load("/Users/haolu/Documents/GitHub/Commpath/HCC.normal.3k.RData")
+ls()
+load("/Users/haolu/Documents/GitHub/Commpath/zhaozhen.rds")
+lsI
+ls()
+library(Commpath)
+load("/Users/haolu/Documents/GitHub/Commpath/zhaozhen.rds")
+load("/Users/haolu/Documents/GitHub/Commpath/zhaozhen.rds")
+a <- readRDS('zhaozhen.rds')
+a
+a
+typeof(a)
+class(a)
+library(Commpath)
+a

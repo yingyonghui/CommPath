@@ -10,7 +10,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 
 	species <- object@meta.info$species
 	expr.mat <- as.matrix(object@data)
-	label <- object@meta.info$cell.info[,'Cluster']
+	label <- object@cell.info[,'Cluster']
 	
 	lr.pair.dat <- CommpathData$DataLR[[species]]
 	all.lig.reps <- unique(c(lr.pair.dat$L, lr.pair.dat$R))
@@ -126,6 +126,10 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 			}
 			Interact.num.mat[lig.idx,rep.idx] <- length(pair.valid)
 		}
+	}
+
+	if (sum(Interact.num.mat)==0){
+		stop('No LR pairs detected! Select a lower logFC.thre or higher p.thre and try again')
 	}
 	rownames(Interact.num.mat) <- cluster.level
 	colnames(Interact.num.mat) <- cluster.level
@@ -261,7 +265,7 @@ scorePath <- function(object, method='gsva', min.size=10, ...){
 		stop('select "gsva" or "average" for pathway scoring')
 	}
 	object@pathway$acti.score <- acti.score
-
+	object@pathway$method <- method
 	return(object)
 }
 
@@ -278,7 +282,7 @@ scorePath <- function(object, method='gsva', min.size=10, ...){
 diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test', only.posi=FALSE, only.sig=FALSE){
 	options(stringsAsFactors=F)
 	acti.score <- object@pathway$acti.score
-	ident.label <- object@meta.info$cell.info$Cluster
+	ident.label <- object@cell.info$Cluster
 	
 	### input parameter check
 	if (method!='t.test' & method!='wilcox.test'){
@@ -296,25 +300,36 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 	if (is.null(path.lr.list)){
 		stop("no pathway detected, run findLRpath befor diffPath")
 	}
-	marker.lig.rep <- subset(object@interact$InteractGeneUnfold, Cell.From %in% select.ident.1)[, 'Ligand']
-	marker.lig.rep <- unique(c(marker.lig.rep, subset(object@interact$InteractGeneUnfold, Cell.To %in% select.ident.1)[, 'Receptor']))
+
+	marker.lig.rep <- subset(object@interact$markerL, cluster %in% select.ident.1)[, 'gene']
+	marker.lig.rep <- unique(c(marker.lig.rep, subset(object@interact$markerR, cluster %in% select.ident.1)[, 'gene']))
 
 	which.overlap.list <- unlist(
 		lapply(path.lr.list, function(x){ 
 			if(any(x %in% marker.lig.rep)){ return(TRUE) }else{ return(FALSE) }
 		}))
 	path.overlap.list <- path.lr.list[which(which.overlap.list)]
-	
+	if (length((path.overlap.list)) == 0){
+		warning(paste0('there is no pathway showing overlap with the marker ligands and receptors of cluster ',select.ident.1))
+		return(test.res.dat)
+	}
 	### test for overlaping pathways
 	### since we set min.sz in the gsva function, there are some pathways not calculated in the gsva process, we shall remove those pathways
 	path.overlap.list <- path.overlap.list[names(path.overlap.list) %in% rownames(acti.score)]
 	acti.ident.score <- acti.score[names(path.overlap.list),]
+
+	### if only 1 name in path.overlap.list, then acti.ident.score would be a vector
+	### convert it to a matrix
+	if (is.null(dim(acti.ident.score))){
+		acti.ident.score <- t(as.matrix(acti.ident.score))
+		rownames(acti.ident.score) <- names(path.overlap.list)
+	}
+	
 	group <- as.character(ident.label)
 	test.res.dat <- pathTest(acti.ident.score, group, select.ident.1, select.ident.2, method, only.posi=only.posi, only.sig=only.sig)
 
 	### to find the ligand in the same pathway
-	marker.lig.dat <- subset(object@interact$InteractGeneUnfold, Cell.From %in% select.ident.1)
-	ident.lig.vec <- unique(marker.lig.dat[,'Ligand'])
+	ident.lig.vec <- subset(object@interact$markerL, cluster %in% select.ident.1)[, 'gene']
 	### for each pathway in the DEG result, find which pathway show overlap with marker ligands of the selected ident
 	ident.lig.in.path <- sapply(test.res.dat$description, function(eachPath){
 		each.set <- path.overlap.list[[eachPath]]
@@ -327,8 +342,7 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 	test.res.dat$ligand.in.path <- unlist(ident.lig.in.path)
 
 	### to find the receptor in the same pathway
-	marker.rep.dat <- subset(object@interact$InteractGeneUnfold, Cell.To %in% select.ident.1)
-	ident.rep.vec <- unique(marker.rep.dat[,'Receptor'])
+	ident.rep.vec <- subset(object@interact$markerR, cluster %in% select.ident.1)[, 'gene']
 	### for each pathway in the DEG result, find which pathway show overlap with marker receptors of the selected ident
 	ident.rep.in.path <- sapply(test.res.dat$description, function(eachPath){
 		each.set <- path.overlap.list[[eachPath]]
@@ -355,14 +369,14 @@ diffAllPath <- function(object, method='t.test'){
 	}else{
 		all.test.dat <- data.frame(matrix(NA,0,11))
 	}
-	all.ident <- unique(object@meta.info$cell.info$Cluster)
-	all.ident <- convert.to.factor(all.ident)
+
+	all.ident <- object@cell.info$Cluster
+	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
 	unique.label <- levels(all.ident)
 	for (each.ident in unique.label){
 		message(paste0('Identifying pathways for cluster ',each.ident,'...'))
 		test.res.dat <- diffPath(object, select.ident.1=each.ident, select.ident.2=NULL, method=method)
 		if (nrow(test.res.dat)==0){ 
-			warning(paste0('there is no significant up or down regulated pathway for cluster ',each.ident))
 			next 
 		}
 		test.res.dat$cluster <- each.ident
@@ -510,6 +524,165 @@ pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NUL
 
 
 #' To conduct defferential expression test in select.ident between two Commpath objects
+#' @param object The first Commpath object
+#' @param select.ident Identity class of interest
+#' @param compare compare
+#' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
+#' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
+#' @param only.posi only logFC > 0
+#' @param only.sig only p_val_adj < 0.05
+#' @return data.frame of differentially expressed geens between the same clusters in two Commpath object
+#' @export
+compCommpathMarker <- function(object, select.ident, compare, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
+	select.var <- compare[1]
+	select.c1 <- compare[2]
+	select.c2 <- compare[3]
+	cell.info <- object@cell.info
+
+	select.cell <- rownames(cell.info)[(cell.info[, 'Cluster'] == select.ident) & (cell.info[,select.var] %in% c(select.c1, select.c2))]
+
+
+	expr.mat <- as.matrix(object@data[, select.cell])
+
+	lr.pair.dat <- CommpathData$DataLR[[object@meta.info$species]]
+	all.lig.reps <- unique(c(lr.pair.dat$L, lr.pair.dat$R))
+	expr.mat <- expr.mat[which(rownames(expr.mat) %in% all.lig.reps), ]
+	if (nrow(expr.mat)==0){
+		stop(paste0("there is no ligand or receptor detected in the expression matrix of cluster ",select.ident))
+	}
+
+	group <- cell.info[select.cell, select.var]
+	cell.ident <- which(group==select.c1)
+	cell.other <- which(group==select.c2)
+	if (length(cell.ident) < 3){
+		stop(paste0('there is(are) ',length(cell.ident),' cell(s) in group ',select.c1,'\nselect other one group and try again'))
+	}
+	if (length(cell.other) < 3){
+		stop(paste0('there is(are) ',length(cell.other),' cell(s) in group ',select.c2,'\nselect other one group and try again'))
+	}
+
+	if (method!='wilcox.test' & method!='t.test'){
+		stop("select t.test or wilcox.test to conduct differential analysis")
+	}
+	if(method=='wilcox.test'){
+		test.res <- apply(expr.mat, 1, function(row.expr){
+			logFC <- log(mean(expm1(row.expr[cell.ident])) +1, base=2) - log(mean(expm1(row.expr[cell.other])) +1, base=2)
+			p.value <- wilcox.test(x=row.expr[cell.ident], y=row.expr[cell.other])$p.value
+			pct.1 <- length(which(row.expr[cell.ident] > 0))/length(cell.ident)
+			pct.2 <- length(which(row.expr[cell.other] > 0))/length(cell.other)
+			c(logFC, p.value, pct.1, pct.2)
+		})
+	}else{
+		test.res <- apply(expr.mat, 1, function(row.expr){
+			logFC <- log(mean(expm1(row.expr[cell.ident])) +1, base=2) - log(mean(expm1(row.expr[cell.other])) +1, base=2)
+			p.value <- t.test(x=row.expr[cell.ident], y=row.expr[cell.other])$p.value
+
+			pct.1 <- length(which(row.expr[cell.ident] > 0))/length(cell.ident)
+			pct.2 <- length(which(row.expr[cell.other] > 0))/length(cell.other)
+			c(logFC, p.value, pct.1, pct.2)
+	})
+	}
+
+	test.res <- as.data.frame(t(test.res))
+	colnames(test.res) <- c('avg_log2FC','p_val', 'pct.1', 'pct.2')
+
+	test.res <- subset(test.res, pct.1>0 | pct.2>0)
+	test.res$p_val_adj <- p.adjust(test.res$p_val, method=p.adjust)
+	test.res$gene <- rownames(test.res)
+
+	if (only.posi){
+		test.res <- subset(test.res, avg_log2FC > 0)
+	}
+	if (only.sig){
+		test.res <- subset(test.res, p_val_adj < 0.05)
+	}
+	
+	return(test.res)
+}
+
+#' To conduct defferential activation test in select.ident between two Commpath objects
+#' @param object The first Commpath object
+#' @param select.ident Identity class of interest
+#' @param compare compare
+#' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
+#' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
+#' @param only.posi only logFC > 0
+#' @param only.sig only p_val_adj < 0.05
+#' @return data.frame of differentially expressed geens between the same clusters in two Commpath object
+#' @export
+compCommpathPath <- function(object, select.ident, compare, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
+	select.var <- compare[1]
+	select.c1 <- compare[2]
+	select.c2 <- compare[3]
+	cell.info <- object@cell.info
+
+	select.cell <- rownames(cell.info)[(cell.info[, 'Cluster'] == select.ident) & (cell.info[,select.var] %in% c(select.c1, select.c2))]
+
+	expr.mat <- object@pathway$acti.score[, select.cell]
+	group <- cell.info[select.cell, select.var]
+	cell.ident <- which(group==select.c1)
+	cell.other <- which(group==select.c2)
+	if (length(cell.ident) < 3){
+		stop(paste0('there is(are) ',length(cell.ident),' cell(s) in group ',select.c1,'\nselect other one group and try again'))
+	}
+	if (length(cell.other) < 3){
+		stop(paste0('there is(are) ',length(cell.other),' cell(s) in group ',select.c2,'\nselect other one group and try again'))
+	}
+
+	if (method!='wilcox.test' & method!='t.test'){
+		stop("select t.test or wilcox.test to conduct differential analysis")
+	}
+	if(method=='wilcox.test'){
+		wil.result <- apply(expr.mat,1,function(geneExpr){
+			wilcox.test(x=geneExpr[cell.ident],y=geneExpr[cell.other])
+		})
+		test.res.dat <- as.data.frame(lapply(wil.result,function(testRes){
+			c(testRes$statistic,testRes$p.value)
+		}))
+		test.res.dat <- as.data.frame(t(test.res.dat))
+		colnames(test.res.dat) <- c('W','p.val')
+
+		wil.median <- apply(expr.mat, 1, function(geneExpr){
+			median.1 <- median(geneExpr[cell.ident])
+			median.2 <- median(geneExpr[cell.other])
+			median.diff <- median.1 - median.2
+			return(c(median.diff, median.1, median.2))
+		})
+		wil.median <- as.data.frame(t(wil.median))
+		colnames(wil.median) <- c('median.diff','median.1','median.2')
+		
+		test.res.dat <- cbind(wil.median,test.res.dat)
+	}else{
+		
+		t.result <- apply(expr.mat,1,function(geneExpr){
+			t.test(x=geneExpr[cell.ident],y=geneExpr[cell.other])
+		})
+		test.res.dat <- as.data.frame(lapply(t.result,function(testRes){
+			return(c(testRes$estimate[1]-testRes$estimate[2],testRes$estimate[1],testRes$estimate[2],testRes$statistic,testRes$parameter,testRes$p.value))
+		}))
+		test.res.dat <- as.data.frame(t(test.res.dat))
+		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','p.val')
+	}
+
+	test.res.dat$p.val.adj <- p.adjust(test.res.dat$p.val, method=p.adjust)
+	test.res.dat$description <- rownames(expr.mat)
+
+	if (only.posi){
+		if (method=='t.test'){
+			test.res.dat <- subset(test.res.dat, mean.diff > 0)
+		}else{
+			test.res.dat <- subset(test.res.dat, median.diff > 0)
+		}
+	}
+
+	if (only.sig){
+		test.res.dat <- subset(test.res.dat, p.val.adj < 0.05)
+	}
+	return(test.res.dat)
+}
+
+
+#' To conduct defferential expression test in select.ident between two Commpath objects
 #' @param object.1 The first Commpath object
 #' @param object.2 The second Commpath object for comparison
 #' @param select.ident Identity class of interest
@@ -572,3 +745,112 @@ diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.
 	return(test.res)
 }
 
+#' To conduct defferential activation test in select.ident between two Commpath objects
+#' @param object.1 The first Commpath object
+#' @param object.2 The second Commpath object for comparison
+#' @param select.ident Identity class of interest
+#' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
+#' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
+#' @param min.size min.size for gsva
+#' @param only.posi only logFC > 0
+#' @param only.sig only p_val_adj < 0.05
+#' @return data.frame of differentially activated pathways between the same clusters in two Commpath object
+#' @export
+diffCommpathPath <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE, ...){
+	obj.1 <- subsetCommpath(object.1, ident.keep=select.ident)
+	obj.2 <- subsetCommpath(object.2, ident.keep=select.ident)
+	score.mat.1 <- obj.1@pathway$acti.score
+	# find pathways presenting in obj.1
+	uniq.path.name <- rownames(score.mat.1)
+
+	# add gsva analysis in obj.2 for the uniq.path.name pathways
+	uniq.path.set <- obj.1@pathway$pathwayLR[uniq.path.name]
+	obj.2.expr <- as.matrix(obj.2@data)
+	if (obj.1@pathway$method=='gsva'){
+		score.mat.2 <- GSVA::gsva(obj.2.expr, uniq.path.set, min.sz=min.size, ...)
+	}else{
+		score.mat.2 <- t(as.data.frame(lapply(uniq.path.set, function(eachPath){
+			overlap.gene <- intersect(eachPath, rownames(obj.2.expr))
+			if (length(overlap.gene) < 10){
+				return(rep(NA, ncol(obj.2.expr)))
+			}else{
+				return(colMeans(obj.2.expr[overlap.gene, ]))
+			}
+		})))
+		rownames(score.mat.2) <- names(uniq.path.set)
+		score.mat.2 <- score.mat.2[which(!is.na(score.mat.2[,1])), ]
+	}
+
+	path.keep <- intersect(rownames(score.mat.1), rownames(score.mat.2))
+	score.mat.1 <- score.mat.1[path.keep, ]
+	score.mat.2 <- score.mat.2[path.keep, ]
+
+	### differential analysis
+	if (ncol(score.mat.1) < 3){
+		stop(paste0('there is(are) ',ncol(score.mat.1),' cell(s) in object.1\nselect other one ident and try again'))
+	}
+	if (ncol(score.mat.2) < 3){
+		stop(paste0('there is(are) ',ncol(score.mat.1),' cell(s) in object.2\nselect other one ident and try again'))
+	}
+
+	expr.mat <- cbind(score.mat.1,score.mat.2)
+	cell.ident <- c(1:ncol(score.mat.1))
+	cell.other <- c(1:ncol(score.mat.2)) + ncol(score.mat.1)
+
+
+	if (method!='wilcox.test' & method!='t.test'){
+		stop("select t.test or wilcox.test to conduct differential analysis")
+	}
+	if(method=='wilcox.test'){
+		wil.result <- apply(expr.mat,1,function(geneExpr){
+			wilcox.test(x=geneExpr[cell.ident],y=geneExpr[cell.other])
+		})
+		test.res.dat <- as.data.frame(lapply(wil.result,function(testRes){
+			c(testRes$statistic,testRes$p.value)
+		}))
+		test.res.dat <- as.data.frame(t(test.res.dat))
+		colnames(test.res.dat) <- c('W','p.val')
+
+		wil.median <- apply(expr.mat, 1, function(geneExpr){
+			median.1 <- median(geneExpr[cell.ident])
+			median.2 <- median(geneExpr[cell.other])
+			median.diff <- median.1 - median.2
+			return(c(median.diff, median.1, median.2))
+		})
+		wil.median <- as.data.frame(t(wil.median))
+		colnames(wil.median) <- c('median.diff','median.1','median.2')
+		
+		test.res.dat <- cbind(wil.median,test.res.dat)
+	}else{
+		t.result <- apply(expr.mat,1,function(geneExpr){
+			t.test(x=geneExpr[cell.ident],y=geneExpr[cell.other])
+		})
+		test.res.dat <- as.data.frame(lapply(t.result,function(testRes){
+			return(c(testRes$estimate[1]-testRes$estimate[2],testRes$estimate[1],testRes$estimate[2],testRes$statistic,testRes$parameter,testRes$p.value))
+		}))
+		test.res.dat <- as.data.frame(t(test.res.dat))
+		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','p.val')
+	}
+
+	test.res.dat$p.val.adj <- p.adjust(test.res.dat$p.val, method=p.adjust)
+	test.res.dat$description <- rownames(expr.mat)
+
+	ident.path.dat <- diffPath(object=object.1, select.ident.1=select.ident, only.posi=FALSE, only.sig=FALSE)
+	test.res.dat <- subset(test.res.dat, description %in% ident.path.dat$description)
+	ident.path.dat <- ident.path.dat[match(test.res.dat$description, ident.path.dat$description), c('ligand.in.path', 'receptor.in.path')]
+	test.res.dat <- cbind(test.res.dat, ident.path.dat)
+
+	if (only.posi){
+		if (method=='t.test'){
+			test.res.dat <- subset(test.res.dat, mean.diff > 0)
+		}else{
+			test.res.dat <- subset(test.res.dat, median.diff > 0)
+		}
+	}
+
+	if (only.sig){
+		test.res.dat <- subset(test.res.dat, p.val.adj < 0.05)
+	}
+	return(test.res.dat)
+
+}

@@ -15,134 +15,114 @@ library(Commpath)
 - [GSVA](https://www.bioconductor.org/packages/release/bioc/html/GSVA.html) (suggested)
 
 ## Tutorials
-#### Load the built-in sample dataset in commpath
+In this vignette we show Commpath's steps and functionalities for inference and analysis of ligand-receptor interactions by applying it to a scRNA-seq data (GEO accession number: GSE156337) on cells from hepatocellular carcinoma (HCC) patients.
+### Brief description of Commpath object
+We start Commpath analysis by creating a Commpath object, which is a S4 object and consists of six slots including (i) data, a matrix containing the normalized expression values by gene * cell; (ii) cell.info, a data frame contain the information of cells; (iii) meta.info, a list containing some important parameters used during the analysis; (iv) LR.marker, a data.frame containing the result of differential expression test of ligands and receptors; (v) interact, a list containing the  information of LR interaction among clusters; (vi) pathway, a list containing the information of pathways related to the ligands and receptors
+### Commpath input
+The expression matrix and cell indentity information are required for Commpath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of Commpath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are also available from Mendeley data (https://xxx).
+We here illustrate the Commpath steps for date from the tumor tissues. And analysis for data from the normal tissues would be roughly in the same manner.
 ```
-data("HCC.tumor.3k",package='Commpath')
+data("HCC.tumor.3k", package = 'Commpath')
 ```
-***tumor.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed
+This dataset consists of 2 varibles which are required for Commpath input:
+***tumor.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed.
 
-***tumor.label*** : data frame containing the meta infomation of cells
+***tumor.label*** : a vector of lables indicating identity classes of cells in the expression matrix, and the order of lables should match the order of cells in the expression matrix; usrs may also provide a data frame containing the meta infomation of cells with the row names matching the cells in the expression matrix and a column named as ***Cluster*** must be included to indicate identity classes of cells.
 
-***tumor.marker*** : data frame of marker genes for each identity class, usually calculated by FindAllMarkers from [Seurat](https://satijalab.org/seurat/)
-
-***tumor.gsva*** : precomputed gsva scores of pathways for the example dataset
 #### Identification of marker ligands and receptors
-We start Commpath analysis by creating a Commpath object, which is a S4 object and consists of five slots including (i) data, a matrix containing the normalized expression values by gene * cell; (ii) meta.info, a list containing  the meta information about cells and some important parameters used during the  analysis; (iii) LR.marker, a data.frame containing the result of differential expression test of ligands and receptors; (iv) interact, a list containing the  information of LR interaction among clusters; (vi) pathway, a list containing the information of pathways related to the ligands and receptors.
+We start Commpath analysis by creating a Commpath object:
 ```
-### to create a Commpath object
-object <- createCommpath(expr.mat=tumor.expr, 
-		cell.info=tumor.label, 
-		species='hsapiens')
-		
-# type ?createCommpath to get more information about each parameter
-?createCommpath
+# Classify the species of the scRNA-seq experiment by the species parameter
+# Commpath now enable the analysis of scRNA-seq experiment from human (hsapiens) and mouse (mmusculus).
+tumor.obj <- createCommpath(expr.mat = tumor.expr, 
+		cell.info = tumor.label, 
+		species = 'hsapiens')
 ```
-Firstly we're supposed to identify marker ligands and receptors (ligands and receptors that are significantly highly expressed) for each identity class of cells in the expression matrix. commpath provide **findLRmarker** to identify these markers by *t.test* or *wilcox.test*.
+Firstly we're supposed to identify marker ligands and receptors (ligands and receptors that are significantly highly expressed) for each identity class of cells in the expression matrix. Commpath provide **findLRmarker** to identify these markers by *t.test* or *wilcox.test*.
 ```
-# to identify marker ligands and receptors
-# object <- findLRmarker(object, method='wilcox.test')
-# to save time, we have pre-identified marker ligands and receptors
-# and saved it in the varible sample.marker
-object@LR.marker <- tumor.marker
+tumor.obj <- findLRmarker(object = tumor.obj, method = 'wilcox.test')
 ```
 
 #### Identification of ligand-receptor (L-R) associations
 ```
 # find significant L-R pairs
-logFC.thre = 0
-p.thre = 0.05
-object <- findLRpairs(object,
-		logFC.thre=logFC.thre, 
-		p.thre=p.thre)
+tumor.obj <- findLRpairs(object = tumor.obj,
+		logFC.thre = 0, 
+		p.thre = 0.05)
 ```
-The number of significant L-R pairs is then stored in object@interact[['InteractNumer']]，and the detailed information of each L-R pair is stored in object@interact[['InteractGeneUnfold']]
+The number of significant LR pairs among cell clusters is then stored in tumor.obj@interact[['InteractNumer']]，and the detailed information of each LR pair is stored in tumor.obj@interact[['InteractGeneUnfold']]
 
 Then you can visualize the interaction through a circos plot:
 ```
-# plot interaction for all cluster
-circosPlot(object)
+# Plot interaction for all cluster
+circosPlot(object = tumor.obj)
 ```
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/circosPlot.png" height=300, width=300>
 
 ```
-# you may want to highlight the interaction of specific cluster
-# here we take the endothelial cell as an example
-ident='Endothelial'
-circosPlot(object, ident=ident)
+# Highlight the interaction of specific cluster
+# Here we take the endothelial cell as an example
+ident = 'Endothelial'
+circosPlot(object = tumor.obj, ident = ident)
 ```
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/circosPlot-Endothelial.png" height=300, width=300>
 
-For a specific cluster of interest, commpath also provides dot plots to investigate its upstream clusters which release specific ligands and its downstream clusters which expressed specific receptors: 
-```
-ident='Endothelial'
-# to investigate the upstream clusters which release specific ligands to the interested cluster
-dotPlot(object, receptor.ident=ident)
-```
-<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/dotPlot-ligand.png" height=300, width=400>
-
-```
-# to investigate the downstream clusters which expressed specific receptors for the interested cluster
-dotPlot(object, ligand.ident=ident)
-```
-<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/dotPlot-receptor.png" height=300, width=400>
-
-Also commpath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand) 
+For a specific cluster of interest, commpath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand) 
 ```
 # For the selected cluster and selected receptor, find the upstream cluster
 select.ident = 'Endothelial'
-select.receptor = 'ITGB1'
+select.receptor = 'ACKR1'
 
-ident.up.dat <- findLigand(object, 
-    select.ident=select.ident, 
-    select.receptor=select.receptor)
+ident.up.dat <- findLigand(object = tumor.obj, 
+    select.ident = select.ident, 
+    select.receptor = select.receptor)
 head(ident.up.dat)
 
 # For the selected cluster and selected ligand, find the downstream cluster
 select.ident = 'Endothelial'
-select.ligand = 'CCL14'
+select.ligand = 'CXCL12'
 
-ident.down.dat <- findReceptor(object, 
-    select.ident=select.ident, 
-    select.ligand=select.ligand)
+ident.down.dat <- findReceptor(object = tumor.obj, 
+    select.ident = select.ident, 
+    select.ligand = select.ligand)
 head(ident.down.dat)
 ```
+
+Commpath also provides dot plots to investigate its upstream clusters which release specific ligands and its downstream clusters which expressed specific receptors: 
+```
+# Investigate the upstream clusters which release specific ligands to the interested cluster
+dotPlot(object = tumor.obj, receptor.ident = ident)
+```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/dotPlot-ligand.png" height=300, width=400>
+
+```
+# Investigate the downstream clusters which expressed specific receptors for the interested cluster
+dotPlot(object = tumor.obj, ligand.ident = ident)
+```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/dotPlot-receptor.png" height=300, width=400>
+
 #### Pathway analysis
+Commpath conducts pathway analysis to identify signaling pathways involving the marker ligands and receptors for each cluster.
 ```
-# find pathways in which genesets show overlap 
-# with the ligands and receptors in the example dataset
-object <- findLRpath(object, category='kegg')
+# Find pathways in which genesets show overlap with the marker ligands and receptors in the example dataset
+# Commpath provides pathway annotations from KEGG pathways, WikiPathways, reactome pathways, and GO terms
+tumor.obj <- findLRpath(object = tumor.obj, category = 'kegg')
 ```
-Now genesets show overlap with the ligands and receptors in the exsample dataset are saved in object@interact[['pathwayLR']]
-
-Scoring the pathways：
+Now genesets showing overlap with the marker ligands and receptors are stored  in tumor.obj@interact[['pathwayLR']]. Then we score the pathways to measure the activation levels for each pathway in each cell.
 ```
-# to compute pathway activation score by the gsva algorithm or an average manner
-# library(GSVA)
-# object <- scorePath(object, method='gsva', min.size=10, parallel.sz=10)
-# to save time, we have precomputed gsva score and saved it in the varible *gsva.mat*
-object@pathway$acti.score <- gsva.mat
-# normal.gsva <- object@pathway$acti.score
+# Compute pathway activation score by the gsva algorithm or an average manner
+# For more information about gsva algorithm, see the GSVA package
+tumor.obj <- scorePath(object = tumor.obj, method = 'gsva', min.size = 10, parallel.sz = 4)
 ```
-Pathway differential activation analysis：
+After that Commpath provide **diffAllPath** to perform pathway differential activation analysis for cells in each identity class and find the receptor and ligand in the pathway:
 ```
-# to find the different activated pathways for cells in the selected identity class 
-# and the receptor and ligand in the pathway
-ident.label = sample.label
-select.ident.1 = 'Endothelial'
-method = 't.test'
-ident.path.dat <- diffPath(object, 
-    select.ident.1=select.ident.1,
-    method=method)
-
-head(ident.path.dat)
-
-# perform diffPath for all clusters
-all.path.dat <- diffAllPath(object, method=method)
+acti.path.dat <- diffAllPath(object = tumor.obj)
 # get all significant pathways
-all.path.dat <- subset(all.path.dat, p.val.adj < 0.05)
+acti.path.dat <- subset(acti.path.dat, p.val.adj < 0.05)
 
-head(all.path.dat)
+head(acti.path.dat)
 ```
+There are several columns stored in the variable acti.path.dat:
 Columns ***mean.diff***, ***mean.1***, ***mean.2***, ***t***, ***df***, ***p.val***, ***p.val.adj*** show the statistic result; *description* shows the name of pathway; 
 
 Columns ***cell.up*** and ***ligand.up*** show the upstream identity classes which would release specific ligands to interact with the receptors from the current identity class; 
@@ -151,44 +131,69 @@ Column ***receptor.in.path*** shows the marker receptors expressed by the curren
 
 Column ***ligand.in.path*** shows the marker ligands released by the current identity class and these ligands are also included in the current pathway.
 
-Then we use **pathHeatmap** to plot a heatmap of those differentially enriched pathways for each cluster to display the highly variable pathways:
+Then we use **pathHeatmap** to plot a heatmap of those differentially activated pathways for each cluster to display the highly variable pathways:
 ```
-pathHeatmap(object,
-       all.path.dat,
+pathHeatmap(object = tumor.obj,
+       acti.path.dat = acti.path.dat,
        top.n.pathway = 10,
        sort = "p.val.adj")
 ```
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathHeatmap.png" height=350, width=600>
 
 #### Cell-cell interaction flow via pathways
+For a specific cell cluster, which here we name it as B for demonstration, Commpath identify the upstream cluster A sending signals to B, the downstream cluster C receiving signals from B, and the significantly activated pathways in B to mediate the A-B-C communication flow. More exactly, through LR and pathways analysis described above, commpath is able to identify LR pairs between A and B, LR pairs between B and C, and pathways activated in B. Then commpath screens for pathways in B which involve both the receptors to interact with A and ligands to interact with C.
+```
+# Identification and visualization of the identified pathways
+# Plot to identify receptors and the associated activated pathways for a specific cluster
+select.ident = 'Endothelial'
+pathPlot(object = tumor.obj, 
+    select.ident = select.ident, 
+    acti.path.dat = acti.path.dat)
+```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathPlot.png" height=300, width=380>
 
 ```
-### first we identify differentially activated pathways associated with receptors in the selected ident
-ident.label = sample.label
-select.ident.1 = 'Endothelial'
-method = 't.test'
-ident.path.dat <- diffPath(object, 
-    select.ident.1=select.ident.1,
-    method=method)
-
-# save.image('before.lineplot.hcc.RData')
-# load('before.lineplot.hcc.RData')
-
-# visualization of the identified pathways
-# plot to identify receptors and the associated activated pathways
-receptorPathPlot(object, 
-    select.ident=select.ident.1, 
-    ident.path.dat=ident.path.dat)
-```
-<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/receptorPathPlot.png" height=300, width=380>
-
-```
-# plot to identify receptors, the associated activated pathways, and the downstream clusters
-pathInterPlot(object, 
-    select.ident=select.ident.1, 
-    ident.path.dat=ident.path.dat)
+# Plot to identify receptors, the associated activated pathways, and the downstream clusters
+pathInterPlot(object = tumor.obj, 
+    select.ident = select.ident, 
+    acti.path.dat = acti.path.dat)
 ```
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathInterPlot.png" height=300, width=600>
+
+#### Compare cell-cell interactions between two conditions
+Commpath also provide useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, used Commpath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. The example data from normal tissues are also avaible from  Mendeley data (https://xxx).
+```
+# We have pre-created the Commpath object for the normal samples following the above steps, and saved it in HCC.normal.3k.RData
+data("HCC.normal.3k", package = 'Commpath')
+```
+This dataset consists of 3 varibles:
+***normal.expr*** : expression matrix for cells from normal tissues
+
+***normal.label*** : indentity lables for cells from normal tissues
+
+***normal.obj*** : Commpath object created from ***normal.expr*** and ***normal.label***, and processed by Commpath steps described above
+
+To compare 2 Commpath object, we shall first identify the differentially expressed ligands and receptors, and differentially activated pathways between  the same cluster of cells in the two object.
+```
+# Take endothelial cells as example
+# Identification of differentially expressed ligands and receptors 
+diff.marker.dat <- diffCommpathMarker(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial')
+
+# Identification of differentially activated pathways 
+diff.path.dat <- diffCommpathPath(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', parallel.sz = 4)
+```
+Then we compare the differentially activated pathways and the cell-cell communication flow mediated by those pathways.
+```
+# To compare differentially activated pathways and the involved receptors between the selected clusters of two Commpath object
+pathPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
+```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathPlot.compare.png" height=300, width=600>
+
+```
+# To compare the pathway mediated cell-cell communication flow for a specific cluster between 2 Commpath object
+pathInterPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
+```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathInterPlot.compare.png" height=300, width=600>
 
 #### sessionInfo()
 ```

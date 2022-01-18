@@ -1,6 +1,7 @@
 #' This is a plug-in function, aimming to paste a vector of idents into a ',' separated string
 #' @param ident.missed Vector of idents
 #' @return String with idents pasted
+#' @export
 pasteIdent <- function(ident.missed){
 	if (length(ident.missed) > 1){ 
 		ident.missed <- paste0(paste(ident.missed[1:(length(ident.missed)-1)], collapse=', '), ' and ', ident.missed[length(ident.missed)])
@@ -12,8 +13,8 @@ pasteIdent <- function(ident.missed){
 #' @param pvalues pvalues
 #' @param scale scale
 #' @return p values with inf adjusted
+#' @export
 p.remove.inf <- function(pvalues, scale=0.1){
-	pvalues <- -log10(pvalues)
 	if (all(is.infinite(pvalues))){ 
 		pvalues <- rep(0, length(pvalues))
 	}else if (is.infinite(max(pvalues))){
@@ -27,13 +28,21 @@ p.remove.inf <- function(pvalues, scale=0.1){
 #' @param LRpvalue pvalues of ligands or receptors
 #' @param user.set.col colors set by user
 #' @return Colors matching each p value
+#' @export
 LRcolor <- function(LRpvalue, user.set.col){
-	if (is.null(user.set.col)){
-		dot.col <- circlize::colorRamp2(breaks=seq(min(LRpvalue),max(LRpvalue), length=2),colors=c("#feb24c", "#bd0026"))(LRpvalue)
-	}else if(length(user.set.col)==1){
-		dot.col <- user.set.col
+	if (length(LRpvalue) > 1){
+		if (is.null(user.set.col)){
+			dot.col <- circlize::colorRamp2(breaks=seq(min(LRpvalue),max(LRpvalue), length=2),colors=c("#feb24c", "#bd0026"))(LRpvalue)
+		}else if(length(user.set.col)==1){
+			dot.col <- user.set.col
+		}else{
+			dot.col <- circlize::colorRamp2(breaks=seq(min(LRpvalue),max(LRpvalue), length=length(user.set.col)),colors=user.set.col)(LRpvalue)
+		}
+	}else if (length(LRpvalue) == 1){
+		dot.col <- "#bd0026"
+
 	}else{
-		dot.col <- circlize::colorRamp2(breaks=seq(min(LRpvalue),max(LRpvalue), length=length(user.set.col)),colors=user.set.col)(LRpvalue)
+		dot.col <- c()
 	}
 	return(dot.col)
 }
@@ -42,6 +51,7 @@ LRcolor <- function(LRpvalue, user.set.col){
 #' @param logfc logfc of ligands or receptors
 #' @param user.set.col colors set by user
 #' @return Colors matching each p value
+#' @export
 LRcolor.up.down <- function(logfc, user.set.col){
 	if (is.null(user.set.col)){
 		dot.col <- ifelse(logfc > 0, 'red', 'green')
@@ -72,14 +82,15 @@ variPath <- function(gsva.mat, select.path=NULL, n=10){
 #' This is a plug-in function, aimming to check whether the specified order of idents by users contain all idents that present in the dataset
 #' @param all.ident Vector of all idents that present in the dataset
 #' @param order Vector of the specified order of idents by users
-#' @return if all idents are not contained, stop the procedure 
+#' @return if all idents are not contained, stop the procedure
+#' @export
 orderCheck <- function(all.ident, order){
 	if (all(all.ident %in% order)){
-		order.overlap <- order[order %in% all.ident]
+		order.overlap <- order[which(order %in% all.ident)]
 		all.ident <- factor(all.ident, levels=order.overlap)
 		return(all.ident)
 	}else{
-		ident.missed <- all.ident[!(all.ident %in% order)]
+		ident.missed <- all.ident[which(!(all.ident %in% order))]
 		ident.missed <- pasteIdent(ident.missed)
 		stop(paste0('the ident class ',ident.missed,' may be missed in the input order'))
 	}
@@ -89,6 +100,7 @@ orderCheck <- function(all.ident, order){
 #' @param x data.frame with columns named as Cell.From and Cell.To
 #' @param column which column
 #' @return data.frame with variables converted to character
+#' @export
 factor.to.character <- function(x, column=c(1, 2)){
 	for (each.col in column){
 		x[, each.col] <- as.character(x[, each.col])
@@ -102,17 +114,21 @@ factor.to.character <- function(x, column=c(1, 2)){
 #' @param subset.slot slot to subset
 #' @return a subset Commpath object
 #' @export
-subsetCommpath <- function(object, ident.keep, subset.slot=c('data','meta.info')){
-	cell.info <- object@meta.info$cell.info
-	cell.info <- subset(cell.info, Cluster==ident.keep)
-	object@meta.info$cell.info <- cell.info
+subsetCommpath <- function(object, ident.keep){
+	cell.info <- object@cell.info
+	cell.info <- subset(cell.info, Cluster %in% ident.keep)
+	object@cell.info <- cell.info
 	object@data <- object@data[, rownames(cell.info)]
+	object@data <- object@data[, rownames(cell.info)]
+	object@LR.marker <- subset(object@LR.marker, cluster %in% ident.keep)
+	object@pathway$acti.score <- object@pathway$acti.score[, rownames(cell.info)]
 	return(object)
 }
 
 #' To extract information from ident.path.dat
 #' @param ident.path.dat ident.path.dat
 #' @return data.frame
+#' @export
 extract.info <- function(ident.path.dat){
 	up.ident <- as.vector(unlist(sapply(ident.path.dat$cell.up, function(x){ strsplit(x, split=';') })))
 	cur.rep <- as.vector(unlist(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') })))
@@ -127,32 +143,45 @@ extract.info <- function(ident.path.dat){
 #' @param x vector of elements with names
 #' @param n top a
 #' @return top n elements in x
+#' @export
 order.and.top <- function(x, n){
 	x <- x[order(x, decreasing=TRUE)]
 	return(x[1:n])
 }
 
 
-#' To get interaction density between clusters and receptors
-cluster.lr.dens <- function(top.rep.name, object, select.ident, ident.label, find) {
+#' To get interaction intensity between clusters and receptors
+#' @param top.rep.name top.rep.name
+#' @param object Commpath object
+#' @param select.ident select.ident
+#' @param ident.label ident.label
+#' @param find find
+#' @return matrix of clusters * genes, elements are interaction intensity between genes and clusters
+#' @export
+cluster.lr.inten <- function(top.rep.name, object, select.ident, ident.label, find) {
 	if(find=='ligand'){
-		top.rep.LR.dens <- sapply(top.rep.name, function(eachrep){
+		top.rep.LR.inten <- sapply(top.rep.name, function(eachrep){
 			up.ligand.dat <- findLigand(object, select.ident=select.ident, select.receptor=eachrep)
 			max.cluster.sum.LR <- by(data=up.ligand.dat$Log2FC.LR, INDICES=up.ligand.dat$Cell.From, sum)
-			each.cluster.dens <- max.cluster.sum.LR[ident.label]
-			names(each.cluster.dens) <- ident.label
-			return(each.cluster.dens)
+			each.cluster.inten <- max.cluster.sum.LR[ident.label]
+			names(each.cluster.inten) <- ident.label
+			return(each.cluster.inten)
 		})
 	}else if(find=='receptor'){
-		top.rep.LR.dens <- sapply(top.rep.name, function(eachrep){
+		top.rep.LR.inten <- sapply(top.rep.name, function(eachrep){
 			up.ligand.dat <- findReceptor(object, select.ident=select.ident, select.ligand=eachrep)
 			max.cluster.sum.LR <- by(data=up.ligand.dat$Log2FC.LR, INDICES=up.ligand.dat$Cell.To, sum)
-			each.cluster.dens <- max.cluster.sum.LR[ident.label]
-			names(each.cluster.dens) <- ident.label
-			return(each.cluster.dens)
+			each.cluster.inten <- max.cluster.sum.LR[ident.label]
+			names(each.cluster.inten) <- ident.label
+			return(each.cluster.inten)
 		})
 	}
 	
-	return(top.rep.LR.dens)
+	return(top.rep.LR.inten)
 }
 
+#' To transform LR intensity to line width
+#' @param x LR intensity
+#' @return line width
+#' @export
+LRinten.to.width <- function(x){ return(x/max(x) + 1) }

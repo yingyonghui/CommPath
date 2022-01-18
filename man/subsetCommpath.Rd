@@ -4,7 +4,7 @@
 \alias{subsetCommpath}
 \title{To subset a Commpath object}
 \usage{
-subsetCommpath(object, ident.keep, subset.slot = c("data", "meta.info"))
+subsetCommpath(object, ident.keep)
 }
 \arguments{
 \item{object}{Commpath object}

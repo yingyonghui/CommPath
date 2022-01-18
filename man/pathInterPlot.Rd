@@ -7,24 +7,20 @@
 pathInterPlot(
   object,
   select.ident,
-  ident.path.dat = NULL,
-  top.n.receptor = 5,
-  order = NULL,
-  top.n.path = 10,
+  acti.path.dat = NULL,
+  top.n.path = 5,
+  path.order = "p.val.adj",
   p.thre = 0.05,
+  top.n.receptor = 10,
   top.n.ligand = 10,
   dot.ident.col = NULL,
-  dot.down.ident.col = NULL,
-  dot.receptor.col = NULL,
+  dot.ident.size = 1,
+  dot.gene.col = NULL,
+  dot.gene.size = 1,
   bar.pathway.col = NULL,
   bar.pathway.width = 10,
-  dot.ident.size = 1,
-  dot.receptor.size = 1,
   label.text.size = 1,
-  label.title.size = 1,
-  line.ident.width = 1,
-  line.path.width = 1,
-  dot.pathway.size = 1
+  label.title.size = 1
 )
 }
 \arguments{
@@ -32,41 +28,33 @@ pathInterPlot(
 
 \item{select.ident}{select.ident}
 
-\item{ident.path.dat}{ident.path.dat for the selected ident}
-
-\item{top.n.receptor}{top n receptor with the largest log2FCs to plot}
-
-\item{order}{order of source clusters}
+\item{acti.path.dat}{acti.path.dat}
 
 \item{top.n.path}{top n pathways with the smallest adjusted p values to plot}
 
+\item{path.order}{path.order}
+
 \item{p.thre}{threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered}
 
-\item{top.n.ligand}{top n receptor with the largest log2FCs to plot}
+\item{top.n.receptor}{top n receptor with the largest log2FCs to plot}
 
-\item{dot.ident.col}{color of the dots representing upstream clusters}
+\item{top.n.ligand}{top n ligand with the largest log2FCs to plot}
 
-\item{dot.down.ident.col}{color of the dots representing downstream clusters}
+\item{dot.ident.col}{color of the dots representing clusters}
 
-\item{dot.receptor.col}{color of the dots representing reptors}
+\item{dot.ident.size}{size of the dots representing clusters}
+
+\item{dot.gene.col}{color of the dots representing receptors and ligands}
+
+\item{dot.gene.size}{size of the dots representing receptors and ligands}
 
 \item{bar.pathway.col}{color of the bars reprsenting pathways}
 
 \item{bar.pathway.width}{width of the bars reprsenting pathways}
 
-\item{dot.ident.size}{size of the dots representing source clusters}
-
-\item{dot.receptor.size}{size of the dots representing receptors}
-
 \item{label.text.size}{text size in the plot}
 
 \item{label.title.size}{text size of the title annotation of the plot}
-
-\item{line.ident.width}{text size of pathway labels}
-
-\item{line.path.width}{width of lines connecting receptors and pathways}
-
-\item{dot.pathway.size}{width of lines connecting receptors and pathways}
 }
 \value{
 Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors
