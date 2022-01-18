@@ -187,7 +187,7 @@ Then we compare the differentially activated pathways and the cell-cell communic
 # To compare differentially activated pathways and the involved receptors between the selected clusters of two Commpath object
 pathPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
 ```
-<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathPlot.compare.png" height=400, width=600>
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathPlot.compare.png" height=300, width=400>
 
 ```
 # To compare the pathway mediated cell-cell communication flow for a specific cluster between 2 Commpath object
