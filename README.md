@@ -1,5 +1,5 @@
 # Commpath
-Commpath is an R package for inference and analysis of ligand-receptor interactions from single cell RNA sequencing data
+Commpath is an R package for inference and analysis of ligand-receptor interactions from single cell RNA sequencing data.
 ## Installation
 Commpath R package can be easily installed from Github using devtools:
 ```
@@ -17,7 +17,7 @@ library(Commpath)
 ## Tutorials
 In this vignette we show Commpath's steps and functionalities for inference and analysis of ligand-receptor interactions by applying it to a scRNA-seq data (GEO accession number: GSE156337) on cells from hepatocellular carcinoma (HCC) patients.
 ### Brief description of Commpath object
-We start Commpath analysis by creating a Commpath object, which is a S4 object and consists of six slots including (i) data, a matrix containing the normalized expression values by gene * cell; (ii) cell.info, a data frame contain the information of cells; (iii) meta.info, a list containing some important parameters used during the analysis; (iv) LR.marker, a data.frame containing the result of differential expression test of ligands and receptors; (v) interact, a list containing the  information of LR interaction among clusters; (vi) pathway, a list containing the information of pathways related to the ligands and receptors
+We start Commpath analysis by creating a Commpath object, which is a S4 object and consists of six slots including (i) data, a matrix containing the normalized expression values by gene * cell; (ii) cell.info, a data frame contain the information of cells; (iii) meta.info, a list containing some important parameters used during the analysis; (iv) LR.marker, a data.frame containing the result of differential expression test of ligands and receptors; (v) interact, a list containing the  information of LR interaction among clusters; (vi) pathway, a list containing the information of pathways related to the ligands and receptors.
 ### Commpath input
 The expression matrix and cell indentity information are required for Commpath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of Commpath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are available in the Commpath package.
 We here illustrate the Commpath steps for date from the tumor tissues. And analysis for data from the normal tissues would be roughly in the same manner.
@@ -49,7 +49,7 @@ tumor.obj <- findLRpairs(object = tumor.obj,
 		logFC.thre = 0, 
 		p.thre = 0.05)
 ```
-The counts of significant LR pairs and overall interaction intensity among cell clusters are then stored in tumor.obj@interact[['InteractNumer']]，and the detailed information of each LR pair is stored in tumor.obj@interact[['InteractGeneUnfold']]
+The counts of significant LR pairs and overall interaction intensity among cell clusters are then stored in tumor.obj@interact[['InteractNumer']]，and the detailed information of each LR pair is stored in tumor.obj@interact[['InteractGeneUnfold']].
 
 Then you can visualize the interaction through a circos plot:
 ```
@@ -75,7 +75,7 @@ circosPlot(object = tumor.obj, ident = ident)
 ```
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/circosPlot-Endothelial.png" height=300, width=300>
 
-For a specific cluster of interest, commpath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand) 
+For a specific cluster of interest, commpath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand): 
 ```
 # For the selected cluster and selected receptor, find the upstream cluster
 select.ident = 'Endothelial'
@@ -170,15 +170,15 @@ pathInterPlot(object = tumor.obj,
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathInterPlot.png" height=300, width=600>
 
 #### Compare cell-cell interactions between two conditions
-Commpath also provide useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, used Commpath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. The example data from normal tissues are also avaible from  Mendeley data (https://xxx).
+Commpath also provide useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, used Commpath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. The example data from normal tissues are also available in the Commpath package.
 ```
 # We have pre-created the Commpath object for the normal samples following the above steps, and saved it in HCC.normal.3k.RData
 data("HCC.normal.3k", package = 'Commpath')
 ```
 This dataset consists of 3 varibles:
-***normal.expr*** : expression matrix for cells from normal tissues
-***normal.label*** : indentity lables for cells from normal tissues
-***normal.obj*** : Commpath object created from ***normal.expr*** and ***normal.label***, and processed by Commpath steps described above
+***normal.expr*** : expression matrix for cells from normal tissues;
+***normal.label*** : indentity lables for cells from normal tissues;
+***normal.obj*** : Commpath object created from ***normal.expr*** and ***normal.label***, and processed by Commpath steps described above.
 
 To compare 2 Commpath object, we shall first identify the differentially expressed ligands and receptors, and differentially activated pathways between  the same cluster of cells in the two object.
 ```
