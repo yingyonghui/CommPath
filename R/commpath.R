@@ -17,7 +17,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 
 	expr.mat <- expr.mat[which(rownames(expr.mat) %in% all.lig.reps), ]
 	if (nrow(expr.mat)==0){
-		stop("there is no ligand or receptor detected in the expression matrix!")
+		stop("There is no ligand or receptor detected in the expression matrix!")
 	}
 
 	if (!is.factor(label)){ label <- factor(label) }
@@ -26,7 +26,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 	label <- as.character(label)
 	### p.value calculated
 	if (method!='wilcox.test' & method!='t.test'){
-		stop("select t.test or wilcox.test to conduct differential analysis")
+		stop("Select t.test or wilcox.test to conduct differential analysis")
 	}
 
 	if(method=='wilcox.test'){
@@ -133,13 +133,15 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 	}
 	rownames(Interact.num.mat) <- cluster.level
 	colnames(Interact.num.mat) <- cluster.level
-	Interact.num.dat <- melt(Interact.num.mat, varnames=c('Cell.From','Cell.To'),value.name="LR.Number",  na.rm=TRUE)
+	Interact.num.dat <- melt(Interact.num.mat, varnames=c('Cell.From','Cell.To'),value.name="LR.Count",  na.rm=TRUE)
 	Interact.num.dat <- factor.to.character(Interact.num.dat)
+	rownames(Interact.num.dat) <- paste(Interact.num.dat$Cell.From,Interact.num.dat$Cell.To, sep='--')
 
 	rownames(Interact.gene.mat) <- cluster.level
 	colnames(Interact.gene.mat) <- cluster.level
 	Interact.gene.dat <- melt(Interact.gene.mat,varnames=c('Cell.From','Cell.To'),value.name="LR.Info", na.rm = TRUE)
 	Interact.gene.dat <- factor.to.character(Interact.gene.dat)
+	rownames(Interact.gene.dat) <- paste(Interact.gene.dat$Cell.From,Interact.gene.dat$Cell.To, sep='--')
 	
 	rownames(Interact.lig.mat) <- cluster.level
 	colnames(Interact.lig.mat) <- cluster.level
@@ -182,6 +184,14 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 	lr.unfold.dat$Log2FC.LR <- fc.lig * fc.rep
 	lr.unfold.dat$P.val.LR <- 1-(1-pval.lig)*(1-pval.rep)
 	lr.unfold.dat$P.val.adj.LR <- p.adjust(lr.unfold.dat$P.val.LR, method='BH')
+	
+	lr.inten.all.name <- paste(lr.unfold.dat$Cell.From, lr.unfold.dat$Cell.To, sep='--')
+	lr.inten.vec <- by(data=lr.unfold.dat$Log2FC.LR, INDICES=lr.inten.all.name, FUN=sum)
+	lr.inten.vec.name <- names(lr.inten.vec)
+	lr.inten.vec <- as.vector(lr.inten.vec)
+
+	Interact.num.dat$Intensity <- lr.inten.vec[match(rownames(Interact.num.dat), lr.inten.vec.name)]
+	Interact.num.dat$Intensity[is.na(Interact.num.dat$Intensity)] <- 0
 
 	Interact <- list(InteractNumer=Interact.num.dat,InteractGene=Interact.gene.dat, InteractGeneUnfold=lr.unfold.dat, markerL=marker.lig.dat, markerR=marker.rep.dat)
 
@@ -201,7 +211,7 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 findLRpath <- function(object, category='all'){
 	options(stringsAsFactors=F)
 	if (category!='all' & category!='go' & category!='kegg' & category!='wiki' & category!='reactome'){
-		stop("wrong category selected. Select one of 'go', 'kegg', 'wiki', and 'reactome', or 'all' for all pathways")
+		stop("Wrong category selected. Select one of 'go', 'kegg', 'wiki', and 'reactome', or 'all' for all pathways")
 	}
 	species <- object@meta.info$species
 
@@ -247,7 +257,10 @@ findLRpath <- function(object, category='all'){
 scorePath <- function(object, method='gsva', min.size=10, ...){
 	expr.mat <- as.matrix(object@data)
 	path.list <- object@pathway$pathwayLR
-	
+	if (is.null(path.list)){
+		stop("No pathway detected, run findLRpath befor scorePath")
+	}
+
 	if (method=='gsva'){
 		acti.score <- GSVA::gsva(expr.mat, path.list, min.sz=min.size, ...)
 	}else if(method=='average'){
@@ -262,7 +275,7 @@ scorePath <- function(object, method='gsva', min.size=10, ...){
 		rownames(acti.score) <- names(path.list)
 		acti.score <- acti.score[which(!is.na(acti.score[,1])), ]
 	}else{
-		stop('select "gsva" or "average" for pathway scoring')
+		stop('Select "gsva" or "average" for pathway scoring')
 	}
 	object@pathway$acti.score <- acti.score
 	object@pathway$method <- method
@@ -286,7 +299,7 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 	
 	### input parameter check
 	if (method!='t.test' & method!='wilcox.test'){
-		stop("select t.test or wilcox.test to conduct differential analysis")
+		stop("Select t.test or wilcox.test to conduct differential analysis")
 	}else if(method=='t.test'){
 		test.res.dat <- data.frame(matrix(NA,0,12))
 		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','p.val','p.val.adj','description','cell.up','ligand.up','receptor.in.path','ligand.in.path')
@@ -298,7 +311,7 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 	### find those pathways showing overlap with the ligands and receptors in select ident
 	path.lr.list <- object@pathway$pathwayLR
 	if (is.null(path.lr.list)){
-		stop("no pathway detected, run findLRpath befor diffPath")
+		stop("No pathway detected, run findLRpath befor diffPath")
 	}
 
 	marker.lig.rep <- subset(object@interact$markerL, cluster %in% select.ident.1)[, 'gene']
@@ -310,7 +323,7 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 		}))
 	path.overlap.list <- path.lr.list[which(which.overlap.list)]
 	if (length((path.overlap.list)) == 0){
-		warning(paste0('there is no pathway showing overlap with the marker ligands and receptors of cluster ',select.ident.1))
+		warning(paste0('There is no pathway showing overlap with the marker ligands and receptors of cluster ',select.ident.1))
 		return(test.res.dat)
 	}
 	### test for overlaping pathways
@@ -397,7 +410,7 @@ findReceptor <- function(object, select.ident=NULL, select.ligand=NULL){
 	options(stringsAsFactors=F)
 
 	if (is.null(select.ident) & is.null(select.ligand)){
-		stop("either a select.ident or a select.ligand need to be asigned")
+		stop("Either a select.ident or a select.ligand need to be asigned")
 	}
 	ident.down.dat <- object@interact$InteractGeneUnfold
 
@@ -409,7 +422,7 @@ findReceptor <- function(object, select.ident=NULL, select.ligand=NULL){
 	}
 
 	if (nrow(ident.down.dat)==0){
-		warning("no downstream ident found for the selected ident and ligand")
+		warning("No downstream ident found for the selected ident and ligand")
 	}
 	return(ident.down.dat)
 }
@@ -425,7 +438,7 @@ findLigand <- function(object, select.ident=NULL, select.receptor=NULL){
 	options(stringsAsFactors=F)
 
 	if (is.null(select.ident) & is.null(select.receptor)){
-		stop("either a select.ident or a select.receptor need to be asigned")
+		stop("Either a select.ident or a select.receptor need to be asigned")
 	}
 
 	ident.up.dat <- object@interact$InteractGeneUnfold
@@ -438,7 +451,7 @@ findLigand <- function(object, select.ident=NULL, select.receptor=NULL){
 	}
 
 	if (nrow(ident.up.dat)==0){
-		warning("no upstream ident found for the selected ident and receptor")
+		warning("No upstream ident found for the selected ident and receptor")
 	}
 	return(ident.up.dat)
 }
@@ -548,21 +561,21 @@ compCommpathMarker <- function(object, select.ident, compare, method='wilcox.tes
 	all.lig.reps <- unique(c(lr.pair.dat$L, lr.pair.dat$R))
 	expr.mat <- expr.mat[which(rownames(expr.mat) %in% all.lig.reps), ]
 	if (nrow(expr.mat)==0){
-		stop(paste0("there is no ligand or receptor detected in the expression matrix of cluster ",select.ident))
+		stop(paste0("There is no ligand or receptor detected in the expression matrix of cluster ",select.ident))
 	}
 
 	group <- cell.info[select.cell, select.var]
 	cell.ident <- which(group==select.c1)
 	cell.other <- which(group==select.c2)
 	if (length(cell.ident) < 3){
-		stop(paste0('there is(are) ',length(cell.ident),' cell(s) in group ',select.c1,'\nselect other one group and try again'))
+		stop(paste0('There is(are) ',length(cell.ident),' cell(s) in group ',select.c1,'\nselect other one group and try again'))
 	}
 	if (length(cell.other) < 3){
-		stop(paste0('there is(are) ',length(cell.other),' cell(s) in group ',select.c2,'\nselect other one group and try again'))
+		stop(paste0('There is(are) ',length(cell.other),' cell(s) in group ',select.c2,'\nselect other one group and try again'))
 	}
 
 	if (method!='wilcox.test' & method!='t.test'){
-		stop("select t.test or wilcox.test to conduct differential analysis")
+		stop("Select t.test or wilcox.test to conduct differential analysis")
 	}
 	if(method=='wilcox.test'){
 		test.res <- apply(expr.mat, 1, function(row.expr){
@@ -623,14 +636,14 @@ compCommpathPath <- function(object, select.ident, compare, method='wilcox.test'
 	cell.ident <- which(group==select.c1)
 	cell.other <- which(group==select.c2)
 	if (length(cell.ident) < 3){
-		stop(paste0('there is(are) ',length(cell.ident),' cell(s) in group ',select.c1,'\nselect other one group and try again'))
+		stop(paste0('There is(are) ',length(cell.ident),' cell(s) in group ',select.c1,'\nselect other one group and try again'))
 	}
 	if (length(cell.other) < 3){
-		stop(paste0('there is(are) ',length(cell.other),' cell(s) in group ',select.c2,'\nselect other one group and try again'))
+		stop(paste0('There is(are) ',length(cell.other),' cell(s) in group ',select.c2,'\nselect other one group and try again'))
 	}
 
 	if (method!='wilcox.test' & method!='t.test'){
-		stop("select t.test or wilcox.test to conduct differential analysis")
+		stop("Select t.test or wilcox.test to conduct differential analysis")
 	}
 	if(method=='wilcox.test'){
 		wil.result <- apply(expr.mat,1,function(geneExpr){
@@ -698,10 +711,10 @@ diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.
 	expr.mat.1 <- obj.1@data
 	expr.mat.2 <- obj.2@data
 	if (ncol(expr.mat.1) < 3){
-		stop(paste0('there is(are) ',ncol(expr.mat.1),' cell(s) in object.1\nselect other one ident and try again'))
+		stop(paste0('There is(are) ',ncol(expr.mat.1),' cell(s) in object.1\nselect other one ident and try again'))
 	}
 	if (ncol(expr.mat.2) < 3){
-		stop(paste0('there is(are) ',ncol(expr.mat.2),' cell(s) in object.2\nselect other one ident and try again'))
+		stop(paste0('There is(are) ',ncol(expr.mat.2),' cell(s) in object.2\nselect other one ident and try again'))
 	}
 	gene.keep <- intersect(rownames(expr.mat.1), rownames(expr.mat.2))
 	expr.mat.1 <- expr.mat.1[gene.keep, ]
@@ -710,7 +723,7 @@ diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.
 	cell.other <- colnames(expr.mat.2)
 
 	if (method!='wilcox.test' & method!='t.test'){
-		stop("select t.test or wilcox.test to conduct differential analysis")
+		stop("Select t.test or wilcox.test to conduct differential analysis")
 	}
 	if(method=='wilcox.test'){
 		test.res <- apply(cbind(expr.mat.1, expr.mat.2), 1, function(row.expr){
@@ -787,10 +800,10 @@ diffCommpathPath <- function(object.1, object.2, select.ident, method='wilcox.te
 
 	### differential analysis
 	if (ncol(score.mat.1) < 3){
-		stop(paste0('there is(are) ',ncol(score.mat.1),' cell(s) in object.1\nselect other one ident and try again'))
+		stop(paste0('There is(are) ',ncol(score.mat.1),' cell(s) in object.1\nselect other one ident and try again'))
 	}
 	if (ncol(score.mat.2) < 3){
-		stop(paste0('there is(are) ',ncol(score.mat.1),' cell(s) in object.2\nselect other one ident and try again'))
+		stop(paste0('There is(are) ',ncol(score.mat.1),' cell(s) in object.2\nselect other one ident and try again'))
 	}
 
 	expr.mat <- cbind(score.mat.1,score.mat.2)
@@ -799,7 +812,7 @@ diffCommpathPath <- function(object.1, object.2, select.ident, method='wilcox.te
 
 
 	if (method!='wilcox.test' & method!='t.test'){
-		stop("select t.test or wilcox.test to conduct differential analysis")
+		stop("Select t.test or wilcox.test to conduct differential analysis")
 	}
 	if(method=='wilcox.test'){
 		wil.result <- apply(expr.mat,1,function(geneExpr){

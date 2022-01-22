@@ -4,12 +4,12 @@
 \alias{circosPlot}
 \title{To present a circos plot}
 \usage{
-circosPlot(object, order = NULL, col = NULL, ident = NULL, name.vert = FALSE)
+circosPlot(object, plot = "count", col = NULL, ident = NULL, name.vert = FALSE)
 }
 \arguments{
 \item{object}{Commpath object}
 
-\item{order}{Vector of orders of the identities arround the circos plot}
+\item{plot}{To present a circos plot for LR count ("count") or overall interaction intensity ("intensity") among cell clusters}
 
 \item{col}{Vector of colors of each identity; names of the col vector are supposed to be assigned to indicate each color for each identity}
 

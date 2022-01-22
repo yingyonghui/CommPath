@@ -19,14 +19,13 @@ In this vignette we show Commpath's steps and functionalities for inference and 
 ### Brief description of Commpath object
 We start Commpath analysis by creating a Commpath object, which is a S4 object and consists of six slots including (i) data, a matrix containing the normalized expression values by gene * cell; (ii) cell.info, a data frame contain the information of cells; (iii) meta.info, a list containing some important parameters used during the analysis; (iv) LR.marker, a data.frame containing the result of differential expression test of ligands and receptors; (v) interact, a list containing the  information of LR interaction among clusters; (vi) pathway, a list containing the information of pathways related to the ligands and receptors
 ### Commpath input
-The expression matrix and cell indentity information are required for Commpath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of Commpath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are also available from Mendeley data (https://xxx).
+The expression matrix and cell indentity information are required for Commpath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of Commpath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are available in the Commpath package.
 We here illustrate the Commpath steps for date from the tumor tissues. And analysis for data from the normal tissues would be roughly in the same manner.
 ```
 data("HCC.tumor.3k", package = 'Commpath')
 ```
 This dataset consists of 2 varibles which are required for Commpath input:
-***tumor.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed.
-
+***tumor.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed;
 ***tumor.label*** : a vector of lables indicating identity classes of cells in the expression matrix, and the order of lables should match the order of cells in the expression matrix; usrs may also provide a data frame containing the meta infomation of cells with the row names matching the cells in the expression matrix and a column named as ***Cluster*** must be included to indicate identity classes of cells.
 
 #### Identification of marker ligands and receptors
@@ -50,7 +49,7 @@ tumor.obj <- findLRpairs(object = tumor.obj,
 		logFC.thre = 0, 
 		p.thre = 0.05)
 ```
-The number of significant LR pairs among cell clusters is then stored in tumor.obj@interact[['InteractNumer']]，and the detailed information of each LR pair is stored in tumor.obj@interact[['InteractGeneUnfold']]
+The counts of significant LR pairs and overall interaction intensity among cell clusters are then stored in tumor.obj@interact[['InteractNumer']]，and the detailed information of each LR pair is stored in tumor.obj@interact[['InteractGeneUnfold']]
 
 Then you can visualize the interaction through a circos plot:
 ```
@@ -59,6 +58,15 @@ circosPlot(object = tumor.obj)
 ```
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/circosPlot.png" height=300, width=300>
 
+In the above circos plot, the directions of lines indicate the associations from ligands to receptors, and the widths of lines indicate the count of LR pairs among clusters.
+
+```
+# Plot interaction for all cluster
+circosPlot(object = tumor.obj)
+```
+<img src="https://github.com/yingyonghui/Commpath/blob/main/pic/circosPlot.png" height=300, width=300>
+
+Now the widths of lines indicate the overall interaction intensity among clusters.
 ```
 # Highlight the interaction of specific cluster
 # Here we take the endothelial cell as an example
@@ -87,6 +95,10 @@ ident.down.dat <- findReceptor(object = tumor.obj,
     select.ligand = select.ligand)
 head(ident.down.dat)
 ```
+
+There are 7 columns stored in the variable *ident.up.dat*/*ident.down.dat*:
+Columns ***Cell.From***, ***Cell.To***, ***Ligand***, ***Receptor*** show the upstream and dowstream clusters and the specific ligands and receptors in the LR associations;
+Columns ***Log2FC.LR***, ***P.val.LR***, ***P.val.adj.LR*** show the interaction intensity (measured by the product of Log2FCs of ligands and receptors)and the corresponding original and adjusted ***p*** value for hypothesis test of one pair of LR.
 
 Commpath also provides dot plots to investigate its upstream clusters which release specific ligands and its downstream clusters which expressed specific receptors: 
 ```
@@ -124,11 +136,8 @@ head(acti.path.dat)
 ```
 There are several columns stored in the variable acti.path.dat:
 Columns ***mean.diff***, ***mean.1***, ***mean.2***, ***t***, ***df***, ***p.val***, ***p.val.adj*** show the statistic result; *description* shows the name of pathway; 
-
 Columns ***cell.up*** and ***ligand.up*** show the upstream identity classes which would release specific ligands to interact with the receptors from the current identity class; 
-
 Column ***receptor.in.path*** shows the marker receptors expressed by the current identity class and these receptors are included in the current pathway;
-
 Column ***ligand.in.path*** shows the marker ligands released by the current identity class and these ligands are also included in the current pathway.
 
 Then we use **pathHeatmap** to plot a heatmap of those differentially activated pathways for each cluster to display the highly variable pathways:
@@ -168,9 +177,7 @@ data("HCC.normal.3k", package = 'Commpath')
 ```
 This dataset consists of 3 varibles:
 ***normal.expr*** : expression matrix for cells from normal tissues
-
 ***normal.label*** : indentity lables for cells from normal tissues
-
 ***normal.obj*** : Commpath object created from ***normal.expr*** and ***normal.label***, and processed by Commpath steps described above
 
 To compare 2 Commpath object, we shall first identify the differentially expressed ligands and receptors, and differentially activated pathways between  the same cluster of cells in the two object.
@@ -254,5 +261,5 @@ loaded via a namespace (and not attached):
 [63] MatrixGenerics_1.2.1        parallel_4.0.3             
 [65] fastmap_1.1.0               AnnotationDbi_1.52.0       
 [67] colorspace_2.0-2            GenomicRanges_1.42.0       
-[69] memoise_2.0.0              
+[69] memoise_2.0.0             
 ```

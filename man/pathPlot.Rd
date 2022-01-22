@@ -31,7 +31,7 @@ pathPlot(
 
 \item{top.n.path}{top n pathways with the smallest adjusted p values to plot}
 
-\item{path.order}{path.order}
+\item{path.order}{Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference}
 
 \item{p.thre}{threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered}
 

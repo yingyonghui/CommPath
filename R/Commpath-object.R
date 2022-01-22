@@ -24,7 +24,7 @@ Commpath <- methods::setClass("Commpath",
 #' @export
 createCommpath <- function(expr.mat, cell.info, species){
 	if ((length(species) > 1) | (!(species %in% c('hsapiens', 'mmusculus', 'rnorvegicus')))){
-		stop("select one species from 'hsapiens', 'mmusculus', and 'rnorvegicus'")
+		stop("Select one species from 'hsapiens', 'mmusculus', and 'rnorvegicus'")
 	}
 	if(is.vector(cell.info) | is.factor(cell.info)){
 		cell.info <- data.frame(Cluster=cell.info)
@@ -32,7 +32,7 @@ createCommpath <- function(expr.mat, cell.info, species){
 	}
 	object <- methods::new(Class="Commpath",
 		data = as(expr.mat, "dgCMatrix"),
-		cell.info=cell.info,
+		cell.info = cell.info,
 		meta.info = list(species=species, logFC.thre=NULL, p.thre=NULL),
 		LR.marker = data.frame(),
 		interact = list(),

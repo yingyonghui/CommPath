@@ -8,7 +8,7 @@ pathHeatmap(
   object,
   acti.path.dat = NULL,
   top.n.pathway = 10,
-  sort = "p.val.adj",
+  path.order = "p.val.adj",
   col = NULL,
   show.legend = FALSE,
   cell.label.size = NULL,
@@ -25,7 +25,7 @@ pathHeatmap(
 
 \item{top.n.pathway}{Show the heatmap of top n most significant pathways}
 
-\item{sort}{Sort criteria used to select the top n pathways, either p.val.adj, p.val, mean.diff, or median.diff}
+\item{path.order}{Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference}
 
 \item{col}{Vector of colors used to generate a series of gradient colors to show the enrichment score of pathways; provide a vector containing at least two colors}
 
