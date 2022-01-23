@@ -689,7 +689,8 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 		bar_pathway_width <- 0.3 * (pathway.new.coor[2]-pathway.new.coor[1]) * top.n.path / max.limit
 	}
 	path.name.max.width <- max(strwidth(path.uniq.name, units="inches", cex=1))
-	bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
+	#bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
+	bar.pathway.length <- 2 * path.rect.length / max(path.rect.length)
 	bar_pathway <- geom_rect(aes(xmin=3, xmax=3+bar.pathway.length, ymin=pathway.new.coor-bar_pathway_width, ymax=pathway.new.coor+bar_pathway_width), size=1, fill=bar.path.col, alpha=1, show.legend=F)
 	point_receptor <- geom_point(aes(x=2,y=rep.new.coor),size=rep.size,color=dot.rep.col) 
 	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
@@ -883,8 +884,14 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 	rep.size <- 10 * dot.gene.size * fc.rep
 	rep.pct <-  top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'pct.1']
 	
-	rep.pval <-  -log10(top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'p_val_adj'])
-	rep.pval <- p.remove.inf(rep.pval)
+	rep.pval <-  top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'p_val_adj']
+	if (all(rep.pval==0)){
+		rep.pval <- fc.rep
+		warning('All adjusted p values for the top.n.receptors are 0. The colors of dots representing receptors are adjusted to indicate the average log2FC of receptors')
+	}else{
+		rep.pval <- -log10(rep.pval)
+		rep.pval <- p.remove.inf(rep.pval)
+	}
 	dot.rep.col <- LRcolor(rep.pval, user.set.col=dot.gene.col)
 
 	
@@ -917,7 +924,8 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 		bar_pathway_width <- 0.3 * (pathway.new.coor[2]-pathway.new.coor[1]) * top.n.path / max.limit
 	}
 	path.name.max.width <- max(strwidth(path.uniq.name, units="inches", cex=1))
-	bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
+	#bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
+	bar.pathway.length <- 2 * path.rect.length / max(path.rect.length)
 	bar_pathway <- geom_rect(aes(xmin=3, xmax=3+bar.pathway.length, ymin=pathway.new.coor-bar_pathway_width, ymax=pathway.new.coor+bar_pathway_width), size=1, fill=bar.path.col, alpha=1, show.legend=F)
 	point_receptor <- geom_point(aes(x=2,y=rep.new.coor),size=rep.size,color=dot.rep.col) 
 	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
@@ -1097,8 +1105,14 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 		path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'median.diff']
 	}
 	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'p.val.adj']
-	path.rect.pval <- -log10(path.rect.pval)
-	path.rect.pval <- p.remove.inf(path.rect.pval)
+
+	if (all(path.rect.pval==0)){
+		path.rect.pval <- path.rect.length
+		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the mean (in t test) or median (in wilcox test) difference of pathways')
+	}else{
+		path.rect.pval <- -log10(path.rect.pval)
+		path.rect.pval <- p.remove.inf(path.rect.pval)
+	}
 	bar.path.col <- LRcolor(path.rect.pval, user.set.col=bar.pathway.col)
 
 	
@@ -1112,8 +1126,15 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	fc.rep <- top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'avg_log2FC']
 	rep.size <- 10 * dot.gene.size * fc.rep
 	rep.pct <-  top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'pct.1']
-	rep.pval <-  -log10(top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'p_val_adj'])
-	rep.pval <- p.remove.inf(rep.pval)
+	rep.pval <-  top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'p_val_adj']
+
+	if (all(rep.pval==0)){
+		rep.pval <- fc.rep
+		warning('All adjusted p values for the top.n.receptors are 0. The colors of dots representing receptors are adjusted to indicate the average log2FC of receptors')
+	}else{
+		rep.pval <- -log10(rep.pval)
+		rep.pval <- p.remove.inf(rep.pval)
+	}
 	dot.rep.col <- LRcolor(rep.pval, user.set.col=dot.gene.col)
 
 
@@ -1127,8 +1148,15 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	fc.lig <- top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'avg_log2FC']
 	lig.size <- 10 * dot.gene.size * fc.lig
 	lig.pct <-  top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'pct.1']
-	lig.pval <-  -log10(top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'p_val_adj'])
-	lig.pval <- p.remove.inf(lig.pval)
+	lig.pval <-  top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'p_val_adj']
+
+	if (all(lig.pval==0)){
+		lig.pval <- fc.lig
+		warning('All adjusted p values for the top.n.ligands are 0. The colors of dots representing ligands are adjusted to indicate the average log2FC of ligands')
+	}else{
+		lig.pval <- -log10(lig.pval)
+		lig.pval <- p.remove.inf(lig.pval)
+	}
 	dot.lig.col <- LRcolor(lig.pval, user.set.col=dot.gene.col)
 
 
@@ -1167,7 +1195,8 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 		bar_pathway_width <- 0.3 * (pathway.new.coor[2]-pathway.new.coor[1]) * top.n.path / max.limit
 	}
 	path.name.max.width <- max(strwidth(path.uniq.name, units="inches", cex=1))
-	bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
+	#bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
+	bar.pathway.length <- 2 * path.rect.length / max(path.rect.length)
 	bar_pathway <- geom_rect(aes(xmin=6, xmax=6+bar.pathway.length, ymin=pathway.new.coor-bar_pathway_width, ymax=pathway.new.coor+bar_pathway_width), size=1, fill=bar.path.col, alpha=1, show.legend=F)
 	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
 	point_receptor <- geom_point(aes(x=2,y=rep.new.coor),size=rep.size,color=dot.rep.col)
@@ -1411,8 +1440,14 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 		path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'median.diff']
 	}
 	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'p.val.adj']
-	path.rect.pval <- -log10(path.rect.pval)
-	path.rect.pval <- p.remove.inf(path.rect.pval)
+
+	if (all(path.rect.pval==0)){
+		path.rect.pval <- path.rect.length
+		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the mean (in t test) or median (in wilcox test) difference of pathways')
+	}else{
+		path.rect.pval <- -log10(path.rect.pval)
+		path.rect.pval <- p.remove.inf(path.rect.pval)
+	}
 	bar.path.col <- LRcolor(path.rect.pval, user.set.col=bar.pathway.col)
 
 	
@@ -1425,8 +1460,15 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	fc.rep <- top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'avg_log2FC']
 	rep.size <- 10 * dot.gene.size * fc.rep
 	rep.pct <-  top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'pct.1']
-	rep.pval <-  -log10(top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'p_val_adj'])
-	rep.pval <- p.remove.inf(rep.pval)
+	rep.pval <-  top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'p_val_adj']
+
+	if (all(rep.pval==0)){
+		rep.pval <- fc.rep
+		warning('All adjusted p values for the top.n.receptors are 0. The colors of dots representing receptors are adjusted to indicate the average log2FC of receptors')
+	}else{
+		rep.pval <- -log10(rep.pval)
+		rep.pval <- p.remove.inf(rep.pval)
+	}
 	dot.rep.col <- LRcolor(rep.pval, user.set.col=dot.gene.col)
 
 
@@ -1439,8 +1481,15 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	fc.lig <- top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'avg_log2FC']
 	lig.size <- 10 * dot.gene.size * fc.lig
 	lig.pct <-  top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'pct.1']
-	lig.pval <-  -log10(top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'p_val_adj'])
-	lig.pval <- p.remove.inf(lig.pval)
+	lig.pval <-  top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'p_val_adj']
+
+	if (all(lig.pval==0)){
+		lig.pval <- fc.lig
+		warning('All adjusted p values for the top.n.ligands are 0. The colors of dots representing ligands are adjusted to indicate the average log2FC of ligands')
+	}else{
+		lig.pval <- -log10(lig.pval)
+		lig.pval <- p.remove.inf(lig.pval)
+	}
 	dot.lig.col <- LRcolor(lig.pval, user.set.col=dot.gene.col)
 
 
@@ -1480,7 +1529,8 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 		bar_pathway_width <- 0.3 * (pathway.new.coor[2]-pathway.new.coor[1]) * top.n.path / max.limit
 	}
 	path.name.max.width <- max(strwidth(path.uniq.name, units="inches", cex=1))
-	bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
+	#bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
+	bar.pathway.length <- 2 * path.rect.length / max(path.rect.length)
 	bar_pathway <- geom_rect(aes(xmin=6, xmax=6+bar.pathway.length, ymin=pathway.new.coor-bar_pathway_width, ymax=pathway.new.coor+bar_pathway_width), size=1, fill=bar.path.col, alpha=1, show.legend=F)
 	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
 	point_receptor <- geom_point(aes(x=2,y=rep.new.coor),size=rep.size,color=dot.rep.col)
