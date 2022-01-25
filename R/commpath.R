@@ -706,10 +706,17 @@ compCommpathPath <- function(object, select.ident, compare, method='wilcox.test'
 #' @return data.frame of differentially expressed geens between the same clusters in two Commpath object
 #' @export
 diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
+	lr.pair.dat <- CommpathData$DataLR[[object.1@meta.info$species]]
+	all.lig.reps <- unique(c(lr.pair.dat$L, lr.pair.dat$R))
+
 	obj.1 <- subsetCommpath(object.1, ident.keep=select.ident)
+	expr.mat.1 <- as.matrix(obj.1@data)
+	expr.mat.1 <- expr.mat.1[which(rownames(expr.mat.1) %in% all.lig.reps), ]
+	
 	obj.2 <- subsetCommpath(object.2, ident.keep=select.ident)
-	expr.mat.1 <- obj.1@data
-	expr.mat.2 <- obj.2@data
+	expr.mat.2 <- as.matrix(obj.2@data)
+	expr.mat.2 <- expr.mat.2[which(rownames(expr.mat.2) %in% all.lig.reps), ]
+	
 	if (ncol(expr.mat.1) < 3){
 		stop(paste0('There is(are) ',ncol(expr.mat.1),' cell(s) in object.1\nselect other one ident and try again'))
 	}
