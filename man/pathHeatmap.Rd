@@ -21,7 +21,7 @@ pathHeatmap(
 \arguments{
 \item{object}{Commpath object}
 
-\item{acti.path.dat}{data.frame of differential enrichment test result from diffAllPath; if NULL, diffAllPath would be run to get the acti.path.dat}
+\item{acti.path.dat}{Data frame of differential enrichment test result from diffAllPath; if NULL, diffAllPath would be run to get the acti.path.dat}
 
 \item{top.n.pathway}{Show the heatmap of top n most significant pathways}
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plug-in.function.R
 \name{LRcolor.up.down}
 \alias{LRcolor.up.down}
-\title{this is a plug-in function, aiming to get the color for the dots representing receptors and ligands}
+\title{This is a plug-in function, aiming to get the color for the dots representing receptors and ligands}
 \usage{
 LRcolor.up.down(logfc, user.set.col)
 }
@@ -15,5 +15,5 @@ LRcolor.up.down(logfc, user.set.col)
 Colors matching each p value
 }
 \description{
-this is a plug-in function, aiming to get the color for the dots representing receptors and ligands
+This is a plug-in function, aiming to get the color for the dots representing receptors and ligands
 }

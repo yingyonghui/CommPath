@@ -30,7 +30,7 @@ pathTest(
 \item{only.sig}{only save the information of pathways showing significant differences}
 }
 \value{
-Dataframe including the statistic result
+Data frame including the statistic result
 }
 \description{
 Differential enrichment analysis by t.test or wilcox.txt

@@ -27,7 +27,7 @@ diffPath(
 \item{only.sig}{only save the information of pathways showing significant differences}
 }
 \value{
-Dataframe including the statistic result comparing the pathway enrichment sorces between group 1 and group 2, the significant recetor and ligand of group 1 in the pathways, and the corresponding up stream identity class which interact with group 1 by releasing specific ligand
+Data frame including the statistic result comparing the pathway enrichment sorces between group 1 and group 2, the significant recetor and ligand of group 1 in the pathways, and the corresponding up stream identity class which interact with group 1 by releasing specific ligand
 }
 \description{
 To find different enriched pathway between two group cells

@@ -10,7 +10,7 @@ LRinten.to.width(x)
 \item{x}{LR intensity}
 }
 \value{
-line width
+Line width
 }
 \description{
 To transform LR intensity to line width

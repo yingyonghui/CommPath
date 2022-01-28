@@ -17,9 +17,9 @@ diffCommpathPath(
 )
 }
 \arguments{
-\item{object.1}{The first Commpath object}
+\item{object.1}{Commpath object 1}
 
-\item{object.2}{The second Commpath object for comparison}
+\item{object.2}{Commpath object 2 for comparison}
 
 \item{select.ident}{Identity class of interest}
 
@@ -27,14 +27,14 @@ diffCommpathPath(
 
 \item{p.adjust}{Method used for p value correction for multiple differential expression test; see p.adjust function for more information}
 
-\item{min.size}{min.size for gsva}
+\item{min.size}{Minimum size of overlaping genes between candidate pathways and the expression matrix}
 
 \item{only.posi}{only logFC > 0}
 
 \item{only.sig}{only p_val_adj < 0.05}
 }
 \value{
-data.frame of differentially activated pathways between the same clusters in two Commpath object
+Data frame of differentially activated pathways between the same clusters in two Commpath object
 }
 \description{
 To conduct defferential activation test in select.ident between two Commpath objects

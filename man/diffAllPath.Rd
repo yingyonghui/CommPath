@@ -2,7 +2,7 @@
 % Please edit documentation in R/Commpath.R
 \name{diffAllPath}
 \alias{diffAllPath}
-\title{To find different enriched pathways in each identity class}
+\title{To find differentially activated pathways in each identity class}
 \usage{
 diffAllPath(object, method = "t.test")
 }
@@ -12,8 +12,8 @@ diffAllPath(object, method = "t.test")
 \item{method}{Method used for differential enrichment analysis, either 't.test' of 'wilcox.test'}
 }
 \value{
-Dataframe including the statistic result comparing the pathway enrichment sorces between cells in each cluster and all other clusters, the significant recetor and ligand in the pathways, and the corresponding up stream identity class and ligand
+Data frame including the statistic result comparing the pathway enrichment sorces between cells in each cluster and all other clusters, the significant recetor and ligand in the pathways, and the corresponding up stream identity class and ligand
 }
 \description{
-To find different enriched pathways in each identity class
+To find differentially activated pathways in each identity class
 }

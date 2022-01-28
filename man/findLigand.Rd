@@ -14,7 +14,7 @@ findLigand(object, select.ident = NULL, select.receptor = NULL)
 \item{select.receptor}{Receptor expressed by downstream identity class; if 'NULL', use all receptors that are markers for the selected downstream identity class}
 }
 \value{
-Dataframe including the interaction information
+Data frame including the interaction information
 }
 \description{
 To find the upstream identity classes and ligands of specific receptor expressed by specific downstream identity class

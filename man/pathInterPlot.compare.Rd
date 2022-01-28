@@ -20,7 +20,6 @@ pathInterPlot.compare(
   dot.gene.col = NULL,
   dot.gene.size = 1,
   bar.pathway.col = NULL,
-  bar.pathway.width = 10,
   label.text.size = 1,
   label.title.size = 1
 )
@@ -28,39 +27,37 @@ pathInterPlot.compare(
 \arguments{
 \item{object.1}{Commpath object 1}
 
-\item{object.2}{Commpath object 2}
+\item{object.2}{Commpath object 2 for comparison}
 
-\item{select.ident}{select.ident}
+\item{select.ident}{Plot the activated pathways for which cluster or cell type?}
 
-\item{diff.marker.dat}{diff.marker.dat}
+\item{diff.marker.dat}{Data frame of defferential expression test result from diffCommpathMarker; if NULL, diffCommpathMarker would be run to get diff.marker.dat}
 
-\item{diff.path.dat}{diff.path.dat}
+\item{diff.path.dat}{Data frame of defferential activation test result from diffCommpathPath; if NULL, diffCommpathPath would be run to get acti.path.dat}
 
-\item{top.n.path}{top n pathways with the smallest adjusted p values to plot}
+\item{top.n.path}{Top n pathways with the smallest adjusted p values to plot}
 
-\item{path.order}{path.order}
+\item{path.order}{Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference}
 
-\item{p.thre}{threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered}
+\item{p.thre}{Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered}
 
-\item{top.n.receptor}{top n receptor with the largest log2FCs to plot}
+\item{top.n.receptor}{Top n receptor with the largest log2FCs to plot}
 
-\item{top.n.ligand}{top n ligand with the largest log2FCs to plot}
+\item{top.n.ligand}{Top n ligand with the largest log2FCs to plot}
 
-\item{dot.ident.col}{color of the dots representing clusters}
+\item{dot.ident.col}{Color of the dots representing clusters}
 
-\item{dot.ident.size}{size of the dots representing clusters}
+\item{dot.ident.size}{Size of the dots representing clusters}
 
-\item{dot.gene.col}{color of the dots representing receptors}
+\item{dot.gene.col}{Color of the dots representing receptors}
 
-\item{dot.gene.size}{size of the dots representing receptors}
+\item{dot.gene.size}{Size of the dots representing receptors}
 
-\item{bar.pathway.col}{color of the bars reprsenting pathways}
+\item{bar.pathway.col}{Color of the bars reprsenting pathways}
 
-\item{bar.pathway.width}{width of the bars reprsenting pathways}
+\item{label.text.size}{Text size in the plot}
 
-\item{label.text.size}{text size in the plot}
-
-\item{label.title.size}{text size of the title annotation of the plot}
+\item{label.title.size}{Text size of the title annotation of the plot}
 }
 \value{
 Network plot showing the significantly differentially activated pathways between the selected clusters of two Commpath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster

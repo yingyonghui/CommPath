@@ -12,7 +12,7 @@ findLRpath(object, category = "all")
 \item{category}{Character to indicate which pathway to investigate; one of "go" (GO terms), "kegg" (for KEGG pathways), 'wiki' (for WikiPathways), and "reactome" (for reactome pathways), or "all" for all pathways}
 }
 \value{
-Interact list containing the ligand-receptor interaction information and the pathways showing overlap with the marker ligand and receptor genes in the dataset
+Commpath object containing the ligand-receptor interaction information and the pathways showing overlap with the marker ligand and receptor genes in the dataset
 }
 \description{
 To find those pathways in which the genesets show overlap with the marker ligand and receptor genes in our dataset

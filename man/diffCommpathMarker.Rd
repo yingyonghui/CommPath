@@ -15,9 +15,9 @@ diffCommpathMarker(
 )
 }
 \arguments{
-\item{object.1}{The first Commpath object}
+\item{object.1}{Commpath object 1}
 
-\item{object.2}{The second Commpath object for comparison}
+\item{object.2}{Commpath object 2 for comparison}
 
 \item{select.ident}{Identity class of interest}
 
@@ -30,7 +30,7 @@ diffCommpathMarker(
 \item{only.sig}{only p_val_adj < 0.05}
 }
 \value{
-data.frame of differentially expressed geens between the same clusters in two Commpath object
+Data frame of differentially expressed geens between the same clusters in two Commpath object
 }
 \description{
 To conduct defferential expression test in select.ident between two Commpath objects

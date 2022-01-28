@@ -1,7 +1,6 @@
 #' This is a plug-in function, aimming to paste a vector of idents into a ',' separated string
 #' @param ident.missed Vector of idents
 #' @return String with idents pasted
-#' @export
 pasteIdent <- function(ident.missed){
 	if (length(ident.missed) > 1){ 
 		ident.missed <- paste0(paste(ident.missed[1:(length(ident.missed)-1)], collapse=', '), ' and ', ident.missed[length(ident.missed)])
@@ -9,11 +8,10 @@ pasteIdent <- function(ident.missed){
 	return(ident.missed)
 }
 
-#' this is a plug-in function, aiming to adjust those p values==0
+#' This is a plug-in function, aiming to adjust those p values==0
 #' @param pvalues pvalues
 #' @param scale scale
 #' @return p values with inf adjusted
-#' @export
 p.remove.inf <- function(pvalues, scale=0.1){
 	if (all(is.infinite(pvalues))){ 
 		pvalues <- rep(0, length(pvalues))
@@ -24,11 +22,10 @@ p.remove.inf <- function(pvalues, scale=0.1){
 	return(pvalues)
 }
 
-#' this is a plug-in function, aiming to get the color for the dots representing receptors and ligands
+#' This is a plug-in function, aiming to get the color for the dots representing receptors and ligands
 #' @param LRpvalue pvalues of ligands or receptors
 #' @param user.set.col colors set by user
 #' @return Colors matching each p value
-#' @export
 LRcolor <- function(LRpvalue, user.set.col){
 	if (length(LRpvalue) > 1){
 		if (is.null(user.set.col)){
@@ -47,11 +44,10 @@ LRcolor <- function(LRpvalue, user.set.col){
 	return(dot.col)
 }
 
-#' this is a plug-in function, aiming to get the color for the dots representing receptors and ligands
+#' This is a plug-in function, aiming to get the color for the dots representing receptors and ligands
 #' @param logfc logfc of ligands or receptors
 #' @param user.set.col colors set by user
 #' @return Colors matching each p value
-#' @export
 LRcolor.up.down <- function(logfc, user.set.col){
 	if (is.null(user.set.col)){
 		dot.col <- ifelse(logfc > 0, 'red', 'green')
@@ -68,7 +64,6 @@ LRcolor.up.down <- function(logfc, user.set.col){
 #' @param select.path selected pathways
 #' @param n n
 #' @return Vector of top n variable pathways
-#' @export
 variPath <- function(gsva.mat, select.path=NULL, n=10){
 	if (!is.null(select.path)){
 		gsva.mat <- gsva.mat[rownames(gsva.mat) %in% select.path,]
@@ -83,7 +78,6 @@ variPath <- function(gsva.mat, select.path=NULL, n=10){
 #' @param all.ident Vector of all idents that present in the dataset
 #' @param order Vector of the specified order of idents by users
 #' @return if all idents are not contained, stop the procedure
-#' @export
 orderCheck <- function(all.ident, order){
 	if (all(all.ident %in% order)){
 		order.overlap <- order[which(order %in% all.ident)]
@@ -100,7 +94,6 @@ orderCheck <- function(all.ident, order){
 #' @param x data.frame with columns named as Cell.From and Cell.To
 #' @param column which column
 #' @return data.frame with variables converted to character
-#' @export
 factor.to.character <- function(x, column=c(1, 2)){
 	for (each.col in column){
 		x[, each.col] <- as.character(x[, each.col])
@@ -113,7 +106,6 @@ factor.to.character <- function(x, column=c(1, 2)){
 #' @param ident.keep idents to keep
 #' @param subset.slot slot to subset
 #' @return a subset Commpath object
-#' @export
 subsetCommpath <- function(object, ident.keep){
 	cell.info <- object@cell.info
 	cell.info <- subset(cell.info, Cluster %in% ident.keep)
@@ -128,7 +120,6 @@ subsetCommpath <- function(object, ident.keep){
 #' To extract information from ident.path.dat
 #' @param ident.path.dat ident.path.dat
 #' @return data.frame
-#' @export
 extract.info <- function(ident.path.dat){
 	up.ident <- as.vector(unlist(sapply(ident.path.dat$cell.up, function(x){ strsplit(x, split=';') })))
 	cur.rep <- as.vector(unlist(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') })))
@@ -143,7 +134,6 @@ extract.info <- function(ident.path.dat){
 #' @param x vector of elements with names
 #' @param n top a
 #' @return top n elements in x
-#' @export
 order.and.top <- function(x, n){
 	x <- x[order(x, decreasing=TRUE)]
 	return(x[1:n])
@@ -157,7 +147,6 @@ order.and.top <- function(x, n){
 #' @param ident.label ident.label
 #' @param find find
 #' @return matrix of clusters * genes, elements are interaction intensity between genes and clusters
-#' @export
 cluster.lr.inten <- function(top.rep.name, object, select.ident, ident.label, find) {
 	if(find=='ligand'){
 		top.rep.LR.inten <- sapply(top.rep.name, function(eachrep){
@@ -182,6 +171,5 @@ cluster.lr.inten <- function(top.rep.name, object, select.ident, ident.label, fi
 
 #' To transform LR intensity to line width
 #' @param x LR intensity
-#' @return line width
-#' @export
+#' @return Line width
 LRinten.to.width <- function(x){ return(x/max(x) + 1) }
