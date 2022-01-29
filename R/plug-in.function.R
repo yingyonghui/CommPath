@@ -59,20 +59,6 @@ LRcolor.up.down <- function(logfc, user.set.col){
 	return(dot.col)
 }
 
-#' This is a plug-in function, aimming to find the highly variable pathways in the gsva score matrix
-#' @param gsva.mat Matrix containing the pathway enrichment sorces, with rows representing pathways and columns representing cells. Pathway scores are usually computed from gsva, or other methods aiming to measure the pathway enrichment in cells
-#' @param select.path selected pathways
-#' @param n n
-#' @return Vector of top n variable pathways
-variPath <- function(gsva.mat, select.path=NULL, n=10){
-	if (!is.null(select.path)){
-		gsva.mat <- gsva.mat[rownames(gsva.mat) %in% select.path,]
-	}
-	gsva.cv.vec <- apply(gsva.mat,1,sd)
-	vari.path <- names(gsva.cv.vec[order(-gsva.cv.vec)][1:n])
-
-	return(vari.path)
-}
 
 #' This is a plug-in function, aimming to check whether the specified order of idents by users contain all idents that present in the dataset
 #' @param all.ident Vector of all idents that present in the dataset
@@ -104,7 +90,6 @@ factor.to.character <- function(x, column=c(1, 2)){
 #' To subset a Commpath object
 #' @param object Commpath object
 #' @param ident.keep idents to keep
-#' @param subset.slot slot to subset
 #' @return a subset Commpath object
 subsetCommpath <- function(object, ident.keep){
 	cell.info <- object@cell.info

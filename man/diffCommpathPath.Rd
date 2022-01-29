@@ -32,6 +32,8 @@ diffCommpathPath(
 \item{only.posi}{only logFC > 0}
 
 \item{only.sig}{only p_val_adj < 0.05}
+
+\item{...}{Extra parameters passed to gsva}
 }
 \value{
 Data frame of differentially activated pathways between the same clusters in two Commpath object

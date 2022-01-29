@@ -1,9 +1,10 @@
-data('CommpathData', package=('Commpath'))
+#data('CommpathData', package=('Commpath'))
 
 #' To identify marker ligands and marker receptors in the expression matrix
 #' @param object Commpath object
 #' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
 #' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
+#' @importFrom stats wilcox.test t.test p.adjust
 #' @return Data frame containing the differential expression test
 #' @export
 findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
@@ -89,6 +90,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 #' @param object Commpath object
 #' @param logFC.thre logFC threshold, marker genes with a logFC > logFC.thre will be considered
 #' @param p.thre p threshold, marker genes with a adjust p value < p.thre will be considered
+#' @importFrom reshape2 melt
 #' @return List containing the ligand-receptor interaction information
 #' @export
 findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
@@ -251,7 +253,7 @@ findLRpath <- function(object, category='all'){
 #' @param object Commpath object
 #' @param method Method used for scoring the pathways, either 'gsva' of 'average'
 #' @param min.size Minimum size of overlaping genes between candidate pathways and the expression matrix
-#' @param ... Other parameters passed to gsva
+#' @param ... Extra parameters passed to gsva
 #' @return Commpath object with pathways activation scores stored in the slot pathway
 #' @export
 scorePath <- function(object, method='gsva', min.size=10, ...){
@@ -465,6 +467,7 @@ findLigand <- function(object, select.ident=NULL, select.receptor=NULL){
 #' @param method Method for hypothesis test, either 't.test' or 'wilcox.test'
 #' @param only.posi only save the information of pathways showing up regulation
 #' @param only.sig only save the information of pathways showing significant differences
+#' @importFrom stats median
 #' @return Data frame including the statistic result
 #' @export
 pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NULL, method='t.test', only.posi=FALSE, only.sig=FALSE){
@@ -772,6 +775,7 @@ diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.
 #' @param min.size Minimum size of overlaping genes between candidate pathways and the expression matrix
 #' @param only.posi only logFC > 0
 #' @param only.sig only p_val_adj < 0.05
+#' @param ... Extra parameters passed to gsva
 #' @return Data frame of differentially activated pathways between the same clusters in two Commpath object
 #' @export
 diffCommpathPath <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE, ...){

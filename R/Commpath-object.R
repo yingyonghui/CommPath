@@ -2,8 +2,9 @@
 
 #' To define the Commpath object and the key slots
 #' @slot data normalized expression matrix
-#' @slot meta.info vector of cell labels
-#' @slot LR.marker data.frame of the differential expression test result of ligands and receptors
+#' @slot cell.info vector of cell labels
+#' @slot meta.info list of important parameters used during the analysis
+#' @slot LR.marker data frame of the differential expression test result of ligands and receptors
 #' @slot interact list containing information of LR interaction among clusters
 #' @slot pathway list containing information of pathways associated with ligands and receptors
 #' @exportClass Commpath

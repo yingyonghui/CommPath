@@ -13,9 +13,11 @@ To define the Commpath object and the key slots
 \describe{
 \item{\code{data}}{normalized expression matrix}
 
-\item{\code{meta.info}}{vector of cell labels}
+\item{\code{cell.info}}{vector of cell labels}
 
-\item{\code{LR.marker}}{data.frame of the differential expression test result of ligands and receptors}
+\item{\code{meta.info}}{list of important parameters used during the analysis}
+
+\item{\code{LR.marker}}{data frame of the differential expression test result of ligands and receptors}
 
 \item{\code{interact}}{list containing information of LR interaction among clusters}
 

@@ -10,8 +10,6 @@ subsetCommpath(object, ident.keep)
 \item{object}{Commpath object}
 
 \item{ident.keep}{idents to keep}
-
-\item{subset.slot}{slot to subset}
 }
 \value{
 a subset Commpath object

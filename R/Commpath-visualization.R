@@ -4,6 +4,7 @@
 #' @param col Vector of colors of each identity; names of the col vector are supposed to be assigned to indicate each color for each identity
 #' @param ident To highlight the interaction between a specific identity class and others; if 'NULL', plot interaction for all identity classes
 #' @param name.vert Should the group annotation be vertical to the grid? Defualt is FALSE
+#' @importFrom circlize circos.clear circos.par chordDiagram circos.track circos.text
 #' @return Circos plot showing the ligand-receptor interaction
 #' @export
 circosPlot <- function(object, plot='count', col=NULL, ident=NULL, name.vert=FALSE){
@@ -87,6 +88,7 @@ circosPlot <- function(object, plot='count', col=NULL, ident=NULL, name.vert=FAL
 #' @param ident.levels Vector of levels of the identities 
 #' @param top.n.inter Show the dotplot for the top n LR pairs with the largest product of Log2FC
 #' @param return.data Logical value indicating whether to return the data for the plot or not
+#' @importFrom ggplot2 ggplot geom_point scale_color_manual labs theme element_text element_rect element_line aes scale_color_gradientn
 #' @return Dotplot showing the ligand-receptor interaction between the selected ligand.ident and receptor.ident
 #' @export
 dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, return.data=FALSE){
@@ -215,6 +217,8 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 #' @param pathway.label.size Text size of the label of pathways
 #' @param scale Whether to scale the enrichment sorces matrix among cells or not; default is TRUE
 #' @param truncation Truncation fold value; scores > (the third quartiles + truncation * interquartile range) and scores < (the first quartiles - truncation * interquartile range) will be adjusted; either a value to indicate the specific truncation value or 'none' to indicate no truncation; default is 1.5
+#' @importFrom ggplot2 geom_tile facet_grid element_blank
+#' @importFrom stats quantile
 #' @return Heatmap plot showing the top enriched patways in each cluster
 #' @export
 pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order='p.val.adj', col=NULL, show.legend=FALSE, cell.label.size=NULL, cell.label.angle=0, pathway.label.size=NULL, scale=TRUE, truncation=1.5){
@@ -544,6 +548,8 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 #' @param bar.pathway.col Color of the bars reprsenting pathways
 #' @param label.text.size Text size in the plot
 #' @param label.title.size Text size of the title annotation of the plot 
+#' @importFrom ggplot2 geom_rect geom_segment geom_text annotate scale_x_continuous
+#' @importFrom graphics strwidth
 #' @return Network plot showing the significantly activated pathways in the select cluster compared to all other clusters, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
 pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
@@ -750,7 +756,7 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 #' @param dot.gene.size Size of the dots representing receptors
 #' @param bar.pathway.col Color of the bars reprsenting pathways
 #' @param label.text.size Text size in the plot
-#' @param label.title.size Text size of the title annotation of the plot 
+#' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two Commpath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
 pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=NULL, diff.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
@@ -1276,7 +1282,7 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 #' @param dot.gene.size Size of the dots representing receptors
 #' @param bar.pathway.col Color of the bars reprsenting pathways
 #' @param label.text.size Text size in the plot
-#' @param label.title.size Text size of the title annotation of the plot 
+#' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two Commpath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
 pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=NULL, diff.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){

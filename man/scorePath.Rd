@@ -13,7 +13,7 @@ scorePath(object, method = "gsva", min.size = 10, ...)
 
 \item{min.size}{Minimum size of overlaping genes between candidate pathways and the expression matrix}
 
-\item{...}{Other parameters passed to gsva}
+\item{...}{Extra parameters passed to gsva}
 }
 \value{
 Commpath object with pathways activation scores stored in the slot pathway

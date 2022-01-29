@@ -19,10 +19,10 @@ In this vignette we show Commpath's steps and functionalities for inference and 
 ### Brief description of Commpath object
 We start Commpath analysis by creating a Commpath object, which is a S4 object and consists of six slots including (i) data, a matrix containing the normalized expression values by gene * cell; (ii) cell.info, a data frame contain the information of cells; (iii) meta.info, a list containing some important parameters used during the analysis; (iv) LR.marker, a data.frame containing the result of differential expression test of ligands and receptors; (v) interact, a list containing the  information of LR interaction among clusters; (vi) pathway, a list containing the information of pathways related to the ligands and receptors.
 ### Commpath input
-The expression matrix and cell indentity information are required for Commpath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of Commpath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are available in the Commpath package.
+The expression matrix and cell indentity information are required for Commpath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of Commpath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
 We here illustrate the Commpath steps for date from the tumor tissues. And analysis for data from the normal tissues would be roughly in the same manner.
 ```
-data("HCC.tumor.3k", package = 'Commpath')
+load("path_to_download/HCC.tumor.3k.RData")
 ```
 This dataset consists of 2 varibles which are required for Commpath input:
 ***tumor.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed;
@@ -170,12 +170,11 @@ pathInterPlot(object = tumor.obj,
 <img src="https://github.com/yingyonghui/Commpath/blob/main/pic/pathInterPlot.png" height=300, width=600>
 
 #### Compare cell-cell interactions between two conditions
-Commpath also provide useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, used Commpath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. The example data from normal tissues are also available in the Commpath package.
+Commpath also provide useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, used Commpath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. The example data from normal tissues are also available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
 ```
-# We have pre-created the Commpath object for the normal samples following the above steps, and saved it in HCC.normal.3k.RData
-data("HCC.normal.3k", package = 'Commpath')
+load("path_to_download/HCC.normal.3k.RData")
 ```
-This dataset consists of 3 varibles:
+We have pre-created the Commpath object for the normal samples following the above steps. This dataset consists of 3 varibles:
 ***normal.expr*** : expression matrix for cells from normal tissues;
 ***normal.label*** : indentity lables for cells from normal tissues;
 ***normal.obj*** : Commpath object created from ***normal.expr*** and ***normal.label***, and processed by Commpath steps described above.

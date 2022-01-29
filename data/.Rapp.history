@@ -50,8 +50,15 @@ load("/Users/haolu/Documents/GitHub/Commpath/data/HCC.normal.3k.RData")
 ls()
 sample.expr[1:3,1:3]
 load("/Users/haolu/Documents/GitHub/Commpath/data/HCC.tumor.3k.RData")
-load("/Users/haolu/Documents/GitHub/Commpath/data/HCC.tumor.3k.RData")
 ls()
 head(tumor.obj@interact$InteractNumer)
 sum(tumor.obj@interact$InteractNumer)
 sum(tumor.obj@interact$InteractNumer$LR.Number)
+load("/Users/haolu/Documents/GitHub/Commpath/data/CommpathData.RData")
+ls()
+save(CommpathData,file='CommpathData.RData',compress='xz')
+load("/Users/haolu/Documents/GitHub/Commpath/data/CommpathData.RData")
+ls()
+CommpathData$DataLR$hsapiens$L
+CommpathData$DataLR$hsapiens$L$
+d
