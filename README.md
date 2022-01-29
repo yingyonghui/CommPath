@@ -22,6 +22,7 @@ We start Commpath analysis by creating a Commpath object, which is a S4 object a
 The expression matrix and cell indentity information are required for Commpath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of Commpath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
 We here illustrate the Commpath steps for date from the tumor tissues. And analysis for data from the normal tissues would be roughly in the same manner.
 ```
+# load(url("https://figshare.com/ndownloader/files/33926126"))
 load("path_to_download/HCC.tumor.3k.RData")
 ```
 This dataset consists of 2 varibles which are required for Commpath input:
@@ -172,6 +173,7 @@ pathInterPlot(object = tumor.obj,
 #### Compare cell-cell interactions between two conditions
 Commpath also provide useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, used Commpath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. The example data from normal tissues are also available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
 ```
+# load(url("https://figshare.com/ndownloader/files/33926129"))
 load("path_to_download/HCC.normal.3k.RData")
 ```
 We have pre-created the Commpath object for the normal samples following the above steps. This dataset consists of 3 varibles:
