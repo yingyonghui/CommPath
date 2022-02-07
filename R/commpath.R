@@ -376,9 +376,11 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 #' To find differentially activated pathways in each identity class 
 #' @param object Commpath object
 #' @param method Method used for differential enrichment analysis, either 't.test' of 'wilcox.test'
+#' @param only.posi only save the information of pathways showing up regulation
+#' @param only.sig only save the information of pathways showing significant differences
 #' @return Data frame including the statistic result comparing the pathway enrichment sorces between cells in each cluster and all other clusters, the significant recetor and ligand in the pathways, and the corresponding up stream identity class and ligand
 #' @export
-diffAllPath <- function(object, method='t.test'){
+diffAllPath <- function(object, method='t.test', only.posi=FALSE, only.sig=FALSE){
 	if (method=='t.test'){
 		all.test.dat <- data.frame(matrix(NA,0,12))
 	}else{
@@ -390,7 +392,7 @@ diffAllPath <- function(object, method='t.test'){
 	unique.label <- levels(all.ident)
 	for (each.ident in unique.label){
 		message(paste0('Identifying pathways for cluster ',each.ident,'...'))
-		test.res.dat <- diffPath(object, select.ident.1=each.ident, select.ident.2=NULL, method=method)
+		test.res.dat <- diffPath(object, select.ident.1=each.ident, select.ident.2=NULL, method=method, only.posi=only.posi, only.sig=only.sig)
 		if (nrow(test.res.dat)==0){ 
 			next 
 		}

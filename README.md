@@ -129,10 +129,8 @@ tumor.obj <- scorePath(object = tumor.obj, method = 'gsva', min.size = 10, paral
 ```
 After that Commpath provide **diffAllPath** to perform pathway differential activation analysis for cells in each identity class and find the receptor and ligand in the pathway:
 ```
-acti.path.dat <- diffAllPath(object = tumor.obj)
-# get all significant pathways
-acti.path.dat <- subset(acti.path.dat, p.val.adj < 0.05)
-
+# get significantly up-regulated pathways in each identity class
+acti.path.dat <- diffAllPath(object = tumor.obj, only.posi = TRUE, only.sig = TRUE)
 head(acti.path.dat)
 ```
 There are several columns stored in the variable acti.path.dat:
