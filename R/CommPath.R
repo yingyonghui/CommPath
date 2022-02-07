@@ -1,7 +1,7 @@
-#data('CommpathData', package=('Commpath'))
+#data('CommPathData', package=('CommPath'))
 
 #' To identify marker ligands and marker receptors in the expression matrix
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
 #' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
 #' @importFrom stats wilcox.test t.test p.adjust
@@ -13,7 +13,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 	expr.mat <- as.matrix(object@data)
 	label <- object@cell.info[,'Cluster']
 	
-	lr.pair.dat <- CommpathData$DataLR[[species]]
+	lr.pair.dat <- CommPathData$DataLR[[species]]
 	all.lig.reps <- unique(c(lr.pair.dat$L, lr.pair.dat$R))
 
 	expr.mat <- expr.mat[which(rownames(expr.mat) %in% all.lig.reps), ]
@@ -87,7 +87,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 }
 
 #' To find marker ligands and marker receptors
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param logFC.thre logFC threshold, marker genes with a logFC > logFC.thre will be considered
 #' @param p.thre p threshold, marker genes with a adjust p value < p.thre will be considered
 #' @importFrom reshape2 melt
@@ -98,7 +98,7 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 	marker.dat <- object@LR.marker
 	species <- object@meta.info$species
 
-	lr.pair.dat <- CommpathData$DataLR[[species]]
+	lr.pair.dat <- CommPathData$DataLR[[species]]
 	ligs <- lr.pair.dat$L
 	reps <- lr.pair.dat$R
 
@@ -206,9 +206,9 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 
 
 #' To find those pathways in which the genesets show overlap with the marker ligand and receptor genes in our dataset
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param category Character to indicate which pathway to investigate; one of "go" (GO terms), "kegg" (for KEGG pathways), 'wiki' (for WikiPathways), and "reactome" (for reactome pathways), or "all" for all pathways
-#' @return Commpath object containing the ligand-receptor interaction information and the pathways showing overlap with the marker ligand and receptor genes in the dataset
+#' @return CommPath object containing the ligand-receptor interaction information and the pathways showing overlap with the marker ligand and receptor genes in the dataset
 #' @export
 findLRpath <- function(object, category='all'){
 	options(stringsAsFactors=F)
@@ -219,21 +219,21 @@ findLRpath <- function(object, category='all'){
 
 	### select one category
 	if (category=='all'){
-		path.go.list <- CommpathData$DataGOterm[[species]]
-		path.kegg.list <- CommpathData$DataKEGGpathway[[species]]
-		path.wiki.list <- CommpathData$DataWikiPathway[[species]]
-		path.reac.list <- CommpathData$DataReactome[[species]]
+		path.go.list <- CommPathData$DataGOterm[[species]]
+		path.kegg.list <- CommPathData$DataKEGGpathway[[species]]
+		path.wiki.list <- CommPathData$DataWikiPathway[[species]]
+		path.reac.list <- CommPathData$DataReactome[[species]]
 		path.list <- c(path.go.list, path.kegg.list, path.wiki.list, path.reac.list)
 		path.list <- path.list[which(!duplicated(names(path.list)))]
 
 	}else if (category=='go'){
-		path.list <- CommpathData$DataGOterm[[species]]
+		path.list <- CommPathData$DataGOterm[[species]]
 	}else if(category=='kegg'){
-		path.list <- CommpathData$DataKEGGpathway[[species]]
+		path.list <- CommPathData$DataKEGGpathway[[species]]
 	}else if(category=='wiki'){
-		path.list <- CommpathData$DataWikiPathway[[species]]
+		path.list <- CommPathData$DataWikiPathway[[species]]
 	}else if(category=='reactome'){
-		path.list <- CommpathData$DataReactome[[species]]
+		path.list <- CommPathData$DataReactome[[species]]
 	}
 
 	marker.lig.dat <- object@interact$markerL
@@ -250,11 +250,11 @@ findLRpath <- function(object, category='all'){
 }
 
 #' To find different enriched pathway between two group cells
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param method Method used for scoring the pathways, either 'gsva' of 'average'
 #' @param min.size Minimum size of overlaping genes between candidate pathways and the expression matrix
 #' @param ... Extra parameters passed to gsva
-#' @return Commpath object with pathways activation scores stored in the slot pathway
+#' @return CommPath object with pathways activation scores stored in the slot pathway
 #' @export
 scorePath <- function(object, method='gsva', min.size=10, ...){
 	expr.mat <- as.matrix(object@data)
@@ -286,7 +286,7 @@ scorePath <- function(object, method='gsva', min.size=10, ...){
 
 
 #' To find different enriched pathway between two group cells
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param select.ident.1 Identity class to define cells for group 1
 #' @param select.ident.2 Identity class to define cells for group 2 for comparison; if 'NULL', use all other cells for comparison
 #' @param method Method used for differential enrichment analysis, either 't.test' of 'wilcox.test'
@@ -374,7 +374,7 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 
 
 #' To find differentially activated pathways in each identity class 
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param method Method used for differential enrichment analysis, either 't.test' of 'wilcox.test'
 #' @param only.posi only save the information of pathways showing up regulation
 #' @param only.sig only save the information of pathways showing significant differences
@@ -405,7 +405,7 @@ diffAllPath <- function(object, method='t.test', only.posi=FALSE, only.sig=FALSE
 
 
 #' To find the downstream identity class of specific ligand released by specific upstream identity class
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param select.ident Upstream identity class; if 'NULL', use all identity classes
 #' @param select.ligand Ligand released by upstream identity class; if 'NULL', use all ligands that are markers for the selected upstream identity class
 #' @return Data frame including the interaction information
@@ -433,7 +433,7 @@ findReceptor <- function(object, select.ident=NULL, select.ligand=NULL){
 
 
 #' To find the upstream identity classes and ligands of specific receptor expressed by specific downstream identity class
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param select.ident Downstream identity class; if 'NULL', use all identity classes
 #' @param select.receptor Receptor expressed by downstream identity class; if 'NULL', use all receptors that are markers for the selected downstream identity class
 #' @return Data frame including the interaction information
@@ -541,16 +541,16 @@ pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NUL
 }
 
 
-# #' To conduct defferential expression test in select.ident between  different conditions in one Commpath objects
-# #' @param object The first Commpath object
+# #' To conduct defferential expression test in select.ident between  different conditions in one CommPath objects
+# #' @param object The first CommPath object
 # #' @param select.ident Identity class of interest
 # #' @param compare compare
 # #' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
 # #' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
 # #' @param only.posi only logFC > 0
 # #' @param only.sig only p_val_adj < 0.05
-# #' @return data.frame of differentially expressed geens between the same clusters in two Commpath object
-# compCommpathMarker <- function(object, select.ident, compare, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
+# #' @return data.frame of differentially expressed geens between the same clusters in two CommPath object
+# compCommPathMarker <- function(object, select.ident, compare, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
 # 	select.var <- compare[1]
 # 	select.c1 <- compare[2]
 # 	select.c2 <- compare[3]
@@ -561,7 +561,7 @@ pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NUL
 
 # 	expr.mat <- as.matrix(object@data[, select.cell])
 
-# 	lr.pair.dat <- CommpathData$DataLR[[object@meta.info$species]]
+# 	lr.pair.dat <- CommPathData$DataLR[[object@meta.info$species]]
 # 	all.lig.reps <- unique(c(lr.pair.dat$L, lr.pair.dat$R))
 # 	expr.mat <- expr.mat[which(rownames(expr.mat) %in% all.lig.reps), ]
 # 	if (nrow(expr.mat)==0){
@@ -617,16 +617,16 @@ pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NUL
 # 	return(test.res)
 # }
 
-# #' To conduct defferential activation test in select.ident between different conditions in one Commpath objects
-# #' @param object The first Commpath object
+# #' To conduct defferential activation test in select.ident between different conditions in one CommPath objects
+# #' @param object The first CommPath object
 # #' @param select.ident Identity class of interest
 # #' @param compare compare
 # #' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
 # #' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
 # #' @param only.posi only logFC > 0
 # #' @param only.sig only p_val_adj < 0.05
-# #' @return Data frame of differentially expressed geens between the same clusters in two Commpath object
-# compCommpathPath <- function(object, select.ident, compare, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
+# #' @return Data frame of differentially expressed geens between the same clusters in two CommPath object
+# compCommPathPath <- function(object, select.ident, compare, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
 # 	select.var <- compare[1]
 # 	select.c1 <- compare[2]
 # 	select.c2 <- compare[3]
@@ -698,25 +698,25 @@ pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NUL
 # }
 
 
-#' To conduct defferential expression test in select.ident between two Commpath objects
-#' @param object.1 Commpath object 1
-#' @param object.2 Commpath object 2 for comparison
+#' To conduct defferential expression test in select.ident between two CommPath objects
+#' @param object.1 CommPath object 1
+#' @param object.2 CommPath object 2 for comparison
 #' @param select.ident Identity class of interest
 #' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
 #' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
 #' @param only.posi only logFC > 0
 #' @param only.sig only p_val_adj < 0.05
-#' @return Data frame of differentially expressed geens between the same clusters in two Commpath object
+#' @return Data frame of differentially expressed geens between the same clusters in two CommPath object
 #' @export
-diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
-	lr.pair.dat <- CommpathData$DataLR[[object.1@meta.info$species]]
+diffCommPathMarker <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
+	lr.pair.dat <- CommPathData$DataLR[[object.1@meta.info$species]]
 	all.lig.reps <- unique(c(lr.pair.dat$L, lr.pair.dat$R))
 
-	obj.1 <- subsetCommpath(object.1, ident.keep=select.ident)
+	obj.1 <- subsetCommPath(object.1, ident.keep=select.ident)
 	expr.mat.1 <- as.matrix(obj.1@data)
 	expr.mat.1 <- expr.mat.1[which(rownames(expr.mat.1) %in% all.lig.reps), ]
 	
-	obj.2 <- subsetCommpath(object.2, ident.keep=select.ident)
+	obj.2 <- subsetCommPath(object.2, ident.keep=select.ident)
 	expr.mat.2 <- as.matrix(obj.2@data)
 	expr.mat.2 <- expr.mat.2[which(rownames(expr.mat.2) %in% all.lig.reps), ]
 	
@@ -768,9 +768,9 @@ diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.
 	return(test.res)
 }
 
-#' To conduct defferential activation test in select.ident between two Commpath objects
-#' @param object.1 Commpath object 1
-#' @param object.2 Commpath object 2 for comparison
+#' To conduct defferential activation test in select.ident between two CommPath objects
+#' @param object.1 CommPath object 1
+#' @param object.2 CommPath object 2 for comparison
 #' @param select.ident Identity class of interest
 #' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
 #' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
@@ -778,11 +778,11 @@ diffCommpathMarker <- function(object.1, object.2, select.ident, method='wilcox.
 #' @param only.posi only logFC > 0
 #' @param only.sig only p_val_adj < 0.05
 #' @param ... Extra parameters passed to gsva
-#' @return Data frame of differentially activated pathways between the same clusters in two Commpath object
+#' @return Data frame of differentially activated pathways between the same clusters in two CommPath object
 #' @export
-diffCommpathPath <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE, ...){
-	obj.1 <- subsetCommpath(object.1, ident.keep=select.ident)
-	obj.2 <- subsetCommpath(object.2, ident.keep=select.ident)
+diffCommPathPath <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE, ...){
+	obj.1 <- subsetCommPath(object.1, ident.keep=select.ident)
+	obj.2 <- subsetCommPath(object.2, ident.keep=select.ident)
 	score.mat.1 <- obj.1@pathway$acti.score
 	# find pathways presenting in obj.1
 	uniq.path.name <- rownames(score.mat.1)

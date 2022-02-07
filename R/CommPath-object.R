@@ -1,14 +1,14 @@
 #setClassUnion(name='exprMatrix', members=c("matrix", "dgCMatrix"))
 
-#' To define the Commpath object and the key slots
+#' To define the CommPath object and the key slots
 #' @slot data normalized expression matrix
 #' @slot cell.info vector of cell labels
 #' @slot meta.info list of important parameters used during the analysis
 #' @slot LR.marker data frame of the differential expression test result of ligands and receptors
 #' @slot interact list containing information of LR interaction among clusters
 #' @slot pathway list containing information of pathways associated with ligands and receptors
-#' @exportClass Commpath
-Commpath <- methods::setClass("Commpath",
+#' @exportClass CommPath
+CommPath <- methods::setClass("CommPath",
 	slots = c(data = 'ANY',
 	cell.info = 'data.frame',
 	meta.info = 'list',
@@ -17,13 +17,13 @@ Commpath <- methods::setClass("Commpath",
 	pathway = 'list')
 )
 
-#' To create a Commpath object
+#' To create a CommPath object
 #' @param expr.mat Matrix or data frame of expression matrix, with genes in rows and cells in columns
 #' @param cell.info Vector of lables indicating identity classes of cells in the expression matrix, and the order of lables should match the order of cells in the expression matrix; or a data frame containing the meta infomation of cells with the row names matching the cells in the expression matrix and a column named as "Cluster" must be included to indicate identity classes of cells
 #' @param species Species
-#' @return Commpath object
+#' @return CommPath object
 #' @export
-createCommpath <- function(expr.mat, cell.info, species){
+createCommPath <- function(expr.mat, cell.info, species){
 	if ((length(species) > 1) | (!(species %in% c('hsapiens', 'mmusculus', 'rnorvegicus')))){
 		stop("Select one species from 'hsapiens', 'mmusculus', and 'rnorvegicus'")
 	}
@@ -43,7 +43,7 @@ createCommpath <- function(expr.mat, cell.info, species){
 	}else{
 		stop('Either input a vector or a data frame for cell.info')
 	}
-	object <- methods::new(Class="Commpath",
+	object <- methods::new(Class="CommPath",
 		data = as(expr.mat, "dgCMatrix"),
 		cell.info = cell.info,
 		meta.info = list(species=species, logFC.thre=NULL, p.thre=NULL),
@@ -56,10 +56,10 @@ createCommpath <- function(expr.mat, cell.info, species){
 }
 
 
-#' Show method for Commpath
-#' @param object A Commpath object
+#' Show method for CommPath
+#' @param object A CommPath object
 #' @docType methods
-setMethod(f="show", signature="Commpath", definition=function(object) {
+setMethod(f="show", signature="CommPath", definition=function(object) {
 	cat("An object of class", class(object), "with\n",
 		nrow(x = object@data), "genes *", ncol(x = object@data), "cells.\n"
 	)

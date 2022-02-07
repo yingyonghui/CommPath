@@ -87,11 +87,11 @@ factor.to.character <- function(x, column=c(1, 2)){
 	return(x)
 }
 
-#' To subset a Commpath object
-#' @param object Commpath object
+#' To subset a CommPath object
+#' @param object CommPath object
 #' @param ident.keep idents to keep
-#' @return a subset Commpath object
-subsetCommpath <- function(object, ident.keep){
+#' @return a subset CommPath object
+subsetCommPath <- function(object, ident.keep){
 	cell.info <- object@cell.info
 	cell.info <- subset(cell.info, Cluster %in% ident.keep)
 	object@cell.info <- cell.info
@@ -127,7 +127,7 @@ order.and.top <- function(x, n){
 
 #' To get interaction intensity between clusters and receptors
 #' @param top.rep.name top.rep.name
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param select.ident select.ident
 #' @param ident.label ident.label
 #' @param find find

@@ -1,5 +1,5 @@
 #' To present a circos plot
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param plot To present a circos plot for LR count ("count") or overall interaction intensity ("intensity") among cell clusters
 #' @param col Vector of colors of each identity; names of the col vector are supposed to be assigned to indicate each color for each identity
 #' @param ident To highlight the interaction between a specific identity class and others; if 'NULL', plot interaction for all identity classes
@@ -82,7 +82,7 @@ circosPlot <- function(object, plot='count', col=NULL, ident=NULL, name.vert=FAL
 }
 
 #' To present a dot plot for specific ligand-receptor pairs in specific clusters
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param ligand.ident Vector containing the ligand ident
 #' @param receptor.ident Vector containing the receptor ident
 #' @param ident.levels Vector of levels of the identities 
@@ -206,7 +206,7 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 }
 
 #' To plot a heatmap of those differentially enriched pathways for each cluster
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath; if NULL, diffAllPath would be run to get the acti.path.dat
 #' @param top.n.pathway Show the heatmap of top n most significant pathways
 #' @param path.order Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
@@ -349,9 +349,9 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 # 	select.c2 <- compare[3]
 # 	condition <- paste0(select.var,': ',select.c1,' and ',select.var,': ',select.c2)
 # 	message(paste0('Identifying differentially expressed marker ligands(receptors) for cluster ',select.ident,' between ',condition,'...'))
-# 	comp.marker.dat <- compCommpathMarker(object=object, select.ident=select.ident, compare=compare, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
+# 	comp.marker.dat <- compCommPathMarker(object=object, select.ident=select.ident, compare=compare, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
 # 	message(paste0('Identifying differentially activated pathways for cluster ',select.ident,' between ',condition,'...'))
-# 	comp.path.dat <- compCommpathPath(object=object, select.ident=select.ident, compare=compare, method='wilcox.test', p.adjust='BH', only.posi=TRUE, only.sig=TRUE)
+# 	comp.path.dat <- compCommPathPath(object=object, select.ident=select.ident, compare=compare, method='wilcox.test', p.adjust='BH', only.posi=TRUE, only.sig=TRUE)
 
 # 	### select pathways showing overlap with marker ligands and receptors of the select.ident
 # 	ident.path.dat <- diffPath(object=object, select.ident.1=select.ident, only.posi=FALSE, only.sig=FALSE)
@@ -534,7 +534,7 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 
 
 #' To present the interactions for a selected cluster, including the upstream clusters and the activated pathways in the selected cluster
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
 #' @param acti.path.dat Data frame of differential activation test result from diffAllPath
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
@@ -740,12 +740,12 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 }
 
 
-#' To compare differentially activated pathways and the involved receptors between the selected clusters of two Commpath object
-#' @param object.1 Commpath object 1
-#' @param object.2 Commpath object 2 for comparison
+#' To compare differentially activated pathways and the involved receptors between the selected clusters of two CommPath object
+#' @param object.1 CommPath object 1
+#' @param object.2 CommPath object 2 for comparison
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
-#' @param diff.marker.dat Data frame of defferential expression test result from diffCommpathMarker; if NULL, diffCommpathMarker would be run to get diff.marker.dat
-#' @param diff.path.dat Data frame of defferential activation test result from diffCommpathPath; if NULL, diffCommpathPath would be run to get acti.path.dat
+#' @param diff.marker.dat Data frame of defferential expression test result from diffCommPathMarker; if NULL, diffCommPathMarker would be run to get diff.marker.dat
+#' @param diff.path.dat Data frame of defferential activation test result from diffCommPathPath; if NULL, diffCommPathPath would be run to get acti.path.dat
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
 #' @param path.order Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
@@ -757,17 +757,17 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 #' @param bar.pathway.col Color of the bars reprsenting pathways
 #' @param label.text.size Text size in the plot
 #' @param label.title.size Text size of the title annotation of the plot
-#' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two Commpath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
+#' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two CommPath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
 pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=NULL, diff.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	if(is.null(diff.marker.dat)){
 		message(paste0('Identifying differentially expressed ligands(receptors) between cluster ',select.ident,' in object 1 and object 2'))
-		diff.marker.dat <- diffCommpathMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
+		diff.marker.dat <- diffCommPathMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
 	}
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
-		diff.path.dat <- diffCommpathPath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
+		diff.path.dat <- diffCommPathPath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
 	}
 	all.ident <- object.1@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
@@ -969,7 +969,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 
 
 #' To present the interactions for a selected cluster, including both the upstream and downstream clusters which are connected by specific pathways in the selected cluster
-#' @param object Commpath object
+#' @param object CommPath object
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
 #' @param acti.path.dat Data frame of differential activation test result from diffAllPath
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
@@ -1265,12 +1265,12 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 }
 
 
-#' To compare the pathway mediated cell-cell communication flow for a specific cluster between two Commpath object
-#' @param object.1 Commpath object 1
-#' @param object.2 Commpath object 2 for comparison
+#' To compare the pathway mediated cell-cell communication flow for a specific cluster between two CommPath object
+#' @param object.1 CommPath object 1
+#' @param object.2 CommPath object 2 for comparison
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
-#' @param diff.marker.dat Data frame of defferential expression test result from diffCommpathMarker; if NULL, diffCommpathMarker would be run to get diff.marker.dat
-#' @param diff.path.dat Data frame of defferential activation test result from diffCommpathPath; if NULL, diffCommpathPath would be run to get acti.path.dat
+#' @param diff.marker.dat Data frame of defferential expression test result from diffCommPathMarker; if NULL, diffCommPathMarker would be run to get diff.marker.dat
+#' @param diff.path.dat Data frame of defferential activation test result from diffCommPathPath; if NULL, diffCommPathPath would be run to get acti.path.dat
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
 #' @param path.order Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
@@ -1283,17 +1283,17 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 #' @param bar.pathway.col Color of the bars reprsenting pathways
 #' @param label.text.size Text size in the plot
 #' @param label.title.size Text size of the title annotation of the plot
-#' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two Commpath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
+#' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two CommPath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
 pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=NULL, diff.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	if(is.null(diff.marker.dat)){
 		message(paste0('Identifying differentially expressed ligands(receptors) between cluster ',select.ident,' in object 1 and object 2'))
-		diff.marker.dat <- diffCommpathMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
+		diff.marker.dat <- diffCommPathMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
 	}
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
-		diff.path.dat <- diffCommpathPath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
+		diff.path.dat <- diffCommPathPath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
 	}
 	
 	all.ident <- object.1@cell.info$Cluster
