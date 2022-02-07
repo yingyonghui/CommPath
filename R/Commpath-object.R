@@ -28,8 +28,20 @@ createCommpath <- function(expr.mat, cell.info, species){
 		stop("Select one species from 'hsapiens', 'mmusculus', and 'rnorvegicus'")
 	}
 	if(is.vector(cell.info) | is.factor(cell.info)){
+		if(length(cell.info)!=ncol(expr.mat)){
+			stop('The input cell.info is vector, and the length of cell.info should match the ncol of expr.mat!')
+		}
 		cell.info <- data.frame(Cluster=cell.info)
 		rownames(cell.info) <- colnames(expr.mat)
+	}else if(is.data.frame(cell.info)){
+		if(nrow(cell.info)!=ncol(expr.mat)){
+			stop('The input cell.info is a data frame, and the row names of cell.info should match the column names of expr.mat!')
+		}
+		if(any(rownames(cell.info) !=  colnames(expr.mat))){
+			stop('The input cell.info is a data frame, and the row names of cell.info should match the column names of expr.mat!')
+		}
+	}else{
+		stop('Either input a vector or a data frame for cell.info')
 	}
 	object <- methods::new(Class="Commpath",
 		data = as(expr.mat, "dgCMatrix"),
