@@ -708,7 +708,7 @@ pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NUL
 #' @param only.sig only p_val_adj < 0.05
 #' @return Data frame of differentially expressed geens between the same clusters in two CommPath object
 #' @export
-diffCommPathMarker <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
+compareMarker <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE){
 	lr.pair.dat <- CommPathData$DataLR[[object.1@meta.info$species]]
 	all.lig.reps <- unique(c(lr.pair.dat$L, lr.pair.dat$R))
 
@@ -780,7 +780,7 @@ diffCommPathMarker <- function(object.1, object.2, select.ident, method='wilcox.
 #' @param ... Extra parameters passed to gsva
 #' @return Data frame of differentially activated pathways between the same clusters in two CommPath object
 #' @export
-diffCommPathPath <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE, ...){
+comparePath <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE, ...){
 	obj.1 <- subsetCommPath(object.1, ident.keep=select.ident)
 	obj.2 <- subsetCommPath(object.2, ident.keep=select.ident)
 	score.mat.1 <- obj.1@pathway$acti.score

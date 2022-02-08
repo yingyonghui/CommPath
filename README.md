@@ -183,10 +183,10 @@ To compare 2 CommPath object, we shall first identify the differentially express
 ```
 # Take endothelial cells as example
 # Identification of differentially expressed ligands and receptors 
-diff.marker.dat <- diffCommPathMarker(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial')
+diff.marker.dat <- compareMarker(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial')
 
 # Identification of differentially activated pathways 
-diff.path.dat <- diffCommPathPath(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', parallel.sz = 4)
+diff.path.dat <- comparePath(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', parallel.sz = 4)
 ```
 Then we compare the differentially activated pathways and the cell-cell communication flow mediated by those pathways.
 ```
