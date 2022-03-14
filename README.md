@@ -144,7 +144,7 @@ Then we use **pathHeatmap** to plot a heatmap of those differentially activated 
 pathHeatmap(object = tumor.obj,
        acti.path.dat = acti.path.dat,
        top.n.pathway = 10,
-       sort = "p.val.adj")
+       path.order = "p.val.adj")
 ```
 <img src="https://github.com/yingyonghui/CommPath/blob/main/pic/pathHeatmap.png" height=350, width=600>
 
