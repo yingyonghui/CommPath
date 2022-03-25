@@ -57,7 +57,7 @@ Then you can visualize the interaction through a circos plot:
 # Plot interaction for all cluster
 circosPlot(object = tumor.obj)
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/circosPlot-count.png" height=300, width=300>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/circosPlot-count.png" height=300, width=300>
 
 In the above circos plot, the directions of lines indicate the associations from ligands to receptors, and the widths of lines indicate the counts of LR pairs among clusters.
 
