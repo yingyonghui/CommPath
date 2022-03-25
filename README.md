@@ -65,7 +65,7 @@ In the above circos plot, the directions of lines indicate the associations from
 # Plot interaction for all cluster
 circosPlot(object = tumor.obj)
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/circosPlot-intensity.png" height=300, width=300>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/circosPlot-intensity.png" height=300, width=300>
 
 Now the widths of lines indicate the overall interaction intensity among clusters.
 ```
@@ -74,7 +74,7 @@ Now the widths of lines indicate the overall interaction intensity among cluster
 ident = 'Endothelial'
 circosPlot(object = tumor.obj, ident = ident)
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/circosPlot-Endothelial.png" height=300, width=300>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/circosPlot-Endothelial.png" height=300, width=300>
 
 For a specific cluster of interest, CommPath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand): 
 ```
@@ -106,13 +106,13 @@ CommPath also provides dot plots to investigate its upstream clusters which rele
 # Investigate the upstream clusters which release specific ligands to the interested cluster
 dotPlot(object = tumor.obj, receptor.ident = ident)
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/dotPlot-ligand.png" height=300, width=400>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/dotPlot-ligand.png" height=300, width=400>
 
 ```
 # Investigate the downstream clusters which expressed specific receptors for the interested cluster
 dotPlot(object = tumor.obj, ligand.ident = ident)
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/dotPlot-receptor.png" height=300, width=400>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/dotPlot-receptor.png" height=300, width=400>
 
 #### Pathway analysis
 CommPath conducts pathway analysis to identify signaling pathways involving the marker ligands and receptors for each cluster.
@@ -146,7 +146,7 @@ pathHeatmap(object = tumor.obj,
        top.n.pathway = 10,
        path.order = "p.val.adj")
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/pathHeatmap.png" height=350, width=600>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathHeatmap.png" height=350, width=600>
 
 #### Cell-cell interaction flow via pathways
 For a specific cell cluster, which here we name it as B for demonstration, CommPath identify the upstream cluster A sending signals to B, the downstream cluster C receiving signals from B, and the significantly activated pathways in B to mediate the A-B-C communication flow. More exactly, through LR and pathways analysis described above, CommPath is able to identify LR pairs between A and B, LR pairs between B and C, and pathways activated in B. Then CommPath screens for pathways in B which involve both the receptors to interact with A and ligands to interact with C.
@@ -158,7 +158,7 @@ pathPlot(object = tumor.obj,
     select.ident = select.ident, 
     acti.path.dat = acti.path.dat)
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/pathPlot.png" height=300, width=380>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathPlot.png" height=300, width=380>
 
 ```
 # Plot to identify receptors, the associated activated pathways, and the downstream clusters
@@ -166,7 +166,7 @@ pathInterPlot(object = tumor.obj,
     select.ident = select.ident, 
     acti.path.dat = acti.path.dat)
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/pathInterPlot.png" height=300, width=600>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathInterPlot.png" height=300, width=600>
 
 #### Compare cell-cell interactions between two conditions
 CommPath also provide useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, used CommPath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. The example data from normal tissues are also available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
@@ -193,13 +193,13 @@ Then we compare the differentially activated pathways and the cell-cell communic
 # To compare differentially activated pathways and the involved receptors between the selected clusters of two CommPath object
 pathPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/pathPlot.compare.png" height=300, width=400>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathPlot.compare.png" height=300, width=400>
 
 ```
 # To compare the pathway mediated cell-cell communication flow for a specific cluster between 2 CommPath object
 pathInterPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
 ```
-<img src="https://github.com/yingyonghui/CommPath/blob/main/pic/pathInterPlot.compare.png" height=300, width=600>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathInterPlot.compare.png" height=300, width=600>
 
 #### sessionInfo()
 ```

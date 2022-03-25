@@ -63,8 +63,8 @@ CommpathData$DataLR$hsapiens$L
 CommpathData$DataLR$hsapiens$L$
 d
 load("/Users/haolu/Documents/GitHub/Commpath/data/CommpathData.RData")
-load("/Users/haolu/Documents/GitHub/Commpath/data/CommpathData.RData")
 ls()
 CommPathData <- CommpathData
 save(CommPathData, file='CommathData.RData')
 save(CommPathData, file='CommathData.RData', compress="xz")
+load("/Users/haolu/Documents/GitHub/CommPath/data/CommPathData.RData")
