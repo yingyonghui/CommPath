@@ -20,12 +20,12 @@ CommPath <- methods::setClass("CommPath",
 #' To create a CommPath object
 #' @param expr.mat Matrix or data frame of expression matrix, with genes in rows and cells in columns
 #' @param cell.info Vector of lables indicating identity classes of cells in the expression matrix, and the order of lables should match the order of cells in the expression matrix; or a data frame containing the meta infomation of cells with the row names matching the cells in the expression matrix and a column named as "Cluster" must be included to indicate identity classes of cells
-#' @param species Species
+#' @param species Species, either 'hsapiens' or 'mmusculus'
 #' @return CommPath object
 #' @export
 createCommPath <- function(expr.mat, cell.info, species){
-	if ((length(species) > 1) | (!(species %in% c('hsapiens', 'mmusculus', 'rnorvegicus')))){
-		stop("Select one species from 'hsapiens', 'mmusculus', and 'rnorvegicus'")
+	if ((length(species) > 1) | (!(species %in% c('hsapiens', 'mmusculus')))){
+		stop("Select one species from 'hsapiens' or 'mmusculus'")
 	}
 	if(is.vector(cell.info) | is.factor(cell.info)){
 		if(length(cell.info)!=ncol(expr.mat)){
