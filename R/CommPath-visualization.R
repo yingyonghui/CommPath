@@ -211,17 +211,18 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 #' @param top.n.pathway Show the heatmap of top n most significant pathways
 #' @param path.order Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
 #' @param col Vector of colors used to generate a series of gradient colors to show the enrichment score of pathways; provide a vector containing at least two colors
-#' @param show.legend Whether to show the legend or not; default is FALSE
+#' @param cell.aver Whether to display averaged pathway enrichment scores among cells from the same clusters or to display scores for all cells; default is FALSE, which means to display scores for all cells
 #' @param cell.label.size Text size of the label of cell types
 #' @param cell.label.angle Rotation angle of the label of cell types
 #' @param pathway.label.size Text size of the label of pathways
 #' @param scale Whether to scale the enrichment sorces matrix among cells or not; default is TRUE
 #' @param truncation Truncation fold value; scores > (the third quartiles + truncation * interquartile range) and scores < (the first quartiles - truncation * interquartile range) will be adjusted; either a value to indicate the specific truncation value or 'none' to indicate no truncation; default is 1.5
+#' @param show.legend Whether to show the legend or not; default is FALSE
 #' @importFrom ggplot2 geom_tile facet_grid element_blank
 #' @importFrom stats quantile
 #' @return Heatmap plot showing the top enriched patways in each cluster
 #' @export
-pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order='p.val.adj', col=NULL, show.legend=FALSE, cell.label.size=NULL, cell.label.angle=0, pathway.label.size=NULL, scale=TRUE, truncation=1.5){
+pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order='p.val.adj', col=NULL, cell.aver=FALSE, cell.label.size=NULL, cell.label.angle=0, pathway.label.size=NULL, scale=TRUE, truncation=1.5, show.legend=FALSE){
 	if (is.null(acti.path.dat)){
 		acti.path.dat <- diffAllPath(object)
 	}
@@ -275,69 +276,149 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 	}
 	
 	gsva.mat <- gsva.mat[path,]
-
-	### scale or not
-	if (scale){
-		gsva.scale.mat <- t(scale(t(gsva.mat)))
-	}else{
-		gsva.scale.mat <- gsva.mat
-	}
-
-	gsva.dat <- melt(gsva.scale.mat, varnames=c('Pathway','Cell'),value.name="Score",  na.rm=TRUE)
-	gsva.dat$Pathway <- factor(as.character(gsva.dat$Pathway), levels=rev(path))
-	gsva.dat$Cell <- as.character(gsva.dat$Cell)
-
-	cell.anno.dat <- data.frame(Cellname=colnames(gsva.scale.mat),Celltype=ident.label,stringsAsFactors=F)
-	gsva.dat$Celltype <- cell.anno.dat[match(gsva.dat$Cell, cell.anno.dat$Cellname),'Celltype']
 	
-	if (is.numeric(truncation)){
-		IQR <- quantile(gsva.dat$Score, 0.75) - quantile(gsva.dat$Score, 0.25)
-		max.score <- quantile(gsva.dat$Score, 0.75) + IQR * truncation
-		min.score <- quantile(gsva.dat$Score, 0.25) - IQR * truncation
-		gsva.dat[gsva.dat$Score > max.score, 'Score'] <- max.score
-		gsva.dat[gsva.dat$Score < min.score, 'Score'] <- min.score
-	}else if(truncation!='none'){
-		stop('Either a specific value or "none" is needed for the truncation parameter')
+	if (cell.aver){
+		gsva.cell.mat <- t(gsva.mat)
+		path.aver <- by(data=gsva.cell.mat, INDICES=ident.label, FUN=colMeans)
+		path.mat <- matrix(unlist(path.aver), nrow=ncol(gsva.cell.mat))
+		rownames(path.mat) <- colnames(gsva.cell.mat)
+		colnames(path.mat) <- names(path.aver)
+
+		### scale or not
+		if (scale){
+			gsva.scale.mat <- t(scale(t(path.mat)))
+		}else{
+			gsva.scale.mat <- path.mat
+		}
+
+		gsva.dat <- melt(gsva.scale.mat, varnames=c('Pathway','Cell'),value.name="Score",  na.rm=TRUE)
+		gsva.dat$Pathway <- factor(as.character(gsva.dat$Pathway), levels=rev(path))
+		### Cell is the Celltype
+		gsva.dat$Cell <- factor(as.character(gsva.dat$Cell), levels=levels(ident.label))
+		
+		if (is.numeric(truncation)){
+			IQR <- quantile(gsva.dat$Score, 0.75) - quantile(gsva.dat$Score, 0.25)
+			max.score <- quantile(gsva.dat$Score, 0.75) + IQR * truncation
+			min.score <- quantile(gsva.dat$Score, 0.25) - IQR * truncation
+			gsva.dat[gsva.dat$Score > max.score, 'Score'] <- max.score
+			gsva.dat[gsva.dat$Score < min.score, 'Score'] <- min.score
+		}else if(truncation!='none'){
+			stop('Either a specific value or "none" is needed for the truncation parameter')
+		}
+		
+		rotatedAxisElementText = function(angle,position='x'){
+			angle <- angle[1]
+			position <- position[1]
+			positions <- list(x=0,y=90,top=180,right=270)
+			if(!position %in% names(positions)){
+				stop(sprintf("'position' must be one of [%s]",paste(names(positions),collapse=", ")),call.=FALSE)
+			}
+			if(!is.numeric(angle)){
+				stop("'angle' must be numeric",call.=FALSE)
+			}
+			rads  <- (-angle - positions[[ position ]])*pi/180
+			hjust <- 0.5*(1 - sin(rads))
+			vjust <- 0.5*(1 + cos(rads))
+			element_text(angle=angle,vjust=vjust,hjust=hjust)
+		}
+		### basic plot
+		path.heatmap <- ggplot(data=gsva.dat, aes(x=Cell, y=Pathway, fill=Score)) + 
+			geom_tile() +
+			labs(x='',y='') +
+			theme(axis.text.y=element_text(colour='black'),
+				axis.text.x=element_text(colour='black'),
+				axis.ticks=element_blank(),
+				axis.line=element_blank(),
+				panel.background=element_rect(fill="white"))
+		path.heatmap <- path.heatmap + theme(axis.text.x=rotatedAxisElementText(cell.label.angle,'x'))
+
+		### gradient color
+		if (is.null(col)){
+			colours <- c("#440154" ,"#21908C", "#FDE725")
+		}else if(length(col)==1){
+			stop('Select at least 2 colors to generate a series of gradient colors')
+		}else{
+			colours <- col
+		}
+		path.heatmap <- path.heatmap + scale_fill_gradientn(colours=colours)
+
+		### show legend or not
+		if (!show.legend){
+			path.heatmap <- path.heatmap + theme(legend.position='none')
+		}
+
+		### cell and pathway label
+		if (!is.null(cell.label.size)){
+			path.heatmap <- path.heatmap + theme(axis.text.x=element_text(size=cell.label.size))
+		}
+		if (!is.null(pathway.label.size)){
+			path.heatmap <- path.heatmap + theme(axis.text.y=element_text(size=pathway.label.size))
+		}
+		return(path.heatmap)
+
+	}else{
+		### scale or not
+		if (scale){
+			gsva.scale.mat <- t(scale(t(gsva.mat)))
+		}else{
+			gsva.scale.mat <- gsva.mat
+		}
+
+		gsva.dat <- melt(gsva.scale.mat, varnames=c('Pathway','Cell'),value.name="Score",  na.rm=TRUE)
+		gsva.dat$Pathway <- factor(as.character(gsva.dat$Pathway), levels=rev(path))
+		gsva.dat$Cell <- as.character(gsva.dat$Cell)
+
+		cell.anno.dat <- data.frame(Cellname=colnames(gsva.scale.mat),Celltype=ident.label,stringsAsFactors=F)
+		gsva.dat$Celltype <- cell.anno.dat[match(gsva.dat$Cell, cell.anno.dat$Cellname),'Celltype']
+		
+		if (is.numeric(truncation)){
+			IQR <- quantile(gsva.dat$Score, 0.75) - quantile(gsva.dat$Score, 0.25)
+			max.score <- quantile(gsva.dat$Score, 0.75) + IQR * truncation
+			min.score <- quantile(gsva.dat$Score, 0.25) - IQR * truncation
+			gsva.dat[gsva.dat$Score > max.score, 'Score'] <- max.score
+			gsva.dat[gsva.dat$Score < min.score, 'Score'] <- min.score
+		}else if(truncation!='none'){
+			stop('Either a specific value or "none" is needed for the truncation parameter')
+		}
+		
+		### basic plot
+		path.heatmap <- ggplot(data=gsva.dat, aes(x=Cell, y=Pathway, fill=Score)) + 
+			geom_tile() +
+			facet_grid(facets=~Celltype,scales="free",space="free",switch='x') +
+			labs(x='',y='') +
+			theme(axis.text.x=element_blank(),
+				axis.text.y=element_text(colour='black'),
+				axis.ticks=element_blank(),
+				axis.line=element_blank(),
+				strip.background = element_blank(),
+				strip.text.x=element_text(colour="black", angle=cell.label.angle),
+				panel.background=element_rect(fill="white"))
+
+		### gradient color
+		if (is.null(col)){
+			colours <- c("#440154" ,"#21908C", "#FDE725")
+		}else if(length(col)==1){
+			stop('Select at least 2 colors to generate a series of gradient colors')
+		}else{
+			colours <- col
+		}
+		path.heatmap <- path.heatmap + scale_fill_gradientn(colours=colours)
+
+		### show legend or not
+		if (!show.legend){
+			path.heatmap <- path.heatmap + theme(legend.position='none')
+		}
+
+		### cell and pathway label
+		if (!is.null(cell.label.size)){
+			path.heatmap <- path.heatmap + theme(strip.text.x=element_text(size=cell.label.size))
+		}
+		if (!is.null(pathway.label.size)){
+			path.heatmap <- path.heatmap + theme(axis.text.y=element_text(size=pathway.label.size))
+		}
+		return(path.heatmap)
 	}
 	
-	### basic plot
-	path.heatmap <- ggplot(data=gsva.dat, aes(x=Cell, y=Pathway, fill=Score)) + 
-		geom_tile() +
-		facet_grid(facets=~Celltype,scales="free",space="free",switch='x') +
-		labs(x='',y='') +
-		theme(axis.text.x=element_blank(),
-			axis.text.y=element_text(colour='black'),
-			axis.ticks=element_blank(),
-			axis.line=element_blank(),
-			strip.background = element_blank(),
-			strip.text.x=element_text(colour="black", angle=cell.label.angle))
-
-	### gradient color
-	if (is.null(col)){
-		colours <- c("#440154" ,"#21908C", "#FDE725")
-	}else if(length(col)==1){
-		stop('Select at least 2 colors to generate a series of gradient colors')
-	}else{
-		colours <- col
-	}
-	path.heatmap <- path.heatmap + scale_fill_gradientn(colours=colours)
-
-	### show legend or not
-	if (show.legend){
-		path.heatmap <- path.heatmap + theme(legend.title=element_text(colour='black',size=14),
-			legend.text=element_text(colour='black',size=14))
-	}else{
-		path.heatmap <- path.heatmap + theme(legend.position='none')
-	}
-
-	### cell and pathway label
-	if (!is.null(cell.label.size)){
-		path.heatmap <- path.heatmap + theme(strip.text.x=element_text(size=cell.label.size))
-	}
-	if (!is.null(pathway.label.size)){
-		path.heatmap <- path.heatmap + theme(axis.text.y=element_text(size=pathway.label.size))
-	}
-	return(path.heatmap)
 }
 
 

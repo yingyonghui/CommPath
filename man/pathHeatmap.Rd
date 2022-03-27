@@ -10,12 +10,13 @@ pathHeatmap(
   top.n.pathway = 10,
   path.order = "p.val.adj",
   col = NULL,
-  show.legend = FALSE,
+  cell.aver = FALSE,
   cell.label.size = NULL,
   cell.label.angle = 0,
   pathway.label.size = NULL,
   scale = TRUE,
-  truncation = 1.5
+  truncation = 1.5,
+  show.legend = FALSE
 )
 }
 \arguments{
@@ -29,7 +30,7 @@ pathHeatmap(
 
 \item{col}{Vector of colors used to generate a series of gradient colors to show the enrichment score of pathways; provide a vector containing at least two colors}
 
-\item{show.legend}{Whether to show the legend or not; default is FALSE}
+\item{cell.aver}{Whether to display averaged pathway enrichment scores among cells from the same clusters or to display scores for all cells; default is FALSE, which means to display scores for all cells}
 
 \item{cell.label.size}{Text size of the label of cell types}
 
@@ -40,6 +41,8 @@ pathHeatmap(
 \item{scale}{Whether to scale the enrichment sorces matrix among cells or not; default is TRUE}
 
 \item{truncation}{Truncation fold value; scores > (the third quartiles + truncation * interquartile range) and scores < (the first quartiles - truncation * interquartile range) will be adjusted; either a value to indicate the specific truncation value or 'none' to indicate no truncation; default is 1.5}
+
+\item{show.legend}{Whether to show the legend or not; default is FALSE}
 }
 \value{
 Heatmap plot showing the top enriched patways in each cluster
