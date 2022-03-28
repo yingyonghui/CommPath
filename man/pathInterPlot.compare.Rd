@@ -31,9 +31,9 @@ pathInterPlot.compare(
 
 \item{select.ident}{Plot the activated pathways for which cluster or cell type?}
 
-\item{diff.marker.dat}{Data frame of defferential expression test result from diffCommPathMarker; if NULL, diffCommPathMarker would be run to get diff.marker.dat}
+\item{diff.marker.dat}{Data frame of defferential expression test result from compareMarker; if NULL, compareMarker would be run to get diff.marker.dat}
 
-\item{diff.path.dat}{Data frame of defferential activation test result from diffCommPathPath; if NULL, diffCommPathPath would be run to get acti.path.dat}
+\item{diff.path.dat}{Data frame of defferential activation test result from comparePath; if NULL, comparePath would be run to get diff.path.dat}
 
 \item{top.n.path}{Top n pathways with the smallest adjusted p values to plot}
 
