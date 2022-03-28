@@ -63,7 +63,7 @@ In the above circos plot, the directions of lines indicate the associations from
 
 ```
 # Plot interaction for all cluster
-circosPlot(object = tumor.obj)
+circosPlot(object = tumor.obj, plot='intensity')
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/circosPlot-intensity.png" height=300, width=300>
 
