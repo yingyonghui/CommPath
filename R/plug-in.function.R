@@ -158,3 +158,21 @@ cluster.lr.inten <- function(top.rep.name, object, select.ident, ident.label, fi
 #' @param x LR intensity
 #' @return Line width
 LRinten.to.width <- function(x){ return(x/max(x) + 1) }
+
+#' To set up the hjust and vjust of text on axises
+#' @param angle rotation angle
+#' @param position 'x' or 'y' axis
+#' @importFrom ggplot2 element_text
+#' @return Theme element_text
+rotated.axis.element.text <- function(angle,position='x'){
+	angle <- angle[1]
+	position <- position[1]
+	positions <- list(x=0,y=90,top=180,right=270)
+	if(!is.numeric(angle)){
+		stop("cell.label.angle must be numeric",call.=FALSE)
+	}
+	rads  <- (-angle - positions[[ position ]])*pi/180
+	hjust <- 0.5*(1 - sin(rads))
+	vjust <- 0.5*(1 + cos(rads))
+	return(element_text(angle=angle,vjust=vjust,hjust=hjust))
+}

@@ -612,7 +612,7 @@ compareMarker <- function(object.1, object.2, select.ident, method='wilcox.test'
 #' @param object.1 CommPath object 1
 #' @param object.2 CommPath object 2 for comparison
 #' @param select.ident Identity class of interest
-#' @param method Method used for differential expression test, either 'wilcox.test' or 't.test'
+#' @param method Method used for differential expression test, either 't.test' or 'wilcox.test'
 #' @param p.adjust Method used for p value correction for multiple differential expression test; see p.adjust function for more information
 #' @param min.size Minimum size of overlaping genes between candidate pathways and the expression matrix
 #' @param only.posi only logFC > 0
@@ -620,7 +620,7 @@ compareMarker <- function(object.1, object.2, select.ident, method='wilcox.test'
 #' @param ... Extra parameters passed to gsva
 #' @return Data frame of differentially activated pathways between the same clusters in two CommPath object
 #' @export
-comparePath <- function(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE, ...){
+comparePath <- function(object.1, object.2, select.ident, method='t.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE, ...){
 	obj.1 <- subsetCommPath(object.1, ident.keep=select.ident)
 	obj.2 <- subsetCommPath(object.2, ident.keep=select.ident)
 	score.mat.1 <- obj.1@pathway$acti.score

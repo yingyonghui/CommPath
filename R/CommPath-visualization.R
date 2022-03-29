@@ -306,21 +306,6 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 			stop('Either a specific value or "none" is needed for the truncation parameter')
 		}
 		
-		rotatedAxisElementText = function(angle,position='x'){
-			angle <- angle[1]
-			position <- position[1]
-			positions <- list(x=0,y=90,top=180,right=270)
-			if(!position %in% names(positions)){
-				stop(sprintf("'position' must be one of [%s]",paste(names(positions),collapse=", ")),call.=FALSE)
-			}
-			if(!is.numeric(angle)){
-				stop("'angle' must be numeric",call.=FALSE)
-			}
-			rads  <- (-angle - positions[[ position ]])*pi/180
-			hjust <- 0.5*(1 - sin(rads))
-			vjust <- 0.5*(1 + cos(rads))
-			element_text(angle=angle,vjust=vjust,hjust=hjust)
-		}
 		### basic plot
 		path.heatmap <- ggplot(data=gsva.dat, aes(x=Cell, y=Pathway, fill=Score)) + 
 			geom_tile() +
@@ -330,7 +315,7 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 				axis.ticks=element_blank(),
 				axis.line=element_blank(),
 				panel.background=element_rect(fill="white"))
-		path.heatmap <- path.heatmap + theme(axis.text.x=rotatedAxisElementText(cell.label.angle,'x'))
+		path.heatmap <- path.heatmap + theme(axis.text.x=rotated.axis.element.text(cell.label.angle,'x'))
 
 		### gradient color
 		if (is.null(col)){
@@ -1197,7 +1182,7 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & median.diff > 0)
 		ident.path.dat$diff <- ident.path.dat$median.diff
 	}else{
-		stop('Please input the integrate acti.path.dat computed from diffPath')
+		stop('Please input the integrate acti.path.dat computed from comparePath')
 	}
 
 	if (nrow(ident.path.dat)==0){ paste0(stop('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
@@ -1294,7 +1279,6 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	}
 	plot.ligand.to.ident.obj1.dat <- melt(top.lig.LR.inten, varnames=c('Cell.To','Ligand'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ligand.to.ident.obj1.dat <- factor.to.character(plot.ligand.to.ident.obj1.dat)
-
 
 	### LR.inten for obj.2 for ligand
 	cur.lig.LR.obj2.inten <- cluster.lr.inten(top.lig.name, object.2, select.ident, ident.label, find='receptor')

@@ -8,7 +8,7 @@ comparePath(
   object.1,
   object.2,
   select.ident,
-  method = "wilcox.test",
+  method = "t.test",
   p.adjust = "BH",
   min.size = 10,
   only.posi = FALSE,
@@ -23,7 +23,7 @@ comparePath(
 
 \item{select.ident}{Identity class of interest}
 
-\item{method}{Method used for differential expression test, either 'wilcox.test' or 't.test'}
+\item{method}{Method used for differential expression test, either 't.test' or 'wilcox.test'}
 
 \item{p.adjust}{Method used for p value correction for multiple differential expression test; see p.adjust function for more information}
 
