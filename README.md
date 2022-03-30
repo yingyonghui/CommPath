@@ -76,11 +76,11 @@ Now the widths of lines indicate the overall interaction intensity among cluster
 # Highlight the interaction of specific cluster
 # Here we take the endothelial cell as an example
 ident = 'Endothelial'
-pdf('circosPlot.Endothelial-count.pdf',height=6,width=6)
+pdf('circosPlot-Endothelial-count.pdf',height=6,width=6)
 circosPlot(object = tumor.obj, ident = ident)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-Endothelial.png" height=300, width=300>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-Endothelial-count.png" height=300, width=300>
 
 For a specific cluster of interest, CommPath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand): 
 ```
@@ -110,7 +110,7 @@ Columns ***Log2FC.LR***, ***P.val.LR***, ***P.val.adj.LR*** show the interaction
 CommPath also provides dot plots to investigate its upstream clusters which release specific ligands and its downstream clusters which expressed specific receptors: 
 ```
 # Investigate the upstream clusters which release specific ligands to the interested cluster
-pdf('dotPlot.ligand.pdf',height=5,width=10)
+pdf('dotPlot-ligand.pdf',height=5,width=10)
 dotPlot(object = tumor.obj, receptor.ident = select.ident)
 dev.off()
 ```
@@ -118,7 +118,7 @@ dev.off()
 
 ```
 # Investigate the downstream clusters which expressed specific receptors for the interested cluster
-pdf('dotPlot.receptor.pdf',height=5,width=10.5)
+pdf('dotPlot-receptor.pdf',height=5,width=10.5)
 dotPlot(object = tumor.obj, ligand.ident = select.ident)
 dev.off()
 ```
@@ -210,19 +210,19 @@ diff.path.dat <- comparePath(object.1 = tumor.obj, object.2 = normal.obj, select
 Then we compare the differentially activated pathways and the cell-cell communication flow mediated by those pathways.
 ```
 # To compare differentially activated pathways and the involved receptors between the selected clusters of two CommPath object
-pdf('pathPlot.compare.pdf',height=6,width=10)
+pdf('pathPlot-compare.pdf',height=6,width=10)
 pathPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = select.ident, diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot.compare.png" height=300, width=400>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot-compare.png" height=300, width=400>
 
 ```
 # To compare the pathway mediated cell-cell communication flow for a specific cluster between 2 CommPath object
-pdf('pathInterPlot.compare.pdf',height=6,width=14)
+pdf('pathInterPlot-compare.pdf',height=6,width=14)
 pathInterPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = select.ident, diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathInterPlot.compare.png" height=300, width=600>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathInterPlot-compare.png" height=300, width=600>
 
 #### sessionInfo()
 ```
