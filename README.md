@@ -175,7 +175,7 @@ pathPlot(object = tumor.obj,
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot.png" height=300, width=390>
-In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream  cluster and endothelial cells via the specific receptors; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of the receptor (ligand) expression in endothelial cells compared to all other cells; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores in endothelial cells compared to all other cells.
+In the above line plot, the widths of lines between ***tumor.obj*** ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream  cluster and endothelial cells via the specific receptors; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of the receptor (ligand) expression in endothelial cells compared to all other cells; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores in endothelial cells compared to all other cells.
 
 ```
 # To identify receptors, the associated activated pathways, and the downstream clusters
