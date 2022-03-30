@@ -34,8 +34,8 @@ We start CommPath analysis by creating a CommPath object:
 ```
 # Classify the species of the scRNA-seq experiment by the species parameter
 # CommPath now enable the analysis of scRNA-seq experiment from human (hsapiens) and mouse (mmusculus).
-tumor.obj <- createCommPath(expr.mat = tumor.expr, 
-		cell.info = tumor.label, 
+tumor.obj <- createCommPath(expr.mat = sample.expr, 
+		cell.info = sample.label, 
 		species = 'hsapiens')
 ```
 Firstly we're supposed to identify marker ligands and receptors (ligands and receptors that are significantly highly expressed) for each identity class of cells in the expression matrix. CommPath provide **findLRmarker** to identify these markers by *t.test* or *wilcox.test*.
@@ -55,7 +55,9 @@ The counts of significant LR pairs and overall interaction intensity among cell 
 Then you can visualize the interaction through a circos plot:
 ```
 # Plot interaction for all cluster
+pdf('circosPlot-count.pdf',height=6,width=6)
 circosPlot(object = tumor.obj)
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/circosPlot-count.png" height=300, width=300>
 
@@ -63,7 +65,9 @@ In the above circos plot, the directions of lines indicate the associations from
 
 ```
 # Plot interaction for all cluster
+pdf('circosPlot-intensity.pdf',height=6,width=6)
 circosPlot(object = tumor.obj, plot='intensity')
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/circosPlot-intensity.png" height=300, width=300>
 
@@ -72,7 +76,9 @@ Now the widths of lines indicate the overall interaction intensity among cluster
 # Highlight the interaction of specific cluster
 # Here we take the endothelial cell as an example
 ident = 'Endothelial'
+pdf('circosPlot.Endothelial-count.pdf',height=6,width=6)
 circosPlot(object = tumor.obj, ident = ident)
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/circosPlot-Endothelial.png" height=300, width=300>
 
@@ -104,13 +110,17 @@ Columns ***Log2FC.LR***, ***P.val.LR***, ***P.val.adj.LR*** show the interaction
 CommPath also provides dot plots to investigate its upstream clusters which release specific ligands and its downstream clusters which expressed specific receptors: 
 ```
 # Investigate the upstream clusters which release specific ligands to the interested cluster
-dotPlot(object = tumor.obj, receptor.ident = ident)
+pdf('dotPlot.ligand.pdf',height=5,width=10)
+dotPlot(object = tumor.obj, receptor.ident = select.ident)
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/dotPlot-ligand.png" height=300, width=400>
 
 ```
 # Investigate the downstream clusters which expressed specific receptors for the interested cluster
-dotPlot(object = tumor.obj, ligand.ident = ident)
+pdf('dotPlot.receptor.pdf',height=5,width=10.5)
+dotPlot(object = tumor.obj, ligand.ident = select.ident)
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/dotPlot-receptor.png" height=300, width=400>
 
@@ -141,10 +151,14 @@ Column ***ligand.in.path*** shows the marker ligands released by the current ide
 
 Then we use **pathHeatmap** to plot a heatmap of those differentially activated pathways for each cluster to display the highly variable pathways:
 ```
+pdf('pathHeatmap.pdf',height=10,width=7)
 pathHeatmap(object = tumor.obj,
        acti.path.dat = acti.path.dat,
        top.n.pathway = 10,
-       path.order = "p.val.adj")
+       cell.aver = TRUE,
+       cell.label.angle=45,
+       show.legend=TRUE)
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathHeatmap.png" height=350, width=600>
 
@@ -154,17 +168,21 @@ For a specific cell cluster, which here we name it as B for demonstration, CommP
 # Identification and visualization of the identified pathways
 # Plot to identify receptors and the associated activated pathways for a specific cluster
 select.ident = 'Endothelial'
+pdf('pathPlot.pdf',height=6,width=10)
 pathPlot(object = tumor.obj, 
     select.ident = select.ident, 
     acti.path.dat = acti.path.dat)
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathPlot.png" height=300, width=380>
 
 ```
 # Plot to identify receptors, the associated activated pathways, and the downstream clusters
+pdf('pathInterPlot.pdf',height=6,width=14)
 pathInterPlot(object = tumor.obj, 
     select.ident = select.ident, 
     acti.path.dat = acti.path.dat)
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathInterPlot.png" height=300, width=600>
 
@@ -182,22 +200,27 @@ We have pre-created the CommPath object for the normal samples following the abo
 To compare 2 CommPath object, we shall first identify the differentially expressed ligands and receptors, and differentially activated pathways between  the same cluster of cells in the two object.
 ```
 # Take endothelial cells as example
+select.ident <- 'Endothelial'
 # Identification of differentially expressed ligands and receptors 
-diff.marker.dat <- compareMarker(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial')
+diff.marker.dat <- compareMarker(object.1 = tumor.obj, object.2 = normal.obj, select.ident = select.ident)
 
 # Identification of differentially activated pathways 
-diff.path.dat <- comparePath(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', parallel.sz = 4)
+diff.path.dat <- comparePath(object.1 = tumor.obj, object.2 = normal.obj, select.ident = select.ident, parallel.sz = 4)
 ```
 Then we compare the differentially activated pathways and the cell-cell communication flow mediated by those pathways.
 ```
 # To compare differentially activated pathways and the involved receptors between the selected clusters of two CommPath object
-pathPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
+pdf('pathPlot.compare.pdf',height=6,width=10)
+pathPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = select.ident, diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathPlot.compare.png" height=300, width=400>
 
 ```
 # To compare the pathway mediated cell-cell communication flow for a specific cluster between 2 CommPath object
-pathInterPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = 'Endothelial', diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
+pdf('pathInterPlot.compare.pdf',height=6,width=14)
+pathInterPlot.compare(object.1 = tumor.obj, object.2 = normal.obj, select.ident = select.ident, diff.marker.dat = diff.marker.dat, diff.path.dat = diff.path.dat)
+dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/pic/pathInterPlot.compare.png" height=300, width=600>
 
@@ -211,54 +234,54 @@ Matrix products: default
 BLAS/LAPACK: /home/luh/miniconda3/envs/seurat4/lib/libopenblasp-r0.3.17.so
 
 locale:
- [1] LC_CTYPE=zh_CN.UTF-8       LC_NUMERIC=C              
- [3] LC_TIME=zh_CN.UTF-8        LC_COLLATE=zh_CN.UTF-8    
- [5] LC_MONETARY=zh_CN.UTF-8    LC_MESSAGES=zh_CN.UTF-8   
- [7] LC_PAPER=zh_CN.UTF-8       LC_NAME=C                 
- [9] LC_ADDRESS=C               LC_TELEPHONE=C            
-[11] LC_MEASUREMENT=zh_CN.UTF-8 LC_IDENTIFICATION=C       
+ [1] LC_CTYPE=zh_CN.UTF-8       LC_NUMERIC=C
+ [3] LC_TIME=zh_CN.UTF-8        LC_COLLATE=zh_CN.UTF-8
+ [5] LC_MONETARY=zh_CN.UTF-8    LC_MESSAGES=zh_CN.UTF-8
+ [7] LC_PAPER=zh_CN.UTF-8       LC_NAME=C
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C
+[11] LC_MEASUREMENT=zh_CN.UTF-8 LC_IDENTIFICATION=C
 
 attached base packages:
-[1] stats     graphics  grDevices utils     datasets  methods   base     
+[1] stats     graphics  grDevices utils     datasets  methods   base
 
 other attached packages:
-[1] GSVA_1.38.2     ggplot2_3.3.5   dplyr_1.0.7     reshape2_1.4.4 
-[5] circlize_0.4.13 CommPath_0.1.0 
+[1] CommPath_0.1.0  Matrix_1.3-4    ggplot2_3.3.5   dplyr_1.0.7
+[5] reshape2_1.4.4  circlize_0.4.13
 
 loaded via a namespace (and not attached):
- [1] Rcpp_1.0.7                  lattice_0.20-44            
- [3] digest_0.6.27               assertthat_0.2.1           
- [5] utf8_1.2.2                  R6_2.5.1                   
- [7] GenomeInfoDb_1.26.7         plyr_1.8.6                 
- [9] stats4_4.0.3                RSQLite_2.2.8              
-[11] httr_1.4.2                  pillar_1.6.2               
-[13] zlibbioc_1.36.0             GlobalOptions_0.1.2        
-[15] rlang_0.4.11                annotate_1.68.0            
-[17] blob_1.2.2                  S4Vectors_0.28.1           
-[19] Matrix_1.3-4                labeling_0.4.2             
-[21] BiocParallel_1.24.1         stringr_1.4.0              
-[23] RCurl_1.98-1.4              bit_4.0.4                  
-[25] munsell_0.5.0               DelayedArray_0.16.3        
-[27] compiler_4.0.3              pkgconfig_2.0.3            
-[29] BiocGenerics_0.36.1         shape_1.4.6                
+ [1] Rcpp_1.0.7                  lattice_0.20-44
+ [3] assertthat_0.2.1            digest_0.6.27
+ [5] utf8_1.2.2                  R6_2.5.1
+ [7] GenomeInfoDb_1.26.7         plyr_1.8.6
+ [9] stats4_4.0.3                RSQLite_2.2.8
+[11] httr_1.4.2                  pillar_1.6.2
+[13] zlibbioc_1.36.0             GlobalOptions_0.1.2
+[15] rlang_0.4.11                annotate_1.68.0
+[17] blob_1.2.2                  S4Vectors_0.28.1
+[19] labeling_0.4.2              BiocParallel_1.24.1
+[21] stringr_1.4.0               RCurl_1.98-1.4
+[23] bit_4.0.4                   munsell_0.5.0
+[25] DelayedArray_0.16.3         GSVA_1.38.2
+[27] compiler_4.0.3              pkgconfig_2.0.3
+[29] BiocGenerics_0.36.1         shape_1.4.6
 [31] tidyselect_1.1.1            SummarizedExperiment_1.20.0
-[33] tibble_3.1.3                GenomeInfoDbData_1.2.4     
-[35] IRanges_2.24.1              matrixStats_0.60.1         
-[37] XML_3.99-0.7                fansi_0.5.0                
-[39] crayon_1.4.1                withr_2.4.2                
-[41] bitops_1.0-7                grid_4.0.3                 
-[43] xtable_1.8-4                GSEABase_1.52.1            
-[45] gtable_0.3.0                lifecycle_1.0.0            
-[47] DBI_1.1.1                   magrittr_2.0.1             
-[49] scales_1.1.1                graph_1.68.0               
-[51] stringi_1.7.4               cachem_1.0.6               
-[53] farver_2.1.0                XVector_0.30.0             
-[55] ellipsis_0.3.2              generics_0.1.0             
-[57] vctrs_0.3.8                 tools_4.0.3                
-[59] bit64_4.0.5                 Biobase_2.50.0             
-[61] glue_1.4.2                  purrr_0.3.4                
-[63] MatrixGenerics_1.2.1        parallel_4.0.3             
-[65] fastmap_1.1.0               AnnotationDbi_1.52.0       
-[67] colorspace_2.0-2            GenomicRanges_1.42.0       
-[69] memoise_2.0.0             
+[33] tibble_3.1.3                GenomeInfoDbData_1.2.4
+[35] IRanges_2.24.1              matrixStats_0.60.1
+[37] XML_3.99-0.7                fansi_0.5.0
+[39] crayon_1.4.1                withr_2.4.2
+[41] bitops_1.0-7                grid_4.0.3
+[43] xtable_1.8-4                GSEABase_1.52.1
+[45] gtable_0.3.0                lifecycle_1.0.0
+[47] DBI_1.1.1                   magrittr_2.0.1
+[49] scales_1.1.1                graph_1.68.0
+[51] stringi_1.7.4               cachem_1.0.6
+[53] XVector_0.30.0              farver_2.1.0
+[55] ellipsis_0.3.2              generics_0.1.0
+[57] vctrs_0.3.8                 tools_4.0.3
+[59] bit64_4.0.5                 Biobase_2.50.0
+[61] glue_1.4.2                  purrr_0.3.4
+[63] MatrixGenerics_1.2.1        parallel_4.0.3
+[65] fastmap_1.1.0               AnnotationDbi_1.52.0
+[67] colorspace_2.0-2            GenomicRanges_1.42.0
+[69] memoise_2.0.0          
 ```
