@@ -36,11 +36,11 @@ We start CommPath analysis by creating a CommPath object:
 # CommPath now enable the analysis of scRNA-seq experiment from human (hsapiens) and mouse (mmusculus).
 tumor.obj <- createCommPath(expr.mat = sample.expr, 
 		cell.info = sample.label, 
-		species = 'hsapiens')
+		species = "hsapiens")
 ```
 Firstly we're supposed to identify marker ligands and receptors (ligands and receptors that are significantly highly expressed) for each cluster of cells in the expression matrix. CommPath provide **findLRmarker** to identify these markers by *t.test* or *wilcox.test*.
 ```
-tumor.obj <- findLRmarker(object = tumor.obj, method = 'wilcox.test')
+tumor.obj <- findLRmarker(object = tumor.obj, method = "wilcox.test")
 ```
 
 #### Identification of ligand-receptor (LR) associations
@@ -66,7 +66,7 @@ In the above circos plot, the directions of lines indicate the associations from
 ```
 # To show the overall interaction intensity of LR interactions among all clusters
 pdf('circosPlot-intensity.pdf',height=6,width=6)
-circosPlot(object = tumor.obj, plot='intensity')
+circosPlot(object = tumor.obj, plot="intensity")
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-intensity.png" height=300, width=300>
@@ -84,8 +84,8 @@ dev.off()
 For a specific cluster of interest, CommPath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand): 
 ```
 # For the selected cluster and selected receptor, find the upstream cluster and ligand
-select.ident = 'Endothelial'
-select.receptor = 'ACKR1'
+select.ident = "Endothelial"
+select.receptor = "ACKR1"
 
 ident.up.dat <- findLigand(object = tumor.obj, 
     select.ident = select.ident, 
@@ -93,8 +93,8 @@ ident.up.dat <- findLigand(object = tumor.obj,
 head(ident.up.dat)
 
 # For the selected cluster and selected ligand, find the downstream cluster and receptpr
-select.ident = 'Endothelial'
-select.ligand = 'CXCL12'
+select.ident = "Endothelial"
+select.ligand = "CXCL12"
 
 ident.down.dat <- findReceptor(object = tumor.obj, 
     select.ident = select.ident, 
@@ -129,13 +129,13 @@ CommPath conducts pathway analysis to identify signaling pathways containing the
 # To find pathways in which genesets show overlap with the marker ligands and receptors in the example dataset
 # CommPath provides pathway annotations from KEGG pathways, WikiPathways, reactome pathways, and GO terms
 # Here we take the KEGG pathways as an example
-tumor.obj <- findLRpath(object = tumor.obj, category = 'kegg')
+tumor.obj <- findLRpath(object = tumor.obj, category = "kegg")
 ```
 Now genesets showing overlap with the marker ligands and receptors are stored  in tumor.obj@interact[['pathwayLR']]. Then we score the pathways to measure the activation levels for each pathway in each cell.
 ```
 # To compute pathway activation score by the gsva algorithm or in an average manner
 # For more information about gsva algorithm, see the GSVA package
-tumor.obj <- scorePath(object = tumor.obj, method = 'gsva', min.size = 10)
+tumor.obj <- scorePath(object = tumor.obj, method = "gsva", min.size = 10)
 ```
 After that CommPath provide **diffAllPath** to perform pathway differential activation analysis for cells in each cluster and find the receptor and ligand in the pathway:
 ```
@@ -175,7 +175,7 @@ pathPlot(object = tumor.obj,
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot.png" height=300, width=390>
-In the above line plot, the widths of lines between *Upstream* cluster and *Receptor* represent the overall interaction intensity between the upstream  cluster and endothelial cells via the specific receptors; the sizes and colors of dots in the *Receptor* (*Ligand*) column represent the average log2FC and -log10(*P*) of the receptor (ligand) expression in endothelial cells compared to all other cells; the lengths and colors of bars in the *Pathway annotation* column represent the mean difference and -log10(*P*) of pathway scores in endothelial cells compared to all other cells.
+In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream  cluster and endothelial cells via the specific receptors; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of the receptor (ligand) expression in endothelial cells compared to all other cells; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores in endothelial cells compared to all other cells.
 
 ```
 # To identify receptors, the associated activated pathways, and the downstream clusters
@@ -217,7 +217,7 @@ pathPlot.compare(object.1 = tumor.obj,
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot-compare.png" height=300, width=390>
-In the above line plot, the widths of lines between *Upstream* cluster and *Receptor* represent the overall interaction intensity between the upstream clusters and endothelial cells via the specific receptors, and the colors indicate the interaction intensity is upregulated (red) or downregulated (blue) in tumor tissues compared to that in normal tissues; the sizes and colors of dots in the *Receptor* column represent the average log2FC and -log10(*P*) of the receptor expression in endothelial cells compared to all other cells in tumor tissues; the lengths and colors of bars in the *Pathway annotation* column represent the mean difference and -log10(*P*) of pathway scores of endothelail cells in tumor tissues compared to that in normal tissues.
+In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream clusters and endothelial cells via the specific receptors, and the colors indicate the interaction intensity is upregulated (red) or downregulated (blue) in tumor tissues compared to that in normal tissues; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of the receptor expression in endothelial cells compared to all other cells in tumor tissues; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores of endothelail cells in tumor tissues compared to that in normal tissues.
 ```
 # To compare the pathway mediated cell-cell communication flow for a specific cluster between 2 CommPath object
 pdf('pathInterPlot-compare.pdf',height=6,width=14)
