@@ -4,7 +4,13 @@
 \alias{circosPlot}
 \title{To present a circos plot}
 \usage{
-circosPlot(object, plot = "count", col = NULL, ident = NULL, name.vert = FALSE)
+circosPlot(
+  object,
+  plot = "count",
+  col = NULL,
+  select.ident = NULL,
+  name.vert = FALSE
+)
 }
 \arguments{
 \item{object}{CommPath object}
@@ -13,7 +19,7 @@ circosPlot(object, plot = "count", col = NULL, ident = NULL, name.vert = FALSE)
 
 \item{col}{Vector of colors of each identity; names of the col vector are supposed to be assigned to indicate each color for each identity}
 
-\item{ident}{To highlight the interaction between a specific identity class and others; if 'NULL', plot interaction for all identity classes}
+\item{select.ident}{To highlight the interaction between a specific identity class and others; if 'NULL', plot interaction for all identity classes}
 
 \item{name.vert}{Should the group annotation be vertical to the grid? Defualt is FALSE}
 }

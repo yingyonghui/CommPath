@@ -2,12 +2,12 @@
 #' @param object CommPath object
 #' @param plot To present a circos plot for LR count ("count") or overall interaction intensity ("intensity") among cell clusters
 #' @param col Vector of colors of each identity; names of the col vector are supposed to be assigned to indicate each color for each identity
-#' @param ident To highlight the interaction between a specific identity class and others; if 'NULL', plot interaction for all identity classes
+#' @param select.ident To highlight the interaction between a specific identity class and others; if 'NULL', plot interaction for all identity classes
 #' @param name.vert Should the group annotation be vertical to the grid? Defualt is FALSE
 #' @importFrom circlize circos.clear circos.par chordDiagram circos.track circos.text
 #' @return Circos plot showing the ligand-receptor interaction
 #' @export
-circosPlot <- function(object, plot='count', col=NULL, ident=NULL, name.vert=FALSE){
+circosPlot <- function(object, plot='count', col=NULL, select.ident=NULL, name.vert=FALSE){
 	options(stringsAsFactors=F)
 	Cluster <- object@cell.info$Cluster
 	if (!is.factor(Cluster)){ Cluster <- factor(Cluster) }
@@ -48,7 +48,7 @@ circosPlot <- function(object, plot='count', col=NULL, ident=NULL, name.vert=FAL
 	circos.par(start.degree=90, clock.wise=F)
 
 	### plot interaction for all identity classes
-	if (is.null(ident)){
+	if (is.null(select.ident)){
 		if (!name.vert){
 			chordDiagram(Interact.num.dat, order=all.ident, grid.col=col, annotationTrack=c("name","grid"), transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow",preAllocateTracks = list(track.height=mm_h(5)), annotationTrackHeight=convert_height(c(1, 2), "mm"))
 		}else{
@@ -58,18 +58,18 @@ circosPlot <- function(object, plot='count', col=NULL, ident=NULL, name.vert=FAL
 
 	}else{
 		### highlight the interaction for a specific identity class
-		### check the ident parameter
-		if (!(all(ident %in% all.ident)) | length(ident)>1){
+		### check the select.ident parameter
+		if (!(all(select.ident %in% all.ident)) | length(select.ident)>1){
 			stop(paste0('Select one identity class from ', pasteIdent(all.ident)))
 		}
 
 		line.col <- rep('gray',nrow(Interact.num.dat))
-		line.col[(Interact.num.dat$Cell.From==ident)] <- col[as.character(ident)]
-		ident.lig = Interact.num.dat[Interact.num.dat$Cell.To==ident,'Cell.From']
-		line.col[(Interact.num.dat$Cell.To==ident)] <- col[as.character(ident.lig)]
+		line.col[(Interact.num.dat$Cell.From==select.ident)] <- col[as.character(select.ident)]
+		ident.lig = Interact.num.dat[Interact.num.dat$Cell.To==select.ident,'Cell.From']
+		line.col[(Interact.num.dat$Cell.To==select.ident)] <- col[as.character(ident.lig)]
 		
 		link.zindex <- 1:nrow(Interact.num.dat)
-		ident.line <- (Interact.num.dat$Cell.From==ident) | (Interact.num.dat$Cell.To==ident)
+		ident.line <- (Interact.num.dat$Cell.From==select.ident) | (Interact.num.dat$Cell.To==select.ident)
 		link.zindex[!ident.line] <- rank(-(Interact.num.dat[!ident.line,'Plot']))
 		link.zindex[ident.line] <- rank(-(Interact.num.dat[ident.line,'Plot']))+length(which(!ident.line))
 		if (!name.vert){
