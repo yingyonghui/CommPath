@@ -634,10 +634,10 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 #' @export
 pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=NULL, diff.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
-	if(is.null(diff.marker.dat)){
-		message(paste0('Identifying differentially expressed ligands(receptors) between cluster ',select.ident,' in object 1 and object 2'))
-		diff.marker.dat <- compareMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
-	}
+	# if(is.null(diff.marker.dat)){
+	# 	message(paste0('Identifying differentially expressed ligands(receptors) between cluster ',select.ident,' in object 1 and object 2'))
+	# 	diff.marker.dat <- compareMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
+	# }
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
 		diff.path.dat <- comparePath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
@@ -1160,10 +1160,10 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 #' @export
 pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=NULL, diff.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
-	if(is.null(diff.marker.dat)){
-		message(paste0('Identifying differentially expressed ligands(receptors) between cluster ',select.ident,' in object 1 and object 2'))
-		diff.marker.dat <- compareMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
-	}
+	# if(is.null(diff.marker.dat)){
+	# 	message(paste0('Identifying differentially expressed ligands(receptors) between cluster ',select.ident,' in object 1 and object 2'))
+	# 	diff.marker.dat <- compareMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
+	# }
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
 		diff.path.dat <- comparePath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
