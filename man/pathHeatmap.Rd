@@ -12,11 +12,11 @@ pathHeatmap(
   col = NULL,
   cell.aver = FALSE,
   cell.label.size = NULL,
-  cell.label.angle = 0,
+  cell.label.angle = 45,
   pathway.label.size = NULL,
   scale = TRUE,
   truncation = 1.5,
-  show.legend = FALSE
+  show.legend = TRUE
 )
 }
 \arguments{

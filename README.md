@@ -17,7 +17,7 @@ library(CommPath)
 ## Tutorials
 In this vignette we show CommPath's steps and functionalities for inference and analysis of ligand-receptor interactions by applying it to a scRNA-seq data (GEO accession number: GSE156337) on cells from hepatocellular carcinoma (HCC) patients.
 ### Brief description of CommPath object
-We start CommPath analysis by creating a CommPath object, which is a S4 object and consists of six slots including (i) data, a matrix containing the normalized expression values by gene * cell; (ii) cell.info, a data frame contain the information of cells; (iii) meta.info, a list containing some important parameters used during the analysis; (iv) LR.marker, a data.frame containing the result of differential expression test of ligands and receptors; (v) interact, a list containing the  information of LR interaction among clusters; (vi) pathway, a list containing the information of pathways related to the ligands and receptors.
+We start CommPath analysis by creating a CommPath object, which is a S4 object and consists of six slots including (i) **data**, a matrix containing the normalized expression values by gene $\times$ cell; (ii) **cell.info**, a dataframe contain the information of cells; (iii) **meta.info**, a list containing some important parameters used during the analysis; (iv) **LR.marker**, a dataframe containing the result of differential expression test of ligands and receptors; (v) **interact**, a list containing the  information of LR interaction among clusters; (vi) **pathway**, a list containing the information of pathways related to the ligands and receptors.
 ### CommPath input
 The expression matrix and cell indentity information are required for CommPath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of CommPath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
 We here illustrate the CommPath steps for data from the tumor tissues. And analysis for data from the normal tissues would be roughly in the same manner.
@@ -26,14 +26,12 @@ We here illustrate the CommPath steps for data from the tumor tissues. And analy
 load("path_to_download/HCC.tumor.3k.RData")
 ```
 This dataset consists of 3 varibles, 2 of which are required for CommPath input:
-***tumor.expr*** : expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed;
-***tumor.label*** : a vector of lables indicating identity classes of cells in the expression matrix, and the order of lables should match the order of cells in the expression matrix; usrs may also provide a data frame containing the meta infomation of cells with the row names matching the cells in the expression matrix and a column named as ***Cluster*** must be included to indicate identity classes of cells.
-The remaining one variable ***tumor.obj*** is the CommPath object created from ***tumor.expr*** and ***tumor.label*** and processed by CommPath standard procedures. This variable would be temporarily ignored since we will recrate it by the following steps. 
+***tumor.expr*** : the expression matrix of gene $\times$ cell. Expression values are required to be first normalized by the library-size and log-transformed;
+***tumor.label*** : a vector of lables indicating identity classes of cells in the expression matrix, and the order of lables should match the order of cells in the expression matrix; usrs may also provide a dataframe containing the meta infomation of cells with the row names matching the cells in the expression matrix and a column named ***Cluster*** must be included to indicate identity classes of cells.
+The remaining one variable ***tumor.obj*** is the CommPath object created from ***tumor.expr*** and ***tumor.label*** and processed by CommPath standard procedures. This variable would be temporarily ignored since we will recreate it by the following steps. 
 #### Identification of marker ligands and receptors
 We start CommPath analysis by creating a CommPath object:
 ```
-# Classify the species of the scRNA-seq experiment by the species parameter
-# CommPath now enable the analysis of scRNA-seq experiment from human (hsapiens) and mouse (mmusculus).
 tumor.obj <- createCommPath(expr.mat = sample.expr, 
 		cell.info = sample.label, 
 		species = "hsapiens")
@@ -52,7 +50,7 @@ tumor.obj <- findLRpairs(object = tumor.obj,
 ```
 The counts of significant LR pairs and overall interaction intensity among cell clusters are then stored in tumor.obj@interact[['InteractNumer']]，and the detailed information of each LR pair is stored in tumor.obj@interact[['InteractGeneUnfold']].
 
-Then you can visualize the interaction through a circos plot:
+Then we can visualize the interaction through a circos plot:
 ```
 # To show the counts of LR associations among all clusters
 pdf('circosPlot-count.pdf',height=6,width=6)
@@ -72,7 +70,8 @@ dev.off()
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-intensity.png" height=300, width=300>
 
 Now the widths of lines represent the overall interaction intensity among clusters.
-Then we highlight the interaction of specific cluster. Here we take the endothelial cell as an example:
+
+Then we highlight the interaction of specific clusters. Here we take the endothelial cell as an example:
 ```
 select.ident = 'Endothelial'
 pdf('circosPlot-Endothelial-count.pdf',height=6,width=6)
@@ -81,9 +80,9 @@ dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-Endothelial-count.png" height=300, width=300>
 
-For a specific cluster of interest, CommPath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) for specific cluster and receptor (ligand): 
+For a specific cluster of interest, CommPath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) interacting with the specific cluster: 
 ```
-# For the selected cluster and selected receptor, find the upstream cluster and ligand
+# For the selected cluster and receptor, find the upstream cluster and ligand
 select.ident = "Endothelial"
 select.receptor = "ACKR1"
 
@@ -92,7 +91,7 @@ ident.up.dat <- findLigand(object = tumor.obj,
     select.receptor = select.receptor)
 head(ident.up.dat)
 
-# For the selected cluster and selected ligand, find the downstream cluster and receptpr
+# For the selected cluster and ligand, find the downstream cluster and receptor
 select.ident = "Endothelial"
 select.ligand = "CXCL12"
 
@@ -104,7 +103,7 @@ head(ident.down.dat)
 
 There are 7 columns stored in the variable ***ident.up.dat***/***ident.down.dat***:
 Columns ***Cell.From***, ***Cell.To***, ***Ligand***, ***Receptor*** show the upstream and dowstream clusters and the specific ligands and receptors for the LR associations;
-Columns ***Log2FC.LR***, ***P.val.LR***, ***P.val.adj.LR*** show the interaction intensity (measured by the product of Log2FCs of ligands and receptors)and the corresponding original and adjusted ***p*** value for hypothesis test of one pair of LR.
+Columns ***Log2FC.LR***, ***P.val.LR***, ***P.val.adj.LR*** show the interaction intensity (measured by the product of Log2FCs of ligands and receptors) and the corresponding original and adjusted ***P*** value for hypothesis test of the LR pair.
 
 CommPath also provides dot plots to investigate its upstream clusters which release specific ligands and its downstream clusters which expresse specific receptors: 
 ```
@@ -116,7 +115,7 @@ dev.off()
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/dotPlot-ligand.png" height=300, width=600>
 
 ```
-# To investigate the downstream clusters which expresse receptors for the interested cluster
+# To investigate the downstream clusters which express receptors for the interested cluster
 pdf('dotPlot-receptor.pdf',height=5,width=10.5)
 dotPlot(object = tumor.obj, ligand.ident = select.ident)
 dev.off()
@@ -126,7 +125,7 @@ dev.off()
 #### Pathway analysis
 CommPath conducts pathway analysis to identify signaling pathways containing the marker ligands and receptors for each cluster.
 ```
-# To find pathways in which genesets show overlap with the marker ligands and receptors in the example dataset
+# To find pathways in which genesets show overlap with the marker ligands and receptors
 # CommPath provides pathway annotations from KEGG pathways, WikiPathways, reactome pathways, and GO terms
 # Here we take the KEGG pathways as an example
 tumor.obj <- findLRpath(object = tumor.obj, category = "kegg")
@@ -134,36 +133,33 @@ tumor.obj <- findLRpath(object = tumor.obj, category = "kegg")
 Now genesets showing overlap with the marker ligands and receptors are stored  in tumor.obj@interact[['pathwayLR']]. Then we score the pathways to measure the activation levels for each pathway in each cell.
 ```
 # To compute pathway activation score by the gsva algorithm or in an average manner
-# For more information about gsva algorithm, see the GSVA package
+# For more information about the gsva algorithm, see the GSVA package (PMID23323831)
 tumor.obj <- scorePath(object = tumor.obj, method = "gsva", min.size = 10)
 ```
-After that CommPath provide **diffAllPath** to perform pathway differential activation analysis for cells in each cluster and find the receptor and ligand in the pathway:
+After that CommPath provides **diffAllPath** to perform pathway differential activation analysis for cells in each cluster and find the receptors and ligands in each pathway:
 ```
 # To get significantly up-regulated pathways in each cluster
 acti.path.dat <- diffAllPath(object = tumor.obj, only.posi = TRUE, only.sig = TRUE)
 head(acti.path.dat)
 ```
-There are several columns stored in the variable acti.path.dat:
-Columns ***mean.diff***, ***mean.1***, ***mean.2***, ***t***, ***df***, ***p.val*** and ***p.val.adj*** show the statistic result; *description* shows the name of pathway; 
+There are several columns stored in the variable ***acti.path.dat***:
+Columns ***mean.diff***, ***mean.1***, ***mean.2***, ***t***, ***df***, ***p.val*** and ***p.val.adj*** show the statistic result; ***description*** shows the name of pathway; 
 Columns ***cell.up*** and ***ligand.up*** show the upstream clusters which would release specific ligands to interact with the receptors expressed by the current cluster; 
-Column ***receptor.in.path*** shows the marker receptors expressed by the current cluster and included in the current pathway;
-Column ***ligand.in.path*** shows the marker ligands released by the current cluster and included in the current pathway.
+Column ***receptor.in.path*** and ***ligand.in.path*** show the marker receptors and ligands expressed by the current cluster and included in the current pathway;
 
-Then we use **pathHeatmap** to plot a heatmap of those differentially activated pathways for each cluster to display the highly variable pathways:
+Then we use **pathHeatmap** to plot a heatmap of those differentially activated pathways for each cluster:
 ```
 pdf('pathHeatmap.pdf',height=10,width=7)
 pathHeatmap(object = tumor.obj,
        acti.path.dat = acti.path.dat,
        top.n.pathway = 10,
-       cell.aver = TRUE,
-       cell.label.angle=45,
-       show.legend=TRUE)
+       cell.aver = TRUE)
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathHeatmap.png" height=600, width=420>
 
 #### Cell-cell interaction flow via pathways
-For a specific cell cluster, which here we name it as B for demonstration, CommPath identify the upstream cluster A sending signals to B, the downstream cluster C receiving signals from B, and the significantly activated pathways in B to mediate the A-B-C communication flow. More exactly, through LR and pathways analysis described above, CommPath is able to identify LR pairs between A and B, LR pairs between B and C, and pathways activated in B. Then CommPath screens for pathways in B which involve both the receptors to interact with A and ligands to interact with C.
+For a specific cell cluster, here named as B for demonstration, CommPath identifies the upstream cluster A sending signals to B, the downstream cluster C receiving signals from B, and the significantly activated pathways in B to mediate the A-B-C communication flow. More exactly, through LR and pathways analysis described above, CommPath is able to identify LR pairs between A and B, LR pairs between B and C, and pathways activated in B. Then CommPath screens for pathways in B which involve both the receptors to interact with A and ligands to interact with C.
 ```
 # Identification and visualization of the identified pathways
 # To identify receptors and the associated activated pathways for a specific cluster
@@ -175,7 +171,7 @@ pathPlot(object = tumor.obj,
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot.png" height=300, width=390>
-In the above line plot, the widths of lines between ***tumor.obj*** ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream  cluster and endothelial cells via the specific receptors; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of the receptor (ligand) expression in endothelial cells compared to all other cells; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores in endothelial cells compared to all other cells.
+In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream  cluster and endothelial cells via the specific receptors; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of the expression of receptors in endothelial cells compared to all other cells; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores in endothelial cells compared to all other cells.
 
 ```
 # To identify receptors, the associated activated pathways, and the downstream clusters
@@ -189,17 +185,17 @@ dev.off()
 The legend of the above line plot is generally the same to that of the previous plot from ***pathPlot***.
 
 #### Compare cell-cell interactions between two conditions
-CommPath also provides useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, used CommPath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. The example data from normal tissues are also available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
+CommPath also provides useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, use CommPath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. We have pre-created the CommPath object for the normal samples following the above steps, and the data are also available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
 ```
 # load(url("https://figshare.com/ndownloader/files/34554875"))
 load("path_to_download/HCC.normal.3k.RData")
 ```
-We have pre-created the CommPath object for the normal samples following the above steps. This dataset consists of 3 varibles:
+This dataset consists of 3 varibles:
 ***normal.expr*** : expression matrix for cells from normal tissues;
 ***normal.label*** : indentity lables for cells from normal tissues;
 ***normal.obj*** : CommPath object created from ***normal.expr*** and ***normal.label***, and processed by CommPath steps described above.
 
-To compare 2 CommPath object, we shall first identify the differentially activated pathways between the same cluster of cells in the two object.
+To compare 2 CommPath objects, we shall first identify the differentially activated pathways between the same cluster of cells in the 2 objects.
 ```
 select.ident <- 'Endothelial'
 diff.path.dat <- comparePath(object.1 = tumor.obj, 
@@ -208,7 +204,7 @@ diff.path.dat <- comparePath(object.1 = tumor.obj,
 ```
 Then we compare the differentially activated pathways and the cell-cell communication flow mediated by those pathways.
 ```
-# To compare differentially activated pathways and the involved receptors between the selected clusters of two CommPath object
+# To compare differentially activated pathways and the involved receptors between the selected clusters of 2 CommPath objects
 pdf('pathPlot-compare.pdf',height=6,width=10)
 pathPlot.compare(object.1 = tumor.obj, 
 		object.2 = normal.obj, 
@@ -217,9 +213,10 @@ pathPlot.compare(object.1 = tumor.obj,
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot-compare.png" height=300, width=390>
-In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream clusters and endothelial cells via the specific receptors, and the colors indicate the interaction intensity is upregulated (red) or downregulated (blue) in tumor tissues compared to that in normal tissues; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of the receptor expression in endothelial cells compared to all other cells in tumor tissues; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores of endothelail cells in tumor tissues compared to that in normal tissues.
+In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream clusters and endothelial cells via the specific receptors, and the colors indicate the interaction intensity is upregulated (red) or downregulated (blue) in tumor tissues compared to that in normal tissues; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of expression of receptors in endothelial cells compared to all other cells in tumor tissues; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores of endothelail cells in tumor tissues compared to that in normal tissues.
+
 ```
-# To compare the pathway mediated cell-cell communication flow for a specific cluster between 2 CommPath object
+# To compare the pathway mediated cell-cell communication flow for a specific cluster between 2 CommPath objects
 pdf('pathInterPlot-compare.pdf',height=6,width=14)
 pathInterPlot.compare(object.1 = tumor.obj, 
 		object.2 = normal.obj, 

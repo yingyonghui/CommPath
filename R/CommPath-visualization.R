@@ -222,7 +222,7 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 #' @importFrom stats quantile
 #' @return Heatmap plot showing the top enriched patways in each cluster
 #' @export
-pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order='p.val.adj', col=NULL, cell.aver=FALSE, cell.label.size=NULL, cell.label.angle=0, pathway.label.size=NULL, scale=TRUE, truncation=1.5, show.legend=FALSE){
+pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order='p.val.adj', col=NULL, cell.aver=FALSE, cell.label.size=NULL, cell.label.angle=45, pathway.label.size=NULL, scale=TRUE, truncation=1.5, show.legend=TRUE){
 	if (is.null(acti.path.dat)){
 		acti.path.dat <- diffAllPath(object)
 	}
