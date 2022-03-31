@@ -188,7 +188,7 @@ dev.off()
 
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathInterPlot.png" height=300, width=600>
 
-The legend of the above line plot is generally the same to that of the previous plot from ***pathPlot***.
+The legend of the above line plot is generally the same to that of the previous plot from **pathPlot**.
 
 #### Compare cell-cell interactions between two conditions
 CommPath also provides useful utilities to compare cell-cell interactions between two conditions such as disease and control. Here we, for example, use CommPath to compare the cell-cell interactions between cells from HCC tumor and normal tissues. We have pre-created the CommPath object for the normal samples following the above steps, and the data are also available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
@@ -235,7 +235,7 @@ dev.off()
 
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathInterPlot-compare.png" height=300, width=600>
 
-The legend of the above line plot is generally the same to that of the previous plot from ***pathPlot.compare***.
+The legend of the above line plot is generally the same to that of the previous plot from **pathPlot.compare**.
 
 #### sessionInfo()
 ```
