@@ -171,6 +171,7 @@ pathPlot(object = tumor.obj,
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot.png" height=300, width=390>
+
 In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream  cluster and endothelial cells via the specific receptors; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of the expression of receptors in endothelial cells compared to all other cells; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores in endothelial cells compared to all other cells.
 
 ```
@@ -182,6 +183,7 @@ pathInterPlot(object = tumor.obj,
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathInterPlot.png" height=300, width=600>
+
 The legend of the above line plot is generally the same to that of the previous plot from ***pathPlot***.
 
 #### Compare cell-cell interactions between two conditions
@@ -213,6 +215,7 @@ pathPlot.compare(object.1 = tumor.obj,
 dev.off()
 ```
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot-compare.png" height=300, width=390>
+
 In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream clusters and endothelial cells via the specific receptors, and the colors indicate the interaction intensity is upregulated (red) or downregulated (blue) in tumor tissues compared to that in normal tissues; the sizes and colors of dots in the ***Receptor*** column represent the average log2FC and -log10(*P*) of expression of receptors in endothelial cells compared to all other cells in tumor tissues; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and -log10(*P*) of pathway scores of endothelail cells in tumor tissues compared to that in normal tissues.
 
 ```
