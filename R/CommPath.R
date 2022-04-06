@@ -102,12 +102,9 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 
 	cluster.level <- unique(marker.dat$cluster)
 	num.cluster <- length(cluster.level)
-	Interact.num.mat <- matrix(0,num.cluster,num.cluster)
 	Interact.gene.mat <- matrix(NA,num.cluster,num.cluster)
 	Interact.lig.mat <- matrix(NA,num.cluster,num.cluster)
 	Interact.rep.mat <- matrix(NA,num.cluster,num.cluster)
-	marker.lig.dat <- as.data.frame(matrix(NA,0,ncol(marker.dat)))
-	marker.rep.dat <- as.data.frame(matrix(NA,0,ncol(marker.dat)))
 	for (lig.idx in 1:num.cluster){
 		cluster.l <- cluster.level[lig.idx]
 		markers.l <- marker.dat[marker.dat$cluster == cluster.l, ]
@@ -121,21 +118,9 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 				Interact.gene.mat[lig.idx,rep.idx] <- paste(paste(ligs[pair.valid],reps[pair.valid],sep='--'),collapse=';')
 				Interact.lig.mat[lig.idx,rep.idx] <- paste(ligs[pair.valid],collapse=';')
 				Interact.rep.mat[lig.idx,rep.idx] <- paste(reps[pair.valid],collapse=';')
-				marker.lig.dat <- rbind(marker.lig.dat,markers.l[markers.l$gene %in% ligs[pair.valid],])
-				marker.rep.dat <- rbind(marker.rep.dat,markers.r[markers.r$gene %in% reps[pair.valid],])
 			}
-			Interact.num.mat[lig.idx,rep.idx] <- length(pair.valid)
 		}
 	}
-
-	if (sum(Interact.num.mat)==0){
-		stop('No LR pairs detected! Select a lower logFC.thre or higher p.thre and try again')
-	}
-	rownames(Interact.num.mat) <- cluster.level
-	colnames(Interact.num.mat) <- cluster.level
-	Interact.num.dat <- melt(Interact.num.mat, varnames=c('Cell.From','Cell.To'),value.name="LR.Count",  na.rm=TRUE)
-	Interact.num.dat <- factor.to.character(Interact.num.dat)
-	rownames(Interact.num.dat) <- paste(Interact.num.dat$Cell.From,Interact.num.dat$Cell.To, sep='--')
 
 	rownames(Interact.gene.mat) <- cluster.level
 	colnames(Interact.gene.mat) <- cluster.level
@@ -173,27 +158,40 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 	colnames(lr.unfold.dat) <- c('Cell.From','Cell.To','Ligand','Receptor')
 	rownames(lr.unfold.dat) <- paste(lr.unfold.dat$Cell.From,lr.unfold.dat$Cell.To,lr.unfold.dat$Ligand,lr.unfold.dat$Receptor, sep='--')
 
-	marker.lig.dat <- unique(marker.lig.dat)
-	marker.rep.dat <- unique(marker.rep.dat)
-
-	fc.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.lig.dat, gene == x['Ligand'] & cluster == x['Cell.From'])[1,'avg_log2FC'] }))
-	pval.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.lig.dat, gene == x['Ligand'] & cluster == x['Cell.From'])[1,'p_val_adj'] }))
-	fc.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.rep.dat, gene == x['Receptor'] & cluster == x['Cell.To'])[1,'avg_log2FC'] }))
-	pval.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.rep.dat, gene == x['Receptor'] & cluster == x['Cell.To'])[1,'p_val_adj'] }))
+	fc.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['Ligand'] & cluster == x['Cell.From'])[1,'avg_log2FC'] }))
+	pval.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['Ligand'] & cluster == x['Cell.From'])[1,'p_val_adj'] }))
+	fc.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['Receptor'] & cluster == x['Cell.To'])[1,'avg_log2FC'] }))
+	pval.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['Receptor'] & cluster == x['Cell.To'])[1,'p_val_adj'] }))
 
 	lr.unfold.dat$Log2FC.LR <- fc.lig * fc.rep
 	lr.unfold.dat$P.val.LR <- 1-(1-pval.lig)*(1-pval.rep)
 	lr.unfold.dat$P.val.adj.LR <- p.adjust(lr.unfold.dat$P.val.LR, method='BH')
-	
+	lr.unfold.dat <- subset(lr.unfold.dat, P.val.adj.LR < 0.05)
+
+	if (nrow(lr.unfold.dat)==0){
+		stop('No significant LR pairs detected! Select a lower logFC.thre or higher p.thre and try again')
+	}
+
 	lr.inten.all.name <- paste(lr.unfold.dat$Cell.From, lr.unfold.dat$Cell.To, sep='--')
+	Interact.num.dat <- data.frame(table(lr.inten.all.name))
+	rownames(Interact.num.dat) <- Interact.num.dat$lr.inten.all.name
+	Interact.num.dat <- cbind(Interact.num.dat, matrix(unlist(strsplit(as.character(Interact.num.dat$lr.inten.all.name), split='--')), ncol = 2, byrow = TRUE))
+	Interact.num.dat$LR.Count <- Interact.num.dat$Freq
+
+
 	lr.inten.vec <- by(data=lr.unfold.dat$Log2FC.LR, INDICES=lr.inten.all.name, FUN=sum)
 	lr.inten.vec.name <- names(lr.inten.vec)
 	lr.inten.vec <- as.vector(lr.inten.vec)
 
 	Interact.num.dat$Intensity <- lr.inten.vec[match(rownames(Interact.num.dat), lr.inten.vec.name)]
 	Interact.num.dat$Intensity[is.na(Interact.num.dat$Intensity)] <- 0
+	Interact.num.dat <- Interact.num.dat[,-c(1,2)]
+	colnames(Interact.num.dat) <- c('Cell.From','Cell.To','LR.Count','Intensity')
+	
+	marker.lig.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.dat$Cell.From, lr.unfold.dat$Ligand, sep='--')), ]
+	marker.rep.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.dat$Cell.To, lr.unfold.dat$Receptor, sep='--')), ]
 
-	Interact <- list(InteractNumer=Interact.num.dat,InteractGene=Interact.gene.dat, InteractGeneUnfold=lr.unfold.dat, markerL=marker.lig.dat, markerR=marker.rep.dat)
+	Interact <- list(InteractNumer=Interact.num.dat, InteractGene=lr.unfold.dat, markerL=marker.lig.dat, markerR=marker.rep.dat)
 
 	object@interact <- Interact
 
@@ -414,7 +412,7 @@ findReceptor <- function(object, select.ident=NULL, select.ligand=NULL){
 	if (is.null(select.ident) & is.null(select.ligand)){
 		stop("Either a select.ident or a select.ligand need to be asigned")
 	}
-	ident.down.dat <- object@interact$InteractGeneUnfold
+	ident.down.dat <- object@interact$InteractGene
 
 	if (!is.null(select.ligand)){
 		ident.down.dat <- subset(ident.down.dat, Ligand %in% select.ligand)
@@ -443,7 +441,7 @@ findLigand <- function(object, select.ident=NULL, select.receptor=NULL){
 		stop("Either a select.ident or a select.receptor need to be asigned")
 	}
 
-	ident.up.dat <- object@interact$InteractGeneUnfold
+	ident.up.dat <- object@interact$InteractGene
 	if (!is.null(select.receptor)){
 		ident.up.dat <- subset(ident.up.dat, Receptor %in% select.receptor)
 	}

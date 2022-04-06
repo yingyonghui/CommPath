@@ -101,7 +101,7 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 	}
 
 	# get the InteractGene dataframe
-	inter.gene.dat <- object@interact$InteractGeneUnfold
+	inter.gene.dat <- object@interact$InteractGene
 	
 	if (!is.null(receptor.ident)){
 		which.rep.not.in <- which(!(receptor.ident %in% inter.gene.dat$Cell.To))

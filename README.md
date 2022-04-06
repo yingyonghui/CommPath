@@ -32,8 +32,8 @@ The remaining one variable ***tumor.obj*** is the CommPath object created from *
 #### Identification of marker ligands and receptors
 We start CommPath analysis by creating a CommPath object:
 ```
-tumor.obj <- createCommPath(expr.mat = sample.expr, 
-		cell.info = sample.label, 
+tumor.obj <- createCommPath(expr.mat = tumor.expr, 
+		cell.info = tumor.label, 
 		species = "hsapiens")
 ```
 Firstly we're supposed to identify marker ligands and receptors (ligands and receptors that are significantly highly expressed) for each cluster of cells in the expression matrix. CommPath provide **findLRmarker** to identify these markers by *t.test* or *wilcox.test*.
