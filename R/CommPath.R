@@ -191,7 +191,7 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 	marker.lig.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.dat$Cell.From, lr.unfold.dat$Ligand, sep='--')), ]
 	marker.rep.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.dat$Cell.To, lr.unfold.dat$Receptor, sep='--')), ]
 
-	Interact <- list(InteractNumer=Interact.num.dat, InteractGene=lr.unfold.dat, markerL=marker.lig.dat, markerR=marker.rep.dat)
+	Interact <- list(InteractNumber=Interact.num.dat, InteractGene=lr.unfold.dat, markerL=marker.lig.dat, markerR=marker.rep.dat)
 
 	object@interact <- Interact
 
