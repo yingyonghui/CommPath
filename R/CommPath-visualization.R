@@ -159,10 +159,10 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 	### adjust the x label and title
 	if (length(ligand.ident)==1){
 		inter.gene.dat$Xaxis <- inter.gene.dat$Cell.To
-		x.title <- paste0('Receptor-expressing clusters for cluster ',ligand.ident)
+		x.title <- paste0('Downstream clusters for cluster ',ligand.ident)
 	}else{
 		inter.gene.dat$Xaxis <- inter.gene.dat$Cell.From
-		x.title <- paste0('Ligand-expressing clusters for cluster ',receptor.ident)
+		x.title <- paste0('Upstream clusters for cluster ',receptor.ident)
 	}
 	### you may want to adjust the order of the clusters in the x axis
 	inter.gene.dat$Xaxis <- as.character(inter.gene.dat$Xaxis)
