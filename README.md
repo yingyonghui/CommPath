@@ -158,7 +158,7 @@ pathHeatmap(object = tumor.obj,
 dev.off()
 ```
 
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathHeatmap.png" height=600, width=420>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathHeatmap.png" height=650, width=455>
 
 #### Cell-cell interaction flow via pathways
 For a specific cell cluster, here named as B for demonstration, CommPath identifies the upstream cluster A sending signals to B, the downstream cluster C receiving signals from B, and the significantly activated pathways in B to mediate the A-B-C communication flow. More exactly, through LR and pathways analysis described above, CommPath is able to identify LR pairs between A and B, LR pairs between B and C, and pathways activated in B. Then CommPath screens for pathways in B which involve both the receptors to interact with A and ligands to interact with C.
