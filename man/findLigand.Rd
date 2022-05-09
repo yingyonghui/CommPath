@@ -4,7 +4,7 @@
 \alias{findLigand}
 \title{To find the upstream identity classes and ligands of specific receptor expressed by specific downstream identity class}
 \usage{
-findLigand(object, select.ident = NULL, select.receptor = NULL)
+findLigand(object, select.ident = NULL, select.receptor = NULL, filter = TRUE)
 }
 \arguments{
 \item{object}{CommPath object}
@@ -12,6 +12,8 @@ findLigand(object, select.ident = NULL, select.receptor = NULL)
 \item{select.ident}{Downstream identity class; if 'NULL', use all identity classes}
 
 \item{select.receptor}{Receptor expressed by downstream identity class; if 'NULL', use all receptors that are markers for the selected downstream identity class}
+
+\item{filter}{Logical value indicating to find the upstream identity class from the filtered LR interactions or not; default is TRUE}
 }
 \value{
 Data frame including the interaction information

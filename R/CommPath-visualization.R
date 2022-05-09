@@ -1,46 +1,55 @@
 #' To present a circos plot
 #' @param object CommPath object
 #' @param plot To present a circos plot for LR count ("count") or overall interaction intensity ("intensity") among cell clusters
-#' @param col Vector of colors of each identity; names of the col vector are supposed to be assigned to indicate each color for each identity
-#' @param select.ident To highlight the interaction between a specific identity class and others; if 'NULL', plot interaction for all identity classes
+#' @param ident.col Vector of colors of each cluster; names of the ident.col vector are supposed to be assigned to indicate each color for each cluster
+#' @param filter Logical value indicating to present the circos plot for the filtered LR interactions or not; default is TRUE
+#' @param select.ident To highlight the interaction between a specific cluster class and others; if 'NULL', plot interaction for all clusters
 #' @param name.vert Should the group annotation be vertical to the grid? Defualt is FALSE
 #' @importFrom circlize circos.clear circos.par chordDiagram circos.track circos.text
 #' @return Circos plot showing the ligand-receptor interaction
 #' @export
-circosPlot <- function(object, plot='count', col=NULL, select.ident=NULL, name.vert=FALSE){
+circosPlot <- function(object, plot='count', ident.col=NULL, filter=TRUE, select.ident=NULL, name.vert=FALSE){
 	options(stringsAsFactors=F)
 	Cluster <- object@cell.info$Cluster
 	if (!is.factor(Cluster)){ Cluster <- factor(Cluster) }
 	ident.label <- levels(Cluster)
 
 	### select LR count or cluster intensity to plot
-	Interact.num.dat <- object@interact$InteractNumber
+	if(filter){
+		Interact.num.dat <- object@interact.filter$InteractNumber
+		if(is.null(Interact.num.dat)){
+			stop('No filtered LR interaction detected, set the parameter "filter" as FALSE and try again')
+		}
+	}else{
+		Interact.num.dat <- object@interact$InteractNumber
+	}
+
 	if (plot=='count'){
-		Interact.num.dat$Plot <- Interact.num.dat$LR.Count
+		Interact.num.dat$Plot <- Interact.num.dat$LR.count
 	}else if(plot=='intensity'){
 		Interact.num.dat$Plot <- Interact.num.dat$Intensity
 	}else{
 		stop('Select "count" or "intensity" for the parameter "plot"!')
 	}
-	Interact.num.dat <- Interact.num.dat[, c('Cell.From','Cell.To','Plot')]
+	Interact.num.dat <- Interact.num.dat[, c('cell.from','cell.to','Plot')]
 	
 	Interact.num.dat = Interact.num.dat[Interact.num.dat$Plot!=0,]
-	all.ident <- unique(c(Interact.num.dat$Cell.From,Interact.num.dat$Cell.To))
+	all.ident <- unique(c(Interact.num.dat$cell.from,Interact.num.dat$cell.to))
 	all.ident <- orderCheck(all.ident, ident.label)
 	all.ident <- all.ident[order(all.ident)]
 	
-	### to check the col parameter
-	if (is.null(col)){ 
-		col <- scales::hue_pal(c=100)(length(all.ident))
-		names(col) <- all.ident
+	### to check the ident.col parameter
+	if (is.null(ident.col)){ 
+		ident.col <- scales::hue_pal(c=100)(length(all.ident))
+		names(ident.col) <- all.ident
 	}else{
-		if (is.null(names(col))){
-			stop('The cols should be named according to the identity class')
+		if (is.null(names(ident.col))){
+			stop(paste0('Wrong "col" parameter! The colors should be named according to the clusters'))
 		}else{
-			colo.name <- names(col)
-			ident.missed <- all.ident[!(all.ident %in% colo.name)]
+			colo.name <- names(ident.col)
+			ident.missed <- all.ident[which(!(all.ident %in% colo.name))]
 			ident.missed <- pasteIdent(ident.missed)
-			stop(paste0('The ident class ',ident.missed,' may be missed in the input color'))
+			stop(paste0('The color of ',ident.missed,' may be missed in the input color'))
 		}
 	}
 
@@ -50,9 +59,9 @@ circosPlot <- function(object, plot='count', col=NULL, select.ident=NULL, name.v
 	### plot interaction for all identity classes
 	if (is.null(select.ident)){
 		if (!name.vert){
-			chordDiagram(Interact.num.dat, order=all.ident, grid.col=col, annotationTrack=c("name","grid"), transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow",preAllocateTracks = list(track.height=mm_h(5)), annotationTrackHeight=convert_height(c(1, 2), "mm"))
+			chordDiagram(Interact.num.dat, order=all.ident, grid.col=ident.col, annotationTrack=c("name","grid"), transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow",preAllocateTracks = list(track.height=mm_h(5)), annotationTrackHeight=convert_height(c(1, 2), "mm"))
 		}else{
-			chordDiagram(Interact.num.dat, order=all.ident, grid.col=col, annotationTrack=c("grid"), transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow", preAllocateTracks = list(track.height=mm_h(5)), annotationTrackHeight=convert_height(c(2, 2), "mm"))
+			chordDiagram(Interact.num.dat, order=all.ident, grid.col=ident.col, annotationTrack=c("grid"), transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow", preAllocateTracks = list(track.height=mm_h(5)), annotationTrackHeight=convert_height(c(2, 2), "mm"))
 			circos.track(track.index=1, panel.fun=function(x, y){circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5), cex = 1)}, bg.border = NA)
 		}
 
@@ -64,18 +73,18 @@ circosPlot <- function(object, plot='count', col=NULL, select.ident=NULL, name.v
 		}
 
 		line.col <- rep('gray',nrow(Interact.num.dat))
-		line.col[(Interact.num.dat$Cell.From==select.ident)] <- col[as.character(select.ident)]
-		ident.lig = Interact.num.dat[Interact.num.dat$Cell.To==select.ident,'Cell.From']
-		line.col[(Interact.num.dat$Cell.To==select.ident)] <- col[as.character(ident.lig)]
+		line.col[(Interact.num.dat$cell.from==select.ident)] <- ident.col[as.character(select.ident)]
+		ident.lig = Interact.num.dat[Interact.num.dat$cell.to==select.ident,'cell.from']
+		line.col[(Interact.num.dat$cell.to==select.ident)] <- ident.col[as.character(ident.lig)]
 		
 		link.zindex <- 1:nrow(Interact.num.dat)
-		ident.line <- (Interact.num.dat$Cell.From==select.ident) | (Interact.num.dat$Cell.To==select.ident)
+		ident.line <- (Interact.num.dat$cell.from==select.ident) | (Interact.num.dat$cell.to==select.ident)
 		link.zindex[!ident.line] <- rank(-(Interact.num.dat[!ident.line,'Plot']))
 		link.zindex[ident.line] <- rank(-(Interact.num.dat[ident.line,'Plot']))+length(which(!ident.line))
 		if (!name.vert){
-			chordDiagram(Interact.num.dat, order=all.ident, grid.col=col, annotationTrack=c("name","grid"), transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow", link.zindex=link.zindex, col=line.col, preAllocateTracks = list(track.height=mm_h(5)), annotationTrackHeight=convert_height(c(1, 2), "mm"))
+			chordDiagram(Interact.num.dat, order=all.ident, grid.col=ident.col, annotationTrack=c("name","grid"), transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow", link.zindex=link.zindex, col=line.col, preAllocateTracks = list(track.height=mm_h(5)), annotationTrackHeight=convert_height(c(1, 2), "mm"))
 		}else{
-			chordDiagram(Interact.num.dat, order=all.ident, grid.col=col, annotationTrack="grid", transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow", link.zindex=link.zindex, col=line.col, preAllocateTracks = list(track.height=mm_h(5)), annotationTrackHeight=convert_height(c(2, 2), "mm"))
+			chordDiagram(Interact.num.dat, order=all.ident, grid.col=ident.col, annotationTrack="grid", transparency=0.1, directional=1, direction.type='arrows', link.arr.type = "big.arrow", link.zindex=link.zindex, col=line.col, preAllocateTracks = list(track.height=mm_h(5)), annotationTrackHeight=convert_height(c(2, 2), "mm"))
 			circos.track(track.index=1, panel.fun=function(x, y){circos.text(CELL_META$xcenter, CELL_META$ylim[1], CELL_META$sector.index, facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5), cex = 1)}, bg.border = NA)
 		}
 	}
@@ -87,11 +96,12 @@ circosPlot <- function(object, plot='count', col=NULL, select.ident=NULL, name.v
 #' @param receptor.ident Vector containing the receptor ident
 #' @param ident.levels Vector of levels of the identities 
 #' @param top.n.inter Show the dotplot for the top n LR pairs with the largest product of Log2FC
+#' @param filter Logical value indicating to present the circos plot for the filtered LR interacyion or not; default is TRUE
 #' @param return.data Logical value indicating whether to return the data for the plot or not
 #' @importFrom ggplot2 ggplot geom_point scale_color_manual labs theme element_text element_rect element_line aes scale_color_gradientn
 #' @return Dotplot showing the ligand-receptor interaction between the selected ligand.ident and receptor.ident
 #' @export
-dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, return.data=FALSE){
+dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, filter=TRUE, return.data=FALSE){
 	options(stringsAsFactors=F)
 	if (is.null(ligand.ident) & is.null(receptor.ident)){
 		stop("Either ligand.ident or ligand.ident need to be asigned")
@@ -101,11 +111,18 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 	}
 
 	# get the InteractGene dataframe
-	inter.gene.dat <- object@interact$InteractGene
+	if(filter){
+		inter.gene.dat <- object@interact.filter$InteractGene
+		if(is.null(inter.gene.dat)){
+			stop('No filtered LR interaction detected, set the parameter "filter" as FALSE and try again')
+		}
+	}else{
+		inter.gene.dat <- object@interact$InteractGene		
+	}
 	
 	if (!is.null(receptor.ident)){
-		which.rep.not.in <- which(!(receptor.ident %in% inter.gene.dat$Cell.To))
-		which.rep.in <- which(receptor.ident %in% inter.gene.dat$Cell.To)
+		which.rep.not.in <- which(!(receptor.ident %in% inter.gene.dat$cell.to))
+		which.rep.in <- which(receptor.ident %in% inter.gene.dat$cell.to)
 
 		if (length(which.rep.not.in) > 0){
 			if (length(which.rep.in) > 0){
@@ -115,11 +132,11 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 			}
 		}
 		receptor.ident <- receptor.ident[which.rep.in]
-		inter.gene.dat <- inter.gene.dat[inter.gene.dat$Cell.To %in% receptor.ident,]
+		inter.gene.dat <- inter.gene.dat[inter.gene.dat$cell.to %in% receptor.ident,]
 	}
 	if (!is.null(ligand.ident)){
-		which.lig.not.in <- which(!(ligand.ident %in% inter.gene.dat$Cell.From))
-		which.lig.in <- which(ligand.ident %in% inter.gene.dat$Cell.From)
+		which.lig.not.in <- which(!(ligand.ident %in% inter.gene.dat$cell.from))
+		which.lig.in <- which(ligand.ident %in% inter.gene.dat$cell.from)
 
 		if (length(which.lig.not.in) > 0){
 			if (length(which.lig.in) > 0){
@@ -129,13 +146,13 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 			}
 		}
 		ligand.ident <- ligand.ident[which.lig.in]
-		inter.gene.dat <- inter.gene.dat[inter.gene.dat$Cell.From %in% ligand.ident,]
+		inter.gene.dat <- inter.gene.dat[which(inter.gene.dat$cell.from %in% ligand.ident),]
 	}
 
-	inter.gene.dat$LR.Info <- paste(inter.gene.dat$Ligand, ' --> ', inter.gene.dat$Receptor)
+	inter.gene.dat$LR.info <- paste(inter.gene.dat$ligand, '/', inter.gene.dat$receptor)
 
-	### to find those LR pairs with largest Log2FC.LR
-	max.fc <- by(data=inter.gene.dat$Log2FC.LR, INDICES=inter.gene.dat$LR.Info, function(x){max(x,na.rm=T)})
+	### to find those LR pairs with largest log2FC.LR
+	max.fc <- by(data=inter.gene.dat$log2FC.LR, INDICES=inter.gene.dat$LR.info, function(x){max(x,na.rm=T)})
 	max.LRname.fc <- names(max.fc)[order(max.fc, decreasing=TRUE)]
 	
 	if (top.n.inter > length(max.LRname.fc)){
@@ -144,10 +161,10 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 	}
 
 	max.LRname.fc <- max.LRname.fc[1:top.n.inter]
-	inter.gene.dat <- subset(inter.gene.dat, LR.Info %in% max.LRname.fc)
+	inter.gene.dat <- subset(inter.gene.dat, LR.info %in% max.LRname.fc)
 
 	if (return.data){
-		return(inter.gene.dat[,c('Cell.From', 'Cell.To', 'LR.Info', 'Log2FC.LR', 'P.val.LR', 'P.val.adj.LR')])
+		return(inter.gene.dat[,c('cell.from', 'cell.to', 'LR.info', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR')])
 	}
 	
 	inter.gene.dat$Log10.P.adj <- -log10(inter.gene.dat$P.val.adj.LR)
@@ -158,10 +175,10 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 	
 	### adjust the x label and title
 	if (length(ligand.ident)==1){
-		inter.gene.dat$Xaxis <- inter.gene.dat$Cell.To
+		inter.gene.dat$Xaxis <- inter.gene.dat$cell.to
 		x.title <- paste0('Downstream clusters for cluster ',ligand.ident)
 	}else{
-		inter.gene.dat$Xaxis <- inter.gene.dat$Cell.From
+		inter.gene.dat$Xaxis <- inter.gene.dat$cell.from
 		x.title <- paste0('Upstream clusters for cluster ',receptor.ident)
 	}
 	### you may want to adjust the order of the clusters in the x axis
@@ -181,10 +198,10 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 	}
 
 	if (all(inter.gene.dat$Log10.P.adj=='Infinite')){
-		plot <- ggplot(data=inter.gene.dat,aes(x=Xaxis,y=LR.Info)) + 
-			geom_point(aes(size=Log2FC.LR,col='Infinite')) +
+		plot <- ggplot(data=inter.gene.dat,aes(x=Xaxis,y=LR.info)) + 
+			geom_point(aes(size=log2FC.LR,col='Infinite')) +
 			scale_color_manual(values='red') + 
-			labs(color='-log10(p.adj)',size='Log2FC.LR',x=x.title,y="") + 
+			labs(color='-log10(p.adj)',size='log2FC.LR',x=x.title,y="") + 
 			theme(axis.text=element_text(colour='black',size=12),
 			axis.title=element_text(colour='black',size=12),
 			panel.background=element_rect(fill="white",color="black"),
@@ -192,10 +209,10 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 			)
 		warning('Adjusted p values for all LR pairs are 0')
 	}else{
-		plot <- ggplot(data=inter.gene.dat,aes(x=Xaxis,y=LR.Info)) + 
-			geom_point(aes(size=Log2FC.LR,col=Log10.P.adj)) +
+		plot <- ggplot(data=inter.gene.dat,aes(x=Xaxis,y=LR.info)) + 
+			geom_point(aes(size=log2FC.LR,col=Log10.P.adj)) +
 			scale_color_gradientn(values = seq(0,1,0.2),colours=c("#0570b0", "grey", "#d7301f")) + 
-			labs(color='-log10(p.adj)',size='Log2FC.LR',x=x.title,y="") + 
+			labs(color='-log10(p.adj)',size='log2FC.LR',x=x.title,y="") + 
 			theme(axis.text=element_text(colour='black',size=12),
 			axis.title=element_text(colour='black',size=12),
 			panel.background=element_rect(fill="white",color="black"),
@@ -209,7 +226,7 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 #' @param object CommPath object
 #' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath; if NULL, diffAllPath would be run to get the acti.path.dat
 #' @param top.n.pathway Show the heatmap of top n most significant pathways
-#' @param path.order Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
+#' @param path.order Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
 #' @param col Vector of colors used to generate a series of gradient colors to show the enrichment score of pathways; provide a vector containing at least two colors
 #' @param cell.aver Whether to display averaged pathway enrichment scores among cells from the same clusters or to display scores for all cells; default is FALSE, which means to display scores for all cells
 #' @param cell.label.size Text size of the label of cell types
@@ -222,12 +239,10 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 #' @importFrom stats quantile
 #' @return Heatmap plot showing the top enriched patways in each cluster
 #' @export
-pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order='p.val.adj', col=NULL, cell.aver=FALSE, cell.label.size=NULL, cell.label.angle=45, pathway.label.size=NULL, scale=TRUE, truncation=1.5, show.legend=TRUE){
-	if (is.null(acti.path.dat)){
-		acti.path.dat <- diffAllPath(object)
-	}
+pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order='P.val.adj', col=NULL, cell.aver=FALSE, cell.label.size=NULL, cell.label.angle=45, pathway.label.size=NULL, scale=TRUE, truncation=1.5, show.legend=TRUE){
+	if (is.null(acti.path.dat)){ acti.path.dat <- diffAllPath(object) }
 	
-	acti.path.dat <- subset(acti.path.dat, p.val.adj < 0.05)
+	acti.path.dat <- subset(acti.path.dat, P.val.adj < 0.05)
 	### select the highly enriched pathways
 	if ('mean.diff' %in% colnames(acti.path.dat)){
 		acti.path.dat <- subset(acti.path.dat, mean.diff > 0)
@@ -240,12 +255,12 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 	}
 
 	### select top n pathways
-	if (path.order=='p.val.adj' | path.order=='p.val'){
+	if (path.order=='P.val.adj' | path.order=='P.val'){
 		acti.path.dat <- acti.path.dat[order(acti.path.dat[[path.order]], -acti.path.dat[['diff']]), ]
 	}else if (path.order=='diff'){
-		acti.path.dat <- acti.path.dat[order(-acti.path.dat[['diff']], acti.path.dat[['p.val.adj']],), ]
+		acti.path.dat <- acti.path.dat[order(-acti.path.dat[['diff']], acti.path.dat[['P.val.adj']],), ]
 	}else{
-		stop('Select one order criteria from p.val.adj, p.val, and diff')
+		stop('Select one order criteria from P.val.adj, P.val, and diff')
 	}
 
 	ident.label <- object@cell.info$Cluster
@@ -411,7 +426,7 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
 #' @param acti.path.dat Data frame of differential activation test result from diffAllPath
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
-#' @param path.order Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
+#' @param path.order Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
 #' @param top.n.receptor Top n receptor with the largest log2FCs to plot
 #' @param dot.ident.col Color of the dots representing clusters
@@ -425,7 +440,7 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 #' @importFrom graphics strwidth
 #' @return Network plot showing the significantly activated pathways in the select cluster compared to all other clusters, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
-pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	all.ident <- object@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
@@ -438,25 +453,25 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 		ident.path.dat <- subset(acti.path.dat, cluster==select.ident)
 	}
 	if ('t' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
+		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & t > 0)
 		ident.path.dat$diff <- ident.path.dat$mean.diff
 	}else if ('W' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & median.diff > 0)
+		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & median.diff > 0)
 		ident.path.dat$diff <- ident.path.dat$median.diff
 	}else{
 		stop('Please input the integrate ident.path.dat computed from diffPath')
 	}
 
-	if (nrow(ident.path.dat)==0){ paste0(stop('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
+	if (nrow(ident.path.dat)==0){ stop(paste0('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
 
 	### remove pathways with NA receptor
 	ident.path.dat <- subset(ident.path.dat, !is.na(receptor.in.path))
-	if (nrow(ident.path.dat)==0){ paste0(stop('There is no marker receptor in the significantly up-regulatged pathways for cluster ', select.ident )) }
+	if (nrow(ident.path.dat)==0){ stop(paste0('There is no marker receptor in the significantly up-regulatged pathways for cluster ', select.ident )) }
 
-	if (path.order=='p.val.adj' | path.order=='p.val'){
+	if (path.order=='P.val.adj' | path.order=='P.val'){
 		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'diff']),]
 	}else if(path.order=='diff'){
-		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'p.val.adj']),]
+		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
 
 	if (top.n.path > nrow(ident.path.dat)){
@@ -495,7 +510,7 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 		colnames(top.rep.LR.inten) <- top.rep.name
 	}
 	plot.receptor.to.pathway.dat <- subset(plot.receptor.to.pathway.dat, cur.rep %in% top.rep.name)
-	plot.ident.to.receprtor.dat <- melt(top.rep.LR.inten, varnames=c('Cell.From','Receptor'),value.name="LR.inten",  na.rm=TRUE)
+	plot.ident.to.receprtor.dat <- melt(top.rep.LR.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=TRUE)
 	plot.ident.to.receprtor.dat <- factor.to.character(plot.ident.to.receprtor.dat)
 
 	### pathways and their color
@@ -504,7 +519,7 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 	
 	#### rect for pathway
 	path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'diff']
-	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'p.val.adj']
+	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'P.val.adj']
 	if (all(path.rect.pval==0)){
 		path.rect.pval <- path.rect.length
 		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the mean (in t test) or median (in wilcox test) difference of pathways')
@@ -520,7 +535,7 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 	cur.uniq.rep <- cur.uniq.rep[order(cur.uniq.rep, decreasing=TRUE)]
 	n.rep <- length(cur.uniq.rep)
 	
-	top.markerR.dat <- subset(object@interact$markerR, subset=(cluster==select.ident & gene %in% top.rep.name))
+	top.markerR.dat <- subset(object@interact.filter$markerR, subset=(cluster==select.ident & gene %in% top.rep.name))
 
 	fc.rep <- top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'avg_log2FC']
 	rep.size <- 10 * dot.gene.size * fc.rep
@@ -572,9 +587,9 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 
 	### lines between elements
 	### lines between up idents and receptors
-	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$Cell.From, up.uniq.ident)]
-	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$Receptor, cur.uniq.rep)]
-	line.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$Cell.From, up.uniq.ident)]
+	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
+	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$receptor, cur.uniq.rep)]
+	line.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.width <- LRinten.to.width(plot.ident.to.receprtor.dat$LR.inten)
 
 	line_ident_to_receptor <- geom_segment(aes(x=1, xend=2, y=line.ident.to.rep.y.coor,yend=line.ident.to.rep.yend.coor), size=line.ident.width, color=line.col, show.legend=F, alpha=0.6)
@@ -596,16 +611,13 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 	plot <- ggplot() + 
 	line_ident_to_receptor +
 	line_receptor_to_pathway +
-
 	point_up_ident +
 	point_receptor + 
 	bar_pathway +
 	text_pathway +
-
 	label_up_ident +
 	label_receptor +
 	label_title +
-	
 	scale_x_continuous(limits=c(0,3+max(path.name.max.width,bar.pathway.length))) + 
 	pathplot.theme
 
@@ -617,10 +629,9 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 #' @param object.1 CommPath object 1
 #' @param object.2 CommPath object 2 for comparison
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
-#' @param diff.marker.dat Data frame of defferential expression test result from compareMarker; if NULL, compareMarker would be run to get diff.marker.dat
 #' @param diff.path.dat Data frame of defferential activation test result from comparePath; if NULL, comparePath would be run to get diff.path.dat
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
-#' @param path.order Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
+#' @param path.order Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
 #' @param top.n.receptor Top n receptor with the largest log2FCs to plot
 #' @param dot.ident.col Color of the dots representing clusters
@@ -632,12 +643,8 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 #' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two CommPath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
-pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=NULL, diff.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
-	# if(is.null(diff.marker.dat)){
-	# 	message(paste0('Identifying differentially expressed ligands(receptors) between cluster ',select.ident,' in object 1 and object 2'))
-	# 	diff.marker.dat <- compareMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
-	# }
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
 		diff.path.dat <- comparePath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
@@ -649,25 +656,25 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 	### check the input and select significant pathways
 	ident.path.dat <- diff.path.dat
 	if ('t' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
+		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & t > 0)
 		ident.path.dat$diff <- ident.path.dat$mean.diff
 	}else if ('W' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & median.diff > 0)
+		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & median.diff > 0)
 		ident.path.dat$diff <- ident.path.dat$median.diff
 	}else{
 		stop('Please input the integrate ident.path.dat computed from diffPath')
 	}
 
-	if (nrow(ident.path.dat)==0){ paste0(stop('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
+	if (nrow(ident.path.dat)==0){ stop(paste0('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
 
 	### remove pathways with NA receptor
 	ident.path.dat <- subset(ident.path.dat, !is.na(receptor.in.path))
-	if (nrow(ident.path.dat)==0){ paste0(stop('There is no marker receptor in the significantly up-regulatged pathways for cluster ', select.ident )) }
+	if (nrow(ident.path.dat)==0){ stop(paste0('There is no marker receptor in the significantly up-regulatged pathways for cluster ', select.ident )) }
 
-	if (path.order=='p.val.adj' | path.order=='p.val'){
+	if (path.order=='P.val.adj' | path.order=='P.val'){
 		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'diff']),]
 	}else if(path.order=='diff'){
-		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'p.val.adj']),]
+		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
 
 	if (top.n.path > nrow(ident.path.dat)){
@@ -705,12 +712,12 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 		top.rep.LR.inten <- as.matrix(top.rep.LR.inten)
 		colnames(top.rep.LR.inten) <- top.rep.name
 	}
-	plot.ident.to.receprtor.obj1.dat <- melt(top.rep.LR.inten, varnames=c('Cell.From','Receptor'),value.name="LR.inten",  na.rm=FALSE)
+	plot.ident.to.receprtor.obj1.dat <- melt(top.rep.LR.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ident.to.receprtor.obj1.dat <- factor.to.character(plot.ident.to.receprtor.obj1.dat)
 
 	### LR.inten for obj.2
 	cur.rep.LR.obj2.inten <- cluster.lr.inten(top.rep.name, object.2, select.ident, ident.label, find='ligand')
-	plot.ident.to.receprtor.obj2.dat <- melt(cur.rep.LR.obj2.inten, varnames=c('Cell.From','Receptor'),value.name="LR.inten",  na.rm=FALSE)
+	plot.ident.to.receprtor.obj2.dat <- melt(cur.rep.LR.obj2.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ident.to.receprtor.obj2.dat <- factor.to.character(plot.ident.to.receprtor.obj2.dat)
 
 	LR.1.Dens <- plot.ident.to.receprtor.obj1.dat$LR.inten
@@ -728,7 +735,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 	
 	#### rect for pathway
 	path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'diff']
-	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'p.val.adj']
+	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'P.val.adj']
 
 	if (all(path.rect.pval==0)){
 		path.rect.pval <- path.rect.length
@@ -798,9 +805,9 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 
 	### lines between elements
 	### lines between up idents and receptors
-	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$Cell.From, up.uniq.ident)]
-	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$Receptor, cur.uniq.rep)]
-	#line.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$Cell.From, up.uniq.ident)]
+	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
+	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$receptor, cur.uniq.rep)]
+	#line.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.to.rep.col <- ifelse(plot.ident.to.receprtor.dat$LR.inten.diff > 0, 'red', 'blue')
 	line.ident.to.rep.width <- LRinten.to.width(plot.ident.to.receprtor.dat$LR.inten)
 
@@ -821,21 +828,12 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 	
 	pathplot.theme <- theme(axis.title=element_blank(), axis.text=element_blank(),axis.ticks=element_blank(), axis.line=element_blank(), panel.background=element_rect(fill="white"))
 	plot <- ggplot() + 
-	line_ident_to_receptor +
-	line_receptor_to_pathway +
-
-	point_up_ident +
-	point_receptor + 
-	bar_pathway +
-	text_pathway +
-	
-
-	label_up_ident +
-	label_receptor +
-	label_title +
-
-	scale_x_continuous(limits=c(0,3+max(path.name.max.width,bar.pathway.length))) + 
-	pathplot.theme
+		line_ident_to_receptor + line_receptor_to_pathway +
+		point_up_ident + point_receptor + 
+		bar_pathway + text_pathway +
+		label_up_ident + label_receptor + label_title +
+		scale_x_continuous(limits=c(0,3+max(path.name.max.width,bar.pathway.length))) + 
+		pathplot.theme
 
 	return(plot)
 }
@@ -846,7 +844,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
 #' @param acti.path.dat Data frame of differential activation test result from diffAllPath
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
-#' @param path.order Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
+#' @param path.order Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
 #' @param top.n.receptor Top n receptor with the largest log2FCs to plot
 #' @param top.n.ligand Top n ligand with the largest log2FCs to plot
@@ -859,7 +857,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=N
 #' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors
 #' @export
-pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	all.ident <- object@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
@@ -873,21 +871,21 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	}
 
 	if ('t' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
+		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & t > 0)
 		ident.path.dat$diff <- ident.path.dat$mean.diff
 	}else if ('W' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & median.diff > 0)
+		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & median.diff > 0)
 		ident.path.dat$diff <- ident.path.dat$median.diff
 	}else{
 		stop('Please input the integrate acti.path.dat computed from diffPath')
 	}
 
-	if (nrow(ident.path.dat)==0){ paste0(stop('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
+	if (nrow(ident.path.dat)==0){ stop(paste0('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
 
-	if (path.order=='p.val.adj' | path.order=='p.val'){
+	if (path.order=='P.val.adj' | path.order=='P.val'){
 		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'diff']),]
 	}else if(path.order=='diff'){
-		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'p.val.adj']),]
+		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
 	if (top.n.path > nrow(ident.path.dat)){
 		warning(paste0('There is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
@@ -926,7 +924,7 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 		top.rep.LR.inten <- as.matrix(top.rep.LR.inten)
 		colnames(top.rep.LR.inten) <- top.rep.name
 	}
-	plot.ident.to.receprtor.dat <- melt(top.rep.LR.inten, varnames=c('Cell.From','Receptor'),value.name="LR.inten",  na.rm=TRUE)
+	plot.ident.to.receprtor.dat <- melt(top.rep.LR.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=TRUE)
 	plot.ident.to.receprtor.dat <- factor.to.character(plot.ident.to.receprtor.dat)
 	
 	### data for plot of ligands and downstream clusters
@@ -959,7 +957,7 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 		top.lig.LR.inten <- as.matrix(top.lig.LR.inten)
 		colnames(top.lig.LR.inten) <- top.rep.name
 	}
-	plot.ligand.to.ident.dat <- melt(top.lig.LR.inten, varnames=c('Cell.To','Ligand'),value.name="LR.inten",  na.rm=TRUE)
+	plot.ligand.to.ident.dat <- melt(top.lig.LR.inten, varnames=c('cell.to','ligand'),value.name="LR.inten",  na.rm=TRUE)
 	plot.ligand.to.ident.dat <- factor.to.character(plot.ligand.to.ident.dat)
 
 	### pathways and their color
@@ -968,7 +966,7 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	
 	#### rect for pathway
 	path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'diff']
-	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'p.val.adj']
+	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'P.val.adj']
 
 	if (all(path.rect.pval==0)){
 		path.rect.pval <- path.rect.length
@@ -985,7 +983,7 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	cur.uniq.rep <- cur.uniq.rep[order(cur.uniq.rep, decreasing=TRUE)]
 	n.rep <- length(cur.uniq.rep)
 	
-	top.markerR.dat <- subset(object@interact$markerR, subset=(cluster==select.ident & gene %in% top.rep.name))
+	top.markerR.dat <- subset(object@interact.filter$markerR, subset=(cluster==select.ident & gene %in% top.rep.name))
 
 	fc.rep <- top.markerR.dat[match(cur.uniq.rep, top.markerR.dat$gene),'avg_log2FC']
 	rep.size <- 10 * dot.gene.size * fc.rep
@@ -1007,7 +1005,7 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	cur.uniq.lig <- cur.uniq.lig[order(cur.uniq.lig, decreasing=TRUE)]
 	n.lig <- length(cur.uniq.lig)
 	
-	top.markerL.dat <- subset(object@interact$markerL, subset=(cluster==select.ident & gene %in% top.lig.name))
+	top.markerL.dat <- subset(object@interact.filter$markerL, subset=(cluster==select.ident & gene %in% top.lig.name))
 
 	fc.lig <- top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'avg_log2FC']
 	lig.size <- 10 * dot.gene.size * fc.lig
@@ -1070,9 +1068,9 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 
 	### lines between elements
 	### lines between up idents and receptors
-	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$Cell.From, up.uniq.ident)]
-	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$Receptor, cur.uniq.rep)]
-	line.ident.to.rep.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$Cell.From, up.uniq.ident)]
+	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
+	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$receptor, cur.uniq.rep)]
+	line.ident.to.rep.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.to.rep.width <- LRinten.to.width(plot.ident.to.receprtor.dat$LR.inten)
 	line_ident_to_receptor <- geom_segment(aes(x=1, xend=2, y=line.ident.to.rep.y.coor,yend=line.ident.to.rep.yend.coor), size=line.ident.to.rep.width, color=line.ident.to.rep.col, show.legend=F, alpha=0.6)
 	### lines between receptors and pathways
@@ -1086,9 +1084,9 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	path.lig.line.col <- dot.lig.col[match(plot.pathway.to.ligand.dat$cur.lig, cur.uniq.lig)]
 	line_pathway_to_ligand <- geom_segment(aes(x=3, xend=4, y=line.path.to.lig.y.coor,yend=line.path.to.lig.yend.coor),size=1, color=path.lig.line.col, show.legend=F)
 	### lines between ligands and down idents
-	line.lig.to.ident.y.coor <- lig.new.coor[match(plot.ligand.to.ident.dat$Ligand, cur.uniq.lig)]
-	line.lig.to.ident.yend.coor <- up.ident.new.coor[match(plot.ligand.to.ident.dat$Cell.To, up.uniq.ident)]
-	line.lig.to.ident.col <- dot.ident.col[match(plot.ligand.to.ident.dat$Cell.To, up.uniq.ident)]
+	line.lig.to.ident.y.coor <- lig.new.coor[match(plot.ligand.to.ident.dat$ligand, cur.uniq.lig)]
+	line.lig.to.ident.yend.coor <- up.ident.new.coor[match(plot.ligand.to.ident.dat$cell.to, up.uniq.ident)]
+	line.lig.to.ident.col <- dot.ident.col[match(plot.ligand.to.ident.dat$cell.to, up.uniq.ident)]
 	line.lig.to.ident.width <- LRinten.to.width(plot.ligand.to.ident.dat$LR.inten)
 	line_ligand_to_ident <- geom_segment(aes(x=4, xend=5, y=line.lig.to.ident.y.coor,yend=line.lig.to.ident.yend.coor), size=line.lig.to.ident.width, color=line.lig.to.ident.col, show.legend=F, alpha=0.6)
 
@@ -1142,10 +1140,9 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 #' @param object.1 CommPath object 1
 #' @param object.2 CommPath object 2 for comparison
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
-#' @param diff.marker.dat Data frame of defferential expression test result from compareMarker; if NULL, compareMarker would be run to get diff.marker.dat
 #' @param diff.path.dat Data frame of defferential activation test result from comparePath; if NULL, comparePath would be run to get diff.path.dat
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
-#' @param path.order Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
+#' @param path.order Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
 #' @param top.n.receptor Top n receptor with the largest log2FCs to plot
 #' @param top.n.ligand Top n ligand with the largest log2FCs to plot
@@ -1158,12 +1155,8 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 #' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two CommPath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
-pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.dat=NULL, diff.path.dat=NULL, top.n.path=5, path.order='p.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
-	# if(is.null(diff.marker.dat)){
-	# 	message(paste0('Identifying differentially expressed ligands(receptors) between cluster ',select.ident,' in object 1 and object 2'))
-	# 	diff.marker.dat <- compareMarker(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', only.posi=FALSE, only.sig=TRUE)
-	# }
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
 		diff.path.dat <- comparePath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
@@ -1176,21 +1169,21 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	### check the input and select significant pathways
 	ident.path.dat <- diff.path.dat
 	if ('t' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & t > 0)
+		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & t > 0)
 		ident.path.dat$diff <- ident.path.dat$mean.diff
 	}else if ('W' %in% colnames(ident.path.dat)){
-		ident.path.dat <- subset(ident.path.dat, p.val.adj < p.thre & median.diff > 0)
+		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & median.diff > 0)
 		ident.path.dat$diff <- ident.path.dat$median.diff
 	}else{
 		stop('Please input the integrate acti.path.dat computed from comparePath')
 	}
 
-	if (nrow(ident.path.dat)==0){ paste0(stop('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
+	if (nrow(ident.path.dat)==0){ stop(paste0('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
 
-	if (path.order=='p.val.adj' | path.order=='p.val'){
+	if (path.order=='P.val.adj' | path.order=='P.val'){
 		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'diff']),]
 	}else if(path.order=='diff'){
-		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'p.val.adj']),]
+		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
 
 	if (top.n.path > nrow(ident.path.dat)){
@@ -1230,12 +1223,12 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 		top.rep.LR.inten <- as.matrix(top.rep.LR.inten)
 		colnames(top.rep.LR.inten) <- top.rep.name
 	}
-	plot.ident.to.receprtor.obj1.dat <- melt(top.rep.LR.inten, varnames=c('Cell.From','Receptor'),value.name="LR.inten",  na.rm=FALSE)
+	plot.ident.to.receprtor.obj1.dat <- melt(top.rep.LR.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ident.to.receprtor.obj1.dat <- factor.to.character(plot.ident.to.receprtor.obj1.dat)
 	
 	### LR.inten for obj.2 for receptor
 	cur.rep.LR.obj2.inten <- cluster.lr.inten(top.rep.name, object.2, select.ident, ident.label, find='ligand')
-	plot.ident.to.receprtor.obj2.dat <- melt(cur.rep.LR.obj2.inten, varnames=c('Cell.From','Receptor'),value.name="LR.inten",  na.rm=FALSE)
+	plot.ident.to.receprtor.obj2.dat <- melt(cur.rep.LR.obj2.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ident.to.receprtor.obj2.dat <- factor.to.character(plot.ident.to.receprtor.obj2.dat)
 
 	LR.1.Dens.rep <- plot.ident.to.receprtor.obj1.dat$LR.inten
@@ -1277,12 +1270,12 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 		top.lig.LR.inten <- as.matrix(top.lig.LR.inten)
 		colnames(top.lig.LR.inten) <- top.rep.name
 	}
-	plot.ligand.to.ident.obj1.dat <- melt(top.lig.LR.inten, varnames=c('Cell.To','Ligand'),value.name="LR.inten",  na.rm=FALSE)
+	plot.ligand.to.ident.obj1.dat <- melt(top.lig.LR.inten, varnames=c('cell.to','ligand'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ligand.to.ident.obj1.dat <- factor.to.character(plot.ligand.to.ident.obj1.dat)
 
 	### LR.inten for obj.2 for ligand
 	cur.lig.LR.obj2.inten <- cluster.lr.inten(top.lig.name, object.2, select.ident, ident.label, find='receptor')
-	plot.ligand.to.ident.obj2.dat <- melt(cur.lig.LR.obj2.inten, varnames=c('Cell.To','Ligand'),value.name="LR.inten",  na.rm=FALSE)
+	plot.ligand.to.ident.obj2.dat <- melt(cur.lig.LR.obj2.inten, varnames=c('cell.to','ligand'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ligand.to.ident.obj2.dat <- factor.to.character(plot.ligand.to.ident.obj2.dat)
 
 	LR.1.Dens.lig <- plot.ligand.to.ident.obj1.dat$LR.inten
@@ -1300,7 +1293,7 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	
 	#### rect for pathway
 	path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'diff']
-	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'p.val.adj']
+	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'P.val.adj']
 
 	if (all(path.rect.pval==0)){
 		path.rect.pval <- path.rect.length
@@ -1332,7 +1325,6 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	}
 	dot.rep.col <- LRcolor(rep.pval, user.set.col=dot.gene.col)
 
-
 	### the ligand and their coordinate, and their color
 	cur.uniq.lig <- factor(top.lig.name, levels=top.lig.name)
 	cur.uniq.lig <- cur.uniq.lig[order(cur.uniq.lig, decreasing=TRUE)]
@@ -1341,8 +1333,8 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	top.markerL.dat <- subset(object.1@interact$markerL, subset=(cluster==select.ident & gene %in% top.lig.name))
 	fc.lig <- top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'avg_log2FC']
 	lig.size <- 10 * dot.gene.size * fc.lig
-	lig.pct <-  top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'pct.1']
-	lig.pval <-  top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'p_val_adj']
+	lig.pct <- top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'pct.1']
+	lig.pval <- top.markerL.dat[match(cur.uniq.lig, top.markerL.dat$gene),'p_val_adj']
 
 	if (all(lig.pval==0)){
 		lig.pval <- fc.lig
@@ -1352,7 +1344,6 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 		lig.pval <- p.remove.inf(lig.pval)
 	}
 	dot.lig.col <- LRcolor(lig.pval, user.set.col=dot.gene.col)
-
 
 	### the upstream and downstream ident and their coordinate, and their color
 	up.uniq.ident <- factor(ident.label, levels=ident.label)
@@ -1375,7 +1366,6 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	lig.new.coor <- seq(from=1, to=max.limit, length.out=n.lig)
 	down.ident.new.coor <- seq(from=1, to=max.limit, length.out=n.up.ident)
 
-
 	if (n.up.ident==1){ 
 		up.ident.new.coor <- median(1:max.limit) 
 		down.ident.new.coor <- median(1:max.limit) 
@@ -1390,7 +1380,6 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 		bar_pathway_width <- 0.3 * (pathway.new.coor[2]-pathway.new.coor[1]) * top.n.path / max.limit
 	}
 	path.name.max.width <- max(strwidth(path.uniq.name, units="inches", cex=1))
-	#bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
 	bar.pathway.length <- 2 * path.rect.length / max(path.rect.length)
 	bar_pathway <- geom_rect(aes(xmin=6, xmax=6+bar.pathway.length, ymin=pathway.new.coor-bar_pathway_width, ymax=pathway.new.coor+bar_pathway_width), size=1, fill=bar.path.col, alpha=1, show.legend=F)
 	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
@@ -1401,9 +1390,9 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 
 	### lines between elements
 	### lines between up idents and receptors
-	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$Cell.From, up.uniq.ident)]
-	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$Receptor, cur.uniq.rep)]
-	#line.ident.to.rep.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$Cell.From, up.uniq.ident)]
+	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
+	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$receptor, cur.uniq.rep)]
+	#line.ident.to.rep.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.to.rep.col <- ifelse(plot.ident.to.receprtor.dat$LR.inten.diff > 0, 'red', 'blue')
 	line.ident.to.lig.width <- LRinten.to.width(plot.ident.to.receprtor.dat$LR.inten)
 	line_ident_to_receptor <- geom_segment(aes(x=1, xend=2, y=line.ident.to.rep.y.coor,yend=line.ident.to.rep.yend.coor), size=line.ident.to.lig.width, color=line.ident.to.rep.col, show.legend=F, alpha=0.6)
@@ -1418,13 +1407,12 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	path.lig.line.col <- dot.lig.col[match(plot.pathway.to.ligand.dat$cur.lig, cur.uniq.lig)]
 	line_pathway_to_ligand <- geom_segment(aes(x=3, xend=4, y=line.path.to.lig.y.coor,yend=line.path.to.lig.yend.coor),size=1, color=path.lig.line.col, show.legend=F)
 	### lines between ligands and down idents
-	line.lig.to.ident.y.coor <- lig.new.coor[match(plot.ligand.to.ident.dat$Ligand, cur.uniq.lig)]
-	line.lig.to.ident.yend.coor <- up.ident.new.coor[match(plot.ligand.to.ident.dat$Cell.To, up.uniq.ident)]
-	#line.lig.to.ident.col <- dot.ident.col[match(plot.ligand.to.ident.dat$Cell.To, up.uniq.ident)]
+	line.lig.to.ident.y.coor <- lig.new.coor[match(plot.ligand.to.ident.dat$ligand, cur.uniq.lig)]
+	line.lig.to.ident.yend.coor <- up.ident.new.coor[match(plot.ligand.to.ident.dat$cell.to, up.uniq.ident)]
+	#line.lig.to.ident.col <- dot.ident.col[match(plot.ligand.to.ident.dat$cell.to, up.uniq.ident)]
 	line.lig.to.ident.col <- ifelse(plot.ligand.to.ident.dat$LR.inten.diff > 0, 'red', 'blue')
 	line.lig.to.ident.width <- LRinten.to.width(plot.ligand.to.ident.dat$LR.inten)
 	line_ligand_to_ident <- geom_segment(aes(x=4, xend=5, y=line.lig.to.ident.y.coor,yend=line.lig.to.ident.yend.coor), size=line.lig.to.ident.width, color=line.lig.to.ident.col, show.legend=F, alpha=0.6)
-
 	
 	### text and label
 	label_up_ident <- annotate('text', hjust=0.5, x=1, y=up.ident.new.coor-0.4,label=up.uniq.ident, size=5*label.text.size)
@@ -1436,7 +1424,6 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 	label_ligand <- annotate('text', hjust=0.5, x=4, y=lig.new.coor-0.4,label=cur.uniq.lig, size=5*label.text.size)
 	label_down_ident <- annotate('text', hjust=0.5, x=5, y=down.ident.new.coor-0.4,label=up.uniq.ident, size=5*label.text.size)
 	label_title <- annotate('text', hjust=c(0.5,0.5,0.5,0.5,0.5,0), x=1:6, y=max.limit+0.8,label=c('Upstream', 'Receptor', 'Pathway', 'Ligand', 'Downstream','Pathway annotation'), size=5*label.title.size) 
-
 
 	pathplot.theme <- theme(axis.title=element_blank(), axis.text=element_blank(),axis.ticks=element_blank(), axis.line=element_blank(), panel.background=element_rect(fill="white"))
 
@@ -1466,6 +1453,188 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.marker.
 
 	scale_x_continuous(limits=c(0,6+max(path.name.max.width,bar.pathway.length))) +
 	pathplot.theme
-
 	return(plot)
+}
+
+
+#' To present a net plot for pathways and associated LR interactions
+#' @param object CommPath object
+#' @param select.ident Cluster of interest
+#' @param ident.col Vector of colors of each cluster; names of the col vector are supposed to be assigned to indicate each color for each cluster
+#' @param vert.size.attr Which statistical measures should be mapped to the size of vertex; Type "getNetAttr(object)" to retrieve the available statistical measures for pathways
+#' @param vert.size.LR Size of node representing LR interactions
+#' @param vert.size.path.adj pseudocount to adjust the size of node representing pathways
+
+#' @param top.n.path Top n activated pathways in the selected cluster of interest; if NULL, slelect all activated pathways
+#' @param path.order Sort criteria used to select the top n pathways, either "P.val" or "P.val.adj", which represent the original and adjusted p values, or "diff" which represents the mean (in t test) or median (in wilcox test) difference; default is "P.val.adj". This parameter would be masked if top.n.path is set as NULL.
+#' @param layout Network layout; defualt is Fruchterman-Reingold ('layout.fruchterman.reingold'). Refer to the igraph package for more information. Note: an error would be raised if the selected layout do not apply to the graph.
+#' @param LR.label Logical value indicating to display the label of LR interactions or not; default is FALSE
+#' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
+#' @param edge.arrow.size Size of arrow
+#' @param vertex.label.cex Font size of vertex label
+#' @param vertex.label.color color of vertex label
+#' @param vertex.label.family Font family of the label
+#' @param vertex.frame.color Color of Node border
+#' @param node.pie Logical value indicating to show the node representing pathways in pie charts or not; default is TRUE
+#' @param return.net Logical value indicating to return the igraph object or not; default is FALSE
+#' @param return.data Logical value indicating to return the link dataframe or not; default is FALSE. This parameter allows users to export the link data in a dataframe, which could be analyzed in other network visualization tools, for example Cytoscape.
+#' @importFrom igraph graph_from_data_frame V E degree layout_with_fr
+#' @importFrom plyr rbind.fill mapvalues
+#' @return Net plot showing the activated pathways and associated LR interactions
+#' @export
+pathNetPlot <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label=FALSE, pathway.label=TRUE, edge.arrow.size=0.2, vertex.label.cex=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+	options(stringsAsFactors=F)
+
+	path.net.dat <- object@pathway.net
+	if (!(select.ident %in% path.net.dat$cell.to)){
+		stop(paste0('There is no significantly up-regulatged pathways for cluster ', select.ident, ' or the up-regulatged pathways contain no marker receptor'))
+	}
+	path.fibro.dat <- path.net.dat[which(path.net.dat$cell.to==select.ident), ]
+
+	### node of pathway
+	node.path <- unique(path.fibro.dat[, c('path.contain.rep.unfold','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')])
+	colnames(node.path) <- c('ID','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')
+	node.path$type <- 'Pathway'
+
+	if('t.path' %in% colnames(node.path)){
+		node.path$diff <- node.path$mean.diff
+	}else{
+		node.path$diff <- node.path$median.diff
+	}
+
+	### select the top n pathways
+	if (is.null(top.n.path)){
+		top.n.path <- nrow(node.path)
+	}else if (is.numeric(top.n.path) & (top.n.path%%1==0)){
+		if (path.order=='P.val.adj'){
+			node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'diff']),]
+		}else if(path.order=='P.val'){
+			node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'diff']),]
+		}else if(path.order=='diff'){
+			node.path <- node.path[order(-node.path[,'diff'], node.path[,'P.val.adj.path']),]
+		}
+
+		if (top.n.path > nrow(node.path)){
+			warning(paste0('There is(are) ', nrow(node.path),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+			top.n.path <- nrow(node.path)
+		}
+	}else{
+		stop('Wrong "top.n.path" parameter! Input an positive integer to select the corresponding number of up-regulatged pathway(s)')
+	}	
+	node.path <- node.path[1:top.n.path, ]
+	path.fibro.dat <- path.fibro.dat[which(path.fibro.dat$path.contain.rep.unfold %in% node.path$ID), ]
+
+	### node of LR
+	node.LR <- unique(path.fibro.dat[, c('LR.type','LR.pair','cell.from', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR')])	
+	colnames(node.LR) <- c('ID','LR.pair','cell.from', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR')
+	node.LR$type <- 'LR'
+	node.LR <- node.LR[which(!duplicated(node.LR$ID)),]
+
+	### get the node of all vertex and construct the net
+	node.dat <- rbind.fill(node.LR, node.path)
+	link.dat <- path.fibro.dat[, c('LR.type', 'path.contain.rep.unfold')]
+	net <- graph_from_data_frame(d=link.dat, vertices=node.dat, directed=T)
+	### return the igraph object if ordered by user
+	if(return.net){
+		return(net)
+	}
+
+	if(return.data){
+		if('t.path' %in% colnames(path.fibro.dat)){
+			return(path.fibro.dat[,c('cell.from', 'cell.to', 'LR.pair', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR','description.path','mean.diff.path', 'mean.1.path', 'mean.2.path', 't.path', 'df.path', 'P.val.path', 'P.val.adj.path')])
+		}else{
+			return(path.fibro.dat[,c('cell.from', 'cell.to', 'LR.pair', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR','description.path','median.diff.path', 'median.1.path', 'median.2.path', 'W.path', 'P.val.path', 'P.val.adj.path')])
+		}
+	}
+
+	### network plot
+	vert.attr.list <- get.vertex.attribute(net)
+	node.dat.id <- vert.attr.list$name
+	### vertex label
+	if(LR.label){
+		vert.label <- vert.attr.list$LR.pair
+		if(pathway.label){
+			vert.label[which(is.na(vert.label))] <- node.dat.id[which(is.na(vert.label))]
+		}
+	}else{
+		if(pathway.label){
+			vert.label <- vert.attr.list$description.path
+		}else{
+			vert.label <- rep(NA,length(node.dat.id))
+		}
+	}
+
+	### vertex size
+	if(vert.size.attr=='degree'){
+		vert.size <- igraph::degree(net, mode="in")
+		vert.size[which(vert.size==0)] <- NA
+	}else{
+		if(vert.size.attr=='logP'){
+			vert.size <- vert.attr.list[['P.val.path']]
+			vert.size <- -log10(vert.size)
+		}else if(vert.size.attr=='logP.adj'){
+				vert.size <- vert.attr.list[['P.val.adj.path']]
+				vert.size <- -log10(vert.size)
+		}else{
+			vert.size <- vert.attr.list[[paste0(vert.size.attr,'.path')]]
+			if(is.null(vert.size)){
+				stop(paste0('Wrong "vert.size.attr" parameter! There is no valid attribute named as ',vert.size.attr,'\nType "getPathAttr(object)" for available attribute'))
+			}
+		}
+	}
+	vert.size <- scale_1(vert.size)
+	vert.size <- vert.size * vert.size.path.adj
+	vert.size[which(is.na(vert.size))] <- vert.size.LR
+	
+	### vertex color
+	all.ident <- object@cell.info$Cluster
+	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
+	ident.label <- levels(all.ident)
+	vert.cluster.ident <- ident.label[which(ident.label %in% as.character(vert.attr.list$cell.from))]
+	if(is.null(ident.col)){
+		scales.color <- scales::hue_pal(c=100)(length(ident.label))
+		vert.cluster.color <- scales.color[which(ident.label %in% as.character(vert.attr.list$cell.from))]
+	}else{
+		col.name <- names(ident.col)
+		if(is.null(col.name)){
+			stop(paste0('Wrong "ident.col" parameter! The colors should be named according to the clusters'))
+		}else{
+			ident.missed <- vert.cluster.ident[which(!(vert.cluster.ident %in% col.name))]
+			if(length(ident.missed) > 0){
+				stop(paste0('The color of ',pasteIdent(ident.missed),' may be missed in the input color'))
+			}
+			vert.cluster.color <- as.vector(ident.col[vert.cluster.ident])
+		}
+	}
+	vertex.pie.color <- list(vert.cluster.color)
+	### pie border
+	vertex.frame.na.color <- mapvalues(vert.attr.list$type, from=c('LR','Pathway'), to=c(NA,vertex.frame.color), warn_missing=FALSE) 
+	
+	### pie chart composition
+	pie.comp.path <- as.data.frame.array(table(path.fibro.dat[,c('cell.from','path.contain.rep.unfold')]))
+	pie.comp.path <- pie.comp.path[vert.cluster.ident, ]
+	pie.comp.node <- as.data.frame.array(table(node.dat[,c('cell.from','ID')]))
+	pie.comp.node <- pie.comp.node[vert.cluster.ident, node.dat$ID]
+
+	for(each.path in colnames(pie.comp.path)){
+		pie.comp.node[ ,each.path] <- pie.comp.path[ ,each.path] 
+	}
+	pie.comp.node <- lapply(pie.comp.node, function(x){x})
+
+	if(!node.pie){
+		scales.color <- scales::hue_pal(c=100)(length(ident.label))
+		vert.cluster.color <- scales.color[which(ident.label %in% as.character(vert.attr.list$cell.from))]
+		vert.color <- mapvalues(vert.attr.list$cell.from, from=c(vert.cluster.ident,NA), to=c(vert.cluster.color,'tomato'), warn_missing=FALSE) 
+	}
+
+	### layout
+	l <- do.call(layout, list(net))
+
+	if(node.pie){
+		plot(net, vertex.shape="pie", vertex.pie=pie.comp.node, edge.arrow.size=edge.arrow.size, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.na.color, vertex.pie.color=vertex.pie.color)
+		legend(x=1.1, y=1, legend=vert.cluster.ident, pch=21, col=vertex.frame.color, pt.bg=vert.cluster.color, pt.cex=1, cex=.5, bty="n", ncol=1)
+	}else{
+		plot(net, edge.arrow.size=edge.arrow.size, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.color, vertex.color=vert.color)
+		legend(x=1.1, y=1, legend=vert.cluster.ident, pch=21, col=vertex.frame.color, pt.bg=vert.cluster.color, pt.cex=1, cex=.5, bty="n", ncol=1)
+	}
 }

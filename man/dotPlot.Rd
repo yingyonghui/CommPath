@@ -10,6 +10,7 @@ dotPlot(
   receptor.ident = NULL,
   ident.levels = NULL,
   top.n.inter = 10,
+  filter = TRUE,
   return.data = FALSE
 )
 }
@@ -23,6 +24,8 @@ dotPlot(
 \item{ident.levels}{Vector of levels of the identities}
 
 \item{top.n.inter}{Show the dotplot for the top n LR pairs with the largest product of Log2FC}
+
+\item{filter}{Logical value indicating to present the circos plot for the filtered LR interacyion or not; default is TRUE}
 
 \item{return.data}{Logical value indicating whether to return the data for the plot or not}
 }

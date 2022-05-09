@@ -8,10 +8,9 @@ pathInterPlot.compare(
   object.1,
   object.2,
   select.ident,
-  diff.marker.dat = NULL,
   diff.path.dat = NULL,
   top.n.path = 5,
-  path.order = "p.val.adj",
+  path.order = "P.val.adj",
   p.thre = 0.05,
   top.n.receptor = 10,
   top.n.ligand = 10,
@@ -31,13 +30,11 @@ pathInterPlot.compare(
 
 \item{select.ident}{Plot the activated pathways for which cluster or cell type?}
 
-\item{diff.marker.dat}{Data frame of defferential expression test result from compareMarker; if NULL, compareMarker would be run to get diff.marker.dat}
-
 \item{diff.path.dat}{Data frame of defferential activation test result from comparePath; if NULL, comparePath would be run to get diff.path.dat}
 
 \item{top.n.path}{Top n pathways with the smallest adjusted p values to plot}
 
-\item{path.order}{Sort criteria used to select the top n pathways, either 'p.val' or 'p.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference}
+\item{path.order}{Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference}
 
 \item{p.thre}{Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered}
 

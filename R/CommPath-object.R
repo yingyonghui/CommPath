@@ -6,7 +6,9 @@
 #' @slot meta.info list of important parameters used during the analysis
 #' @slot LR.marker data frame of the differential expression test result of ligands and receptors
 #' @slot interact list containing information of LR interaction among clusters
+#' @slot interact.filter list containing information of filtered LR interaction among clusters
 #' @slot pathway list containing information of pathways associated with ligands and receptors
+#' @slot pathway.net data frame of the statistics of LR interactions and associated pathways
 #' @exportClass CommPath
 CommPath <- methods::setClass("CommPath",
 	slots = c(data = 'ANY',
@@ -14,18 +16,25 @@ CommPath <- methods::setClass("CommPath",
 	meta.info = 'list',
 	LR.marker = 'data.frame',
 	interact = 'list',
-	pathway = 'list')
+	interact.filter = 'list',
+	pathway = 'list',
+	pathway.net = 'data.frame'
+	)
 )
 
 #' To create a CommPath object
 #' @param expr.mat Matrix or data frame of expression matrix, with genes in rows and cells in columns
 #' @param cell.info Vector of lables indicating identity classes of cells in the expression matrix, and the order of lables should match the order of cells in the expression matrix; or a data frame containing the meta infomation of cells with the row names matching the cells in the expression matrix and a column named as "Cluster" must be included to indicate identity classes of cells
-#' @param species Species, either 'hsapiens' or 'mmusculus'
+#' @param species Species, either 'hsapiens'('human') or 'mmusculus'('mouse')
 #' @return CommPath object
 #' @export
 createCommPath <- function(expr.mat, cell.info, species){
 	if ((length(species) > 1) | (!(species %in% c('hsapiens', 'mmusculus')))){
-		stop("Select one species from 'hsapiens' or 'mmusculus'")
+		stop("Select one species from hsapiens (human) or mmusculus (mouse)")
+	}else if(species=='human'){
+		species <- 'hsapiens'
+	}else if(species=='mouse'){
+		species <- 'mmusculus'
 	}
 	if(is.vector(cell.info) | is.factor(cell.info)){
 		if(length(cell.info)!=ncol(expr.mat)){
@@ -49,7 +58,9 @@ createCommPath <- function(expr.mat, cell.info, species){
 		meta.info = list(species=species, logFC.thre=NULL, p.thre=NULL),
 		LR.marker = data.frame(),
 		interact = list(),
-		pathway = list()
+		interact.filter = list(),
+		pathway = list(),
+		pathway.net = data.frame()
 	)
 
 	return(object)

@@ -21,6 +21,10 @@ To define the CommPath object and the key slots
 
 \item{\code{interact}}{list containing information of LR interaction among clusters}
 
+\item{\code{interact.filter}}{list containing information of filtered LR interaction among clusters}
+
 \item{\code{pathway}}{list containing information of pathways associated with ligands and receptors}
+
+\item{\code{pathway.net}}{data frame of the statistics of LR interactions and associated pathways}
 }}
 

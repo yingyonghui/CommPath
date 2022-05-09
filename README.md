@@ -17,7 +17,7 @@ library(CommPath)
 ## Tutorials
 In this vignette we show CommPath's steps and functionalities for inference and analysis of ligand-receptor interactions by applying it to a scRNA-seq data (GEO accession number: GSE156337) on cells from hepatocellular carcinoma (HCC) patients.
 ### Brief description of CommPath object
-We start CommPath analysis by creating a CommPath object, which is a S4 object and consists of six slots including (i) ***data***, a matrix containing the normalized expression values by gene $\times$ cell; (ii) ***cell.info***, a dataframe contain the information of cells; (iii) ***meta.info***, a list containing some important parameters used during the analysis; (iv) ***LR.marker***, a dataframe containing the result of differential expression test of ligands and receptors; (v) ***interact***, a list containing the  information of LR interaction among clusters; (vi) ***pathway***, a list containing the information of pathways related to the ligands and receptors.
+We start CommPath analysis by creating a CommPath object, which is a S4 object and consists of six slots including (i) ***data***, a matrix containing the normalized expression values by gene $\times$ cell; (ii) ***cell.info***, a dataframe contain the information of cells; (iii) ***meta.info***, a list containing some important parameters used during the analysis; (iv) ***LR.marker***, a dataframe containing the result of differential expression test of ligands and receptors; (v) ***interact***, a list containing the  information of LR interaction among clusters; (v) ***interact.filter***, a list containing the  information of filtered LR interaction among clusters; (vi) ***pathway***, a list containing the information of pathways related to the ligands and receptors.
 ### CommPath input
 The expression matrix and cell indentity information are required for CommPath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of CommPath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
 We here illustrate the CommPath steps for data from the tumor tissues. And analysis for data from the normal tissues would be roughly in the same manner.
@@ -123,7 +123,7 @@ dev.off()
 
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/dotPlot-receptor.png" height=300, width=630>
 
-#### Pathway analysis
+#### Pathway enrichment analysis
 CommPath conducts pathway analysis to identify signaling pathways containing the marker ligands and receptors for each cluster.
 ```
 # To find pathways in which genesets show overlap with the marker ligands and receptors
@@ -159,6 +159,26 @@ dev.off()
 ```
 
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathHeatmap.png" height=650, width=455>
+
+#### Screening LR interactions associated with activated pathways
+For each cell cluster, CommPath identifies LR associations involved in the activated pathways to screen functional LR interactions. Those interacctions are considered to be more likely to trigger the corresponding molecular pathways in the receiver cells.
+```
+# To screen functional LR interactions by the filterLR function
+tumor.obj <- filterLR(object = tumor.obj, acti.path.dat = acti.path.dat)
+# To integrate the statistics of LR interactions and associated activated pathways
+tumor.obj <- pathNet(object = tumor.obj, acti.path.dat = acti.path.dat)
+```
+Then CommPath provides pathNetPlot to visualize the pathways and associated LR           interactions in a network plot:
+```
+pdf('LR.pathway.net.pdf',width=6,heigh=6)
+set.seed(1234)
+pathNetPlot(object, select.ident, vert.size.adj=8, top.n.path=NULL, layout='layout.davidson.harel', LR.label=T, pathway.label=TRUE, vertex.label.cex=0.25, node.pie=T, vert.size.LR=3)
+dev.off()
+```
+
+
+
+
 
 #### Cell-cell interaction flow via pathways
 For a specific cell cluster, here named as B for demonstration, CommPath identifies the upstream cluster A sending signals to B, the downstream cluster C receiving signals from B, and the significantly activated pathways in B to mediate the A-B-C communication flow. More exactly, through LR and pathways analysis described above, CommPath is able to identify LR pairs between A and B, LR pairs between B and C, and pathways activated in B. Then CommPath screens for pathways in B which involve both the receptors to interact with A and ligands to interact with C.

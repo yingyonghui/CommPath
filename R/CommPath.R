@@ -23,7 +23,7 @@ findLRmarker <- function(object, method='wilcox.test', p.adjust='BH'){
 	ident.level <- levels(label)
 	
 	label <- as.character(label)
-	### p.value calculated
+	### P.value calculated
 	if (method!='wilcox.test' & method!='t.test'){
 		stop("Select t.test or wilcox.test to conduct differential analysis")
 	}
@@ -107,12 +107,12 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 	Interact.rep.mat <- matrix(NA,num.cluster,num.cluster)
 	for (lig.idx in 1:num.cluster){
 		cluster.l <- cluster.level[lig.idx]
-		markers.l <- marker.dat[marker.dat$cluster == cluster.l, ]
+		markers.l <- marker.dat[which(marker.dat$cluster == cluster.l), ]
 		ligands <- markers.l[(markers.l$avg_log2FC > logFC.thre) & (markers.l$p_val_adj < p.thre), 'gene']
 		for (rep.idx in 1:num.cluster){
 			cluster.r <- cluster.level[rep.idx]
-			markers.r <- marker.dat[marker.dat$cluster == cluster.r, ]
-			receptors <- markers.r[(markers.r$avg_log2FC>logFC.thre) & (markers.r$p_val_adj<p.thre), 'gene']
+			markers.r <- marker.dat[which(marker.dat$cluster == cluster.r), ]
+			receptors <- markers.r[which((markers.r$avg_log2FC > logFC.thre) & (markers.r$p_val_adj < p.thre)), 'gene']
 			pair.valid <- which((ligs %in% ligands) & (reps %in% receptors))
 			if (length(pair.valid) > 0){
 				Interact.gene.mat[lig.idx,rep.idx] <- paste(paste(ligs[pair.valid],reps[pair.valid],sep='--'),collapse=';')
@@ -124,26 +124,26 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 
 	rownames(Interact.gene.mat) <- cluster.level
 	colnames(Interact.gene.mat) <- cluster.level
-	Interact.gene.dat <- melt(Interact.gene.mat,varnames=c('Cell.From','Cell.To'),value.name="LR.Info", na.rm = TRUE)
+	Interact.gene.dat <- melt(Interact.gene.mat,varnames=c('cell.from','cell.to'),value.name="LR.info", na.rm = TRUE)
 	Interact.gene.dat <- factor.to.character(Interact.gene.dat)
-	rownames(Interact.gene.dat) <- paste(Interact.gene.dat$Cell.From,Interact.gene.dat$Cell.To, sep='--')
+	rownames(Interact.gene.dat) <- paste(Interact.gene.dat$cell.from,Interact.gene.dat$cell.to, sep='--')
 	
 	rownames(Interact.lig.mat) <- cluster.level
 	colnames(Interact.lig.mat) <- cluster.level
-	Interact.lig.dat <- melt(Interact.lig.mat,varnames=c('Cell.From','Cell.To'),value.name="L.Info", na.rm = TRUE)
+	Interact.lig.dat <- melt(Interact.lig.mat,varnames=c('cell.from','cell.to'),value.name="L.info", na.rm = TRUE)
 	Interact.lig.dat <- factor.to.character(Interact.lig.dat)
 
 	rownames(Interact.rep.mat) <- cluster.level
 	colnames(Interact.rep.mat) <- cluster.level
-	Interact.rep.dat <- melt(Interact.rep.mat,varnames=c('Cell.From','Cell.To'),value.name="R.Info", na.rm = TRUE)
+	Interact.rep.dat <- melt(Interact.rep.mat,varnames=c('cell.from','cell.to'),value.name="R.info", na.rm = TRUE)
 	Interact.rep.dat <- factor.to.character(Interact.rep.dat)
 	
-	Interact.gene.dat$L.Info <- Interact.lig.dat$L.Info
-	Interact.gene.dat$R.Info <- Interact.rep.dat$R.Info
+	Interact.gene.dat$L.info <- Interact.lig.dat$L.info
+	Interact.gene.dat$R.info <- Interact.rep.dat$R.info
 	rownames(Interact.gene.dat) <- 1:nrow(Interact.gene.dat)
 
-	LRpair <- Interact.gene.dat$LR.Info
-	names(LRpair) <- paste(Interact.gene.dat$Cell.From,Interact.gene.dat$Cell.To,sep='--')
+	LRpair <- Interact.gene.dat$LR.info
+	names(LRpair) <- paste(Interact.gene.dat$cell.from,Interact.gene.dat$cell.to,sep='--')
 	lr.split.list <- sapply(LRpair, function(LR){
 		strsplit(LR,split=';')
 	})
@@ -155,15 +155,15 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 		strsplit(ident.LR.info, split='--')
 		})
 	lr.unfold.dat <- as.data.frame(t(as.data.frame(lr.split.list)))
-	colnames(lr.unfold.dat) <- c('Cell.From','Cell.To','Ligand','Receptor')
-	rownames(lr.unfold.dat) <- paste(lr.unfold.dat$Cell.From,lr.unfold.dat$Cell.To,lr.unfold.dat$Ligand,lr.unfold.dat$Receptor, sep='--')
+	colnames(lr.unfold.dat) <- c('cell.from','cell.to','ligand','receptor')
+	rownames(lr.unfold.dat) <- paste(lr.unfold.dat$cell.from,lr.unfold.dat$cell.to,lr.unfold.dat$ligand,lr.unfold.dat$receptor, sep='--')
 
-	fc.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['Ligand'] & cluster == x['Cell.From'])[1,'avg_log2FC'] }))
-	pval.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['Ligand'] & cluster == x['Cell.From'])[1,'p_val_adj'] }))
-	fc.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['Receptor'] & cluster == x['Cell.To'])[1,'avg_log2FC'] }))
-	pval.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['Receptor'] & cluster == x['Cell.To'])[1,'p_val_adj'] }))
+	fc.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['ligand'] & cluster == x['cell.from'])[1,'avg_log2FC'] }))
+	pval.lig <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['ligand'] & cluster == x['cell.from'])[1,'p_val_adj'] }))
+	fc.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['receptor'] & cluster == x['cell.to'])[1,'avg_log2FC'] }))
+	pval.rep <- as.vector(apply(lr.unfold.dat, 1, function(x){ subset(marker.dat, gene == x['receptor'] & cluster == x['cell.to'])[1,'p_val_adj'] }))
 
-	lr.unfold.dat$Log2FC.LR <- fc.lig * fc.rep
+	lr.unfold.dat$log2FC.LR <- fc.lig * fc.rep
 	lr.unfold.dat$P.val.LR <- 1-(1-pval.lig)*(1-pval.rep)
 	lr.unfold.dat$P.val.adj.LR <- p.adjust(lr.unfold.dat$P.val.LR, method='BH')
 	lr.unfold.dat <- subset(lr.unfold.dat, P.val.adj.LR < 0.05)
@@ -172,25 +172,25 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 		stop('No significant LR pairs detected! Select a lower logFC.thre or higher p.thre and try again')
 	}
 
-	lr.inten.all.name <- paste(lr.unfold.dat$Cell.From, lr.unfold.dat$Cell.To, sep='--')
+	lr.inten.all.name <- paste(lr.unfold.dat$cell.from, lr.unfold.dat$cell.to, sep='--')
 	Interact.num.dat <- data.frame(table(lr.inten.all.name))
 	rownames(Interact.num.dat) <- Interact.num.dat$lr.inten.all.name
 	Interact.num.dat <- cbind(Interact.num.dat, matrix(unlist(strsplit(as.character(Interact.num.dat$lr.inten.all.name), split='--')), ncol = 2, byrow = TRUE))
-	Interact.num.dat$LR.Count <- Interact.num.dat$Freq
+	Interact.num.dat$LR.count <- Interact.num.dat$Freq
 
 
-	lr.inten.vec <- by(data=lr.unfold.dat$Log2FC.LR, INDICES=lr.inten.all.name, FUN=sum)
+	lr.inten.vec <- by(data=lr.unfold.dat$log2FC.LR, INDICES=lr.inten.all.name, FUN=sum)
 	lr.inten.vec.name <- names(lr.inten.vec)
 	lr.inten.vec <- as.vector(lr.inten.vec)
 
 	Interact.num.dat$Intensity <- lr.inten.vec[match(rownames(Interact.num.dat), lr.inten.vec.name)]
 	Interact.num.dat$Intensity[is.na(Interact.num.dat$Intensity)] <- 0
 	Interact.num.dat <- Interact.num.dat[,-c(1,2)]
-	colnames(Interact.num.dat) <- c('Cell.From','Cell.To','LR.Count','Intensity')
+	colnames(Interact.num.dat) <- c('cell.from','cell.to','LR.count','Intensity')
 	
-	marker.lig.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.dat$Cell.From, lr.unfold.dat$Ligand, sep='--')), ]
-	marker.rep.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.dat$Cell.To, lr.unfold.dat$Receptor, sep='--')), ]
-
+	marker.lig.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.dat$cell.from, lr.unfold.dat$ligand, sep='--')), ]
+	marker.rep.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.dat$cell.to, lr.unfold.dat$receptor, sep='--')), ]
+	
 	Interact <- list(InteractNumber=Interact.num.dat, InteractGene=lr.unfold.dat, markerL=marker.lig.dat, markerR=marker.rep.dat)
 
 	object@interact <- Interact
@@ -300,10 +300,10 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 		stop("Select t.test or wilcox.test to conduct differential analysis")
 	}else if(method=='t.test'){
 		test.res.dat <- data.frame(matrix(NA,0,12))
-		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','p.val','p.val.adj','description','cell.up','ligand.up','receptor.in.path','ligand.in.path')
+		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','P.val','P.val.adj','description','cell.up','ligand.up','receptor.in.path','ligand.in.path')
 	}else{
 		test.res.dat <- data.frame(matrix(NA,0,11))
-		colnames(test.res.dat) <- c('median.diff','median.1','median.2','W','p.val','p.val.adj','description','cell.up','ligand.up','receptor.in.path','ligand.in.path')
+		colnames(test.res.dat) <- c('median.diff','median.1','median.2','W','P.val','P.val.adj','description','cell.up','ligand.up','receptor.in.path','ligand.in.path')
 	}
 
 	### find those pathways showing overlap with the ligands and receptors in select ident
@@ -399,26 +399,133 @@ diffAllPath <- function(object, method='t.test', only.posi=FALSE, only.sig=FALSE
 	return(all.test.dat)
 }
 
+#' To screen LR pairs involved in activated pathways
+#' @param object CommPath object
+#' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
+#' @importFrom reshape2 melt
+#' @return CommPath object with LR interactions filtered by activated pathways in each cluster
+#' @export
+filterLR <- function(object, acti.path.dat){
+	# if (is.null(acti.path.dat)){
+	# 		acti.path.dat <- diffAllPath(object)
+	# }
+	
+	### select the highly enriched pathways
+	if ('mean.diff' %in% colnames(acti.path.dat)){
+		acti.path.dat$diff <- acti.path.dat$mean.diff
+	}else if('median.diff' %in% colnames(acti.path.dat)){
+		acti.path.dat$diff <- acti.path.dat$median.diff
+	}else{
+		stop('Please input the intact test result computed from diffAllPath')
+	}
+	acti.path.dat <- subset(acti.path.dat, (mean.diff > 0) & (P.val.adj < 0.05) & (!(is.na(receptor.in.path))))
+
+	### to filter the LR interactions
+	interact.dat <- object@interact$InteractGene
+	interact.dat <- interact.dat[which(interact.dat$cell.to %in% acti.path.dat$cluster), ]
+
+	all.path.list <- object@pathway$pathwayLR
+	pathname.list <- by(data=acti.path.dat$description, INDICES=acti.path.dat$cluster, FUN=function(x){x})
+
+	allpath.contain.rep <- apply(interact.dat,1,function(x){
+		#x <- t(interact.dat)[,28]
+		cur.rep <- x['receptor']
+		cur.pathname <- pathname.list[[ x['cell.to'] ]]
+		cur.pathgene <- all.path.list[cur.pathname]
+		path.contain.cur.rep <- lapply(cur.pathgene, function(x){cur.rep %in% x})
+		path.contain.cur.rep <- paste(names(which(unlist(path.contain.cur.rep))), collapse=';')
+		return(path.contain.cur.rep)
+		})
+	interact.dat$path.contain.rep <- as.character(allpath.contain.rep)
+	lr.unfold.filter.dat <- interact.dat[which(interact.dat$path.contain.rep!=''), ]
+
+	### to construct the slot Interact
+	### Interact.num.dat
+	lr.inten.all.name <- paste(lr.unfold.filter.dat$cell.from, lr.unfold.filter.dat$cell.to, sep='--')
+	Interact.num.dat <- data.frame(table(lr.inten.all.name))
+	rownames(Interact.num.dat) <- Interact.num.dat$lr.inten.all.name
+	Interact.num.dat <- cbind(Interact.num.dat, matrix(unlist(strsplit(as.character(Interact.num.dat$lr.inten.all.name), split='--')), ncol = 2, byrow = TRUE))
+	Interact.num.dat$LR.count <- Interact.num.dat$Freq
+
+	lr.inten.vec <- by(data=lr.unfold.filter.dat$log2FC.LR, INDICES=lr.inten.all.name, FUN=sum)
+	lr.inten.vec.name <- names(lr.inten.vec)
+	lr.inten.vec <- as.vector(lr.inten.vec)
+
+	Interact.num.dat$Intensity <- lr.inten.vec[match(rownames(Interact.num.dat), lr.inten.vec.name)]
+	Interact.num.dat$Intensity[is.na(Interact.num.dat$Intensity)] <- 0
+	Interact.num.dat <- Interact.num.dat[,-c(1,2)]
+	colnames(Interact.num.dat) <- c('cell.from','cell.to','LR.count','Intensity')
+	
+	marker.dat <- object@LR.marker
+	marker.lig.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.filter.dat$cell.from, lr.unfold.filter.dat$ligand, sep='--')), ]
+	marker.rep.dat <- marker.dat[which(paste(marker.dat$cluster, marker.dat$gene, sep='--') %in% paste(lr.unfold.filter.dat$cell.to, lr.unfold.filter.dat$receptor, sep='--')), ]
+	Interact <- list(InteractNumber=Interact.num.dat, InteractGene=lr.unfold.filter.dat, markerL=marker.lig.dat, markerR=marker.rep.dat)
+	object@interact.filter <- Interact
+	return(object)
+}
+
+
+#' To integrate the statistics of LR interactions and associated activated pathways
+#' @param object CommPath object
+#' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
+#' @return CommPath object with statistics of LR interactions and associated pathways saved in the slot pathway.net
+#' @export
+pathNet <- function(object, acti.path.dat){
+	Interact <- object@interact.filter$InteractGene
+
+	path.contain.rep <- Interact$path.contain.rep
+	names(path.contain.rep) <- rownames(Interact)
+
+	Interact$LR.pair <- paste(Interact$ligand, Interact$receptor, sep='/')
+
+	path.vec <- unlist(sapply(path.contain.rep, function(x){
+		strsplit(x, split=';')
+		}))
+	path.vec <- as.character(path.vec)
+
+	path.num <- unlist(sapply(path.contain.rep, function(x){
+		length(strsplit(x, split=';')[[1]])
+		}))
+	LR.type.vec <- rep(names(path.num),times=path.num)
+	InteractUnfold <- data.frame(LR.type=LR.type.vec,path.contain.rep.unfold=path.vec)
+	InteractUnfold <- cbind(Interact[match(InteractUnfold$LR.type, rownames(Interact)), ], InteractUnfold)
+	
+	rep.path.id.unfold <- paste(InteractUnfold$cell.to, InteractUnfold$path.contain.rep.unfold, sep='--')
+	colnames(acti.path.dat) <- paste0(colnames(acti.path.dat), '.path')
+	rep.path.id.score <- paste(acti.path.dat$cluster.path, acti.path.dat$description.path, sep='--')
+	InteractUnfold <- cbind(InteractUnfold, acti.path.dat[match(rep.path.id.unfold,rep.path.id.score), ])
+	object@pathway.net <- InteractUnfold
+	return(object)
+}
 
 #' To find the downstream identity class of specific ligand released by specific upstream identity class
 #' @param object CommPath object
 #' @param select.ident Upstream identity class; if 'NULL', use all identity classes
 #' @param select.ligand Ligand released by upstream identity class; if 'NULL', use all ligands that are markers for the selected upstream identity class
+#' @param filter Logical value indicating to find the downstream identity class from the filtered LR interactions or not; default is TRUE
 #' @return Data frame including the interaction information
 #' @export
-findReceptor <- function(object, select.ident=NULL, select.ligand=NULL){
+findReceptor <- function(object, select.ident=NULL, select.ligand=NULL, filter=TRUE){
 	options(stringsAsFactors=F)
 
 	if (is.null(select.ident) & is.null(select.ligand)){
 		stop("Either a select.ident or a select.ligand need to be asigned")
 	}
-	ident.down.dat <- object@interact$InteractGene
+
+	if(filter){
+		ident.down.dat <- object@interact.filter$InteractGene
+		if(is.null(ident.down.dat)){
+			stop('No filtered LR interaction detected, set the parameter "filter" as FALSE and try again')
+		}
+	}else{
+		ident.down.dat <- object@interact$InteractGene
+	}
 
 	if (!is.null(select.ligand)){
-		ident.down.dat <- subset(ident.down.dat, Ligand %in% select.ligand)
+		ident.down.dat <- subset(ident.down.dat, ligand %in% select.ligand)
 	}
 	if (!is.null(select.ident)){
-		ident.down.dat <- subset(ident.down.dat, Cell.From %in% select.ident)
+		ident.down.dat <- subset(ident.down.dat, cell.from %in% select.ident)
 	}
 
 	if (nrow(ident.down.dat)==0){
@@ -432,22 +539,31 @@ findReceptor <- function(object, select.ident=NULL, select.ligand=NULL){
 #' @param object CommPath object
 #' @param select.ident Downstream identity class; if 'NULL', use all identity classes
 #' @param select.receptor Receptor expressed by downstream identity class; if 'NULL', use all receptors that are markers for the selected downstream identity class
+#' @param filter Logical value indicating to find the upstream identity class from the filtered LR interactions or not; default is TRUE
 #' @return Data frame including the interaction information
 #' @export
-findLigand <- function(object, select.ident=NULL, select.receptor=NULL){
+findLigand <- function(object, select.ident=NULL, select.receptor=NULL, filter=TRUE){
 	options(stringsAsFactors=F)
 
 	if (is.null(select.ident) & is.null(select.receptor)){
 		stop("Either a select.ident or a select.receptor need to be asigned")
 	}
 
-	ident.up.dat <- object@interact$InteractGene
+	if(filter){
+		ident.up.dat <- object@interact.filter$InteractGene
+		if(is.null(ident.up.dat)){
+			stop('No filtered LR interaction detected, set the parameter "filter" as FALSE and try again')
+		}
+	}else{
+		ident.up.dat <- object@interact$InteractGene
+	}
+
 	if (!is.null(select.receptor)){
-		ident.up.dat <- subset(ident.up.dat, Receptor %in% select.receptor)
+		ident.up.dat <- subset(ident.up.dat, receptor %in% select.receptor)
 	}
 
 	if (!is.null(select.ident)){
-		ident.up.dat <- subset(ident.up.dat, Cell.To %in% select.ident)
+		ident.up.dat <- subset(ident.up.dat, cell.to %in% select.ident)
 	}
 
 	if (nrow(ident.up.dat)==0){
@@ -482,7 +598,7 @@ pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NUL
 			c(testRes$estimate[1]-testRes$estimate[2],testRes$estimate[1],testRes$estimate[2],testRes$statistic,testRes$parameter,testRes$p.value)
 		}))
 		test.res.dat <- as.data.frame(t(test.res.dat))
-		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','p.val')
+		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','P.val')
 	}else{
 		if (is.null(select.ident.2)){
 			wil.result <- apply(acti.ident.score,1,function(geneExpr){
@@ -514,12 +630,12 @@ pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NUL
 			c(testRes$statistic,testRes$p.value)
 		}))
 		test.res.dat <- as.data.frame(t(test.res.dat))
-		colnames(test.res.dat) <- c('W','p.val')
+		colnames(test.res.dat) <- c('W','P.val')
 
 		test.res.dat <- cbind(wil.median,test.res.dat)
 	}
 	
-	test.res.dat$p.val.adj <- p.adjust(test.res.dat$p.val, method='BH')
+	test.res.dat$P.val.adj <- p.adjust(test.res.dat$P.val, method='BH')
 	test.res.dat$description <- rownames(acti.ident.score)
 
 	if (only.posi){
@@ -531,7 +647,7 @@ pathTest <- function(acti.ident.score, group, select.ident.1, select.ident.2=NUL
 	}
 
 	if (only.sig){
-		test.res.dat <- subset(test.res.dat, p.val.adj < 0.05)
+		test.res.dat <- subset(test.res.dat, P.val.adj < 0.05)
 	}
 	return(test.res.dat)
 }
@@ -671,7 +787,7 @@ comparePath <- function(object.1, object.2, select.ident, method='t.test', p.adj
 			c(testRes$statistic,testRes$p.value)
 		}))
 		test.res.dat <- as.data.frame(t(test.res.dat))
-		colnames(test.res.dat) <- c('W','p.val')
+		colnames(test.res.dat) <- c('W','P.val')
 
 		wil.median <- apply(expr.mat, 1, function(geneExpr){
 			median.1 <- median(geneExpr[cell.ident])
@@ -691,10 +807,10 @@ comparePath <- function(object.1, object.2, select.ident, method='t.test', p.adj
 			return(c(testRes$estimate[1]-testRes$estimate[2],testRes$estimate[1],testRes$estimate[2],testRes$statistic,testRes$parameter,testRes$p.value))
 		}))
 		test.res.dat <- as.data.frame(t(test.res.dat))
-		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','p.val')
+		colnames(test.res.dat) <- c('mean.diff','mean.1','mean.2','t','df','P.val')
 	}
 
-	test.res.dat$p.val.adj <- p.adjust(test.res.dat$p.val, method=p.adjust)
+	test.res.dat$P.val.adj <- p.adjust(test.res.dat$P.val, method=p.adjust)
 	test.res.dat$description <- rownames(expr.mat)
 
 	ident.path.dat <- diffPath(object=object.1, select.ident.1=select.ident, only.posi=FALSE, only.sig=FALSE)
@@ -711,7 +827,7 @@ comparePath <- function(object.1, object.2, select.ident, method='t.test', p.adj
 	}
 
 	if (only.sig){
-		test.res.dat <- subset(test.res.dat, p.val.adj < 0.05)
+		test.res.dat <- subset(test.res.dat, P.val.adj < 0.05)
 	}
 	return(test.res.dat)
 
