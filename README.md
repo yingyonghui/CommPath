@@ -48,37 +48,99 @@ tumor.obj <- findLRpairs(object = tumor.obj,
 		logFC.thre = 0, 
 		p.thre = 0.05)
 ```
-The counts of significant LR pairs and overall interaction intensity among cell clusters are then stored in tumor.obj@interact[['InteractNumer']]，and the detailed information of each LR pair is stored in tumor.obj@interact[['InteractGeneUnfold']].
+The counts of significant LR pairs and overall interaction intensity among cell clusters are then stored in tumor.obj@interact[['InteractNumer']]，and the detailed information of each LR pair is stored in tumor.obj@interact[['InteractGene']]. 
 
-Then we can visualize the interaction through a circos plot:
+Then we can visualize all interactions through a circos plot:
 ```
 # To show the counts of LR associations among all clusters
-pdf('circosPlot-count.pdf',height=6,width=6)
-circosPlot(object = tumor.obj)
+# Here we set the parameter "filter" as FALSE, which means that those LR interactions are identified only based on their expression profiles, not filtered by pathways in the receiver cells (as described in the later section)
+pdf('circosPlot-count.nonfiltered.pdf',height=6,width=6)
+circosPlot(object = tumor.obj, filter=FALSE)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-count.png" height=300, width=300>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-count.nonfiltered.png" height=300, width=300>
 
 In the above circos plot, the directions of lines indicate the associations from ligands to receptors, and the widths of lines represent the counts of LR pairs among clusters.
 
 ```
 # To show the overall interaction intensity of LR interactions among all clusters
-pdf('circosPlot-intensity.pdf',height=6,width=6)
-circosPlot(object = tumor.obj, plot="intensity")
+pdf('circosPlot-intensity.nonfiltered.pdf',height=6,width=6)
+circosPlot(object = tumor.obj, plot="intensity", filter=FALSE)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-intensity.png" height=300, width=300>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-intensity.nonfiltered.png" height=300, width=300>
 
 Now the widths of lines represent the overall interaction intensity among clusters.
+#### Pathway enrichment analysis
+CommPath conducts pathway analysis to identify signaling pathways containing the marker ligands and receptors for each cluster.
+```
+# To find pathways in which genesets show overlap with the marker ligands and receptors
+# CommPath provides pathway annotations from KEGG pathways, WikiPathways, reactome pathways, and GO terms
+# Here we take the KEGG pathways as an example
+tumor.obj <- findLRpath(object = tumor.obj, category = "kegg")
+```
+Now genesets showing overlap with the marker ligands and receptors are stored  in tumor.obj@interact[['pathwayLR']]. Then we score the pathways to measure the activation levels for each pathway in each cell.
+```
+# To compute pathway activation score by the gsva algorithm or in an average manner
+# For more information about the gsva algorithm, see the GSVA package (PMID23323831)
+tumor.obj <- scorePath(object = tumor.obj, method = "gsva", min.size = 10)
+```
+After that CommPath provides **diffAllPath** to perform pathway differential activation analysis for cells in each cluster and find the receptors and ligands in each pathway:
+```
+# To get significantly up-regulated pathways in each cluster
+acti.path.dat <- diffAllPath(object = tumor.obj, only.posi = TRUE, only.sig = TRUE)
+head(acti.path.dat)
+```
+There are several columns stored in the variable ***acti.path.dat***:
+Columns ***mean.diff***, ***mean.1***, ***mean.2***, ***t***, ***df***, ***p.val*** and ***p.val.adj*** show the statistic result; ***description*** shows the name of pathway; 
+Columns ***cell.up*** and ***ligand.up*** show the upstream clusters which would release specific ligands to interact with the receptors expressed by the current cluster; 
+Column ***receptor.in.path*** and ***ligand.in.path*** show the marker receptors and ligands expressed by the current cluster and included in the current pathway;
+
+Then we use **pathHeatmap** to plot a heatmap of those differentially activated pathways for each cluster:
+```
+pdf('pathHeatmap.pdf',height=10,width=7)
+pathHeatmap(object = tumor.obj,
+       acti.path.dat = acti.path.dat,
+       top.n.pathway = 10,
+       cell.aver = TRUE)
+dev.off()
+```
+
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathHeatmap.png" height=650, width=455>
+
+#### Screening LR interactions associated with activated pathways
+For each cell cluster, CommPath identifies LR associations involved in the activated pathways to screen functional LR interactions. Those pathway-filtered interacctions are considered to be more likely to trigger the corresponding molecular pathways in the receiver cells.
+```
+# To screen functional LR interactions by the filterLR function
+tumor.obj <- filterLR(object = tumor.obj, acti.path.dat = acti.path.dat)
+```
+Then counts of filtered significant LR pairs and overall interaction intensity among cell clusters are then stored in tumor.obj@interact.filter[['InteractNumer']]，and the detailed information of each LR pair is stored in tumor.obj@interact.filter[['InteractGene']].
+
+Filtered interactions could be also visualized through the circos plot:
+```
+# To show the counts of filtered LR associations among all clusters
+pdf('circosPlot-count.filtered.pdf',height=6,width=6)
+circosPlot(object = tumor.obj, filter=TRUE)
+dev.off()
+```
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-count.filtered.png" height=300, width=300>
+
+```
+# To show the overall interaction intensity of filtered LR interactions among all clusters
+pdf('circosPlot-intensity.filtered.pdf',height=6,width=6)
+circosPlot(object = tumor.obj, plot="intensity", filter=TRUE)
+dev.off()
+```
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-intensity.filtered.png" height=300, width=300>
 
 Then we highlight the interaction of specific clusters. Here we take the endothelial cell as an example:
 ```
 select.ident = 'Endothelial'
-pdf('circosPlot-Endothelial-count.pdf',height=6,width=6)
-circosPlot(object = tumor.obj, select.ident = select.ident)
+pdf('circosPlot-Endothelial-count.filtered.pdf',height=6,width=6)
+circosPlot(object = tumor.obj, select.ident = select.ident, filter=TRUE)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-Endothelial-count.png" height=300, width=300>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/circosPlot-Endothelial-count.filtered.png" height=300, width=300>
 
 For a specific cluster of interest, CommPath provides function **findLigand** (**findReceptor**) to find the upstream (downstream) cluster and the corresponding ligand (receptor) interacting with the specific cluster: 
 ```
@@ -123,62 +185,18 @@ dev.off()
 
 <img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/dotPlot-receptor.png" height=300, width=630>
 
-#### Pathway enrichment analysis
-CommPath conducts pathway analysis to identify signaling pathways containing the marker ligands and receptors for each cluster.
-```
-# To find pathways in which genesets show overlap with the marker ligands and receptors
-# CommPath provides pathway annotations from KEGG pathways, WikiPathways, reactome pathways, and GO terms
-# Here we take the KEGG pathways as an example
-tumor.obj <- findLRpath(object = tumor.obj, category = "kegg")
-```
-Now genesets showing overlap with the marker ligands and receptors are stored  in tumor.obj@interact[['pathwayLR']]. Then we score the pathways to measure the activation levels for each pathway in each cell.
-```
-# To compute pathway activation score by the gsva algorithm or in an average manner
-# For more information about the gsva algorithm, see the GSVA package (PMID23323831)
-tumor.obj <- scorePath(object = tumor.obj, method = "gsva", min.size = 10)
-```
-After that CommPath provides **diffAllPath** to perform pathway differential activation analysis for cells in each cluster and find the receptors and ligands in each pathway:
-```
-# To get significantly up-regulated pathways in each cluster
-acti.path.dat <- diffAllPath(object = tumor.obj, only.posi = TRUE, only.sig = TRUE)
-head(acti.path.dat)
-```
-There are several columns stored in the variable ***acti.path.dat***:
-Columns ***mean.diff***, ***mean.1***, ***mean.2***, ***t***, ***df***, ***p.val*** and ***p.val.adj*** show the statistic result; ***description*** shows the name of pathway; 
-Columns ***cell.up*** and ***ligand.up*** show the upstream clusters which would release specific ligands to interact with the receptors expressed by the current cluster; 
-Column ***receptor.in.path*** and ***ligand.in.path*** show the marker receptors and ligands expressed by the current cluster and included in the current pathway;
 
-Then we use **pathHeatmap** to plot a heatmap of those differentially activated pathways for each cluster:
+Then CommPath provides network graph tools to visualize the pathways and associated LR interactions:
 ```
-pdf('pathHeatmap.pdf',height=10,width=7)
-pathHeatmap(object = tumor.obj,
-       acti.path.dat = acti.path.dat,
-       top.n.pathway = 10,
-       cell.aver = TRUE)
-dev.off()
-```
-
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathHeatmap.png" height=650, width=455>
-
-#### Screening LR interactions associated with activated pathways
-For each cell cluster, CommPath identifies LR associations involved in the activated pathways to screen functional LR interactions. Those interacctions are considered to be more likely to trigger the corresponding molecular pathways in the receiver cells.
-```
-# To screen functional LR interactions by the filterLR function
-tumor.obj <- filterLR(object = tumor.obj, acti.path.dat = acti.path.dat)
-# To integrate the statistics of LR interactions and associated activated pathways
+# First to integrate the statistics of LR interactions and associated activated pathways
 tumor.obj <- pathNet(object = tumor.obj, acti.path.dat = acti.path.dat)
-```
-Then CommPath provides pathNetPlot to visualize the pathways and associated LR           interactions in a network plot:
-```
-pdf('LR.pathway.net.pdf',width=6,heigh=6)
+# To visualize the pathways and associated LR interactions in a network plot
+pdf('LR.pathway.net.Endothelial.pdf',width=6,heigh=6)
 set.seed(1234)
-pathNetPlot(object, select.ident, vert.size.adj=8, top.n.path=NULL, layout='layout.davidson.harel', LR.label=T, pathway.label=TRUE, vertex.label.cex=0.25, node.pie=T, vert.size.LR=3)
+pathNetPlot(object = tumor.obj, select.ident =  select.ident,  layout='layout.davidson.harel', vert.size.path.adj=8, LR.label=TRUE, pathway.label=TRUE, vertex.label.cex=0.25, vert.size.LR=3)
 dev.off()
 ```
-
-
-
-
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/LR.pathway.net.Endothelial.png" height=500, width=530>
 
 #### Cell-cell interaction flow via pathways
 For a specific cell cluster, here named as B for demonstration, CommPath identifies the upstream cluster A sending signals to B, the downstream cluster C receiving signals from B, and the significantly activated pathways in B to mediate the A-B-C communication flow. More exactly, through LR and pathways analysis described above, CommPath is able to identify LR pairs between A and B, LR pairs between B and C, and pathways activated in B. Then CommPath screens for pathways in B which involve both the receptors to interact with A and ligands to interact with C.

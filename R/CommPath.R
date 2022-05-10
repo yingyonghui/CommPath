@@ -426,7 +426,8 @@ filterLR <- function(object, acti.path.dat){
 
 	all.path.list <- object@pathway$pathwayLR
 	pathname.list <- by(data=acti.path.dat$description, INDICES=acti.path.dat$cluster, FUN=function(x){x})
-
+	
+	### to select the LR interactions with Receptor contained in at least an activated pathway
 	allpath.contain.rep <- apply(interact.dat,1,function(x){
 		#x <- t(interact.dat)[,28]
 		cur.rep <- x['receptor']
