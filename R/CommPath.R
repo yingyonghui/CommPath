@@ -402,7 +402,6 @@ diffAllPath <- function(object, method='t.test', only.posi=FALSE, only.sig=FALSE
 #' To screen LR pairs involved in activated pathways
 #' @param object CommPath object
 #' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
-#' @importFrom reshape2 melt
 #' @return CommPath object with LR interactions filtered by activated pathways in each cluster
 #' @export
 filterLR <- function(object, acti.path.dat){
@@ -463,6 +462,53 @@ filterLR <- function(object, acti.path.dat){
 	Interact <- list(InteractNumber=Interact.num.dat, InteractGene=lr.unfold.filter.dat, markerL=marker.lig.dat, markerR=marker.rep.dat)
 	object@interact.filter <- Interact
 	return(object)
+}
+
+### To remove those pathways containing only ligands which do not triger any pathway in the downstream clusters 
+#' @param object CommPath object
+#' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
+#' @return Data frame including the statistic result of filtered pathways in each cluster
+#' @export
+filterPath <- function(object, acti.path.dat){
+	all.marker.L <- object@interact.filter$markerL
+	all.ident <- object@cell.info$Cluster
+	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
+	unique.label <- levels(all.ident)
+
+	filtered.path.dat <- data.frame(matrix(NA,0,ncol(acti.path.dat)))
+	colnames(filtered.path.dat) <- colnames(acti.path.dat)
+
+	for (each.ident in unique.label){
+		message(paste0('Screening pathways for cluster ',each.ident,'...'))
+		cur.path.dat <- acti.path.dat[which(acti.path.dat$cluster == each.ident), ]
+		if (nrow(cur.path.dat)==0){
+			warning(paste0('There is no pathway showing overlap with the marker ligands and receptors of cluster ',each.ident))
+			next
+		}
+
+		cur.marker.L <- all.marker.L[which(all.marker.L$cluster==each.ident), 'gene']
+		if (length(cur.marker.L)==0){
+			warning(paste0('There is no marker ligands of cluster ',each.ident))
+			next 
+		}
+
+		cur.lig.in.path <- cur.path.dat$ligand.in.path
+		names(cur.lig.in.path) <- cur.path.dat$description
+		cur.lig.in.path.list <- sapply(cur.lig.in.path, function(x){strsplit(x, split=';')})
+		cur.lig.in.marker.list <- lapply(cur.lig.in.path.list, function(x){ x[which(x %in% cur.marker.L)] })
+		cur.lig.in.marker.vec <- unlist(lapply(cur.lig.in.marker.list, function(x){ paste(x,collapse = ';') }))
+		cur.lig.in.marker.vec <- as.vector(cur.lig.in.marker.vec[cur.path.dat$description])
+		cur.lig.in.marker.vec[which(cur.lig.in.marker.vec=='')] <- NA
+		cur.path.dat$ligand.in.path <- cur.lig.in.marker.vec
+		cur.path.dat <- cur.path.dat[ which( !(is.na(cur.path.dat$ligand.in.path) & is.na(cur.path.dat$receptor.in.path)) ), ]
+		if(nrow(cur.path.dat)==0){
+			warning(paste0('There is no pathway showing overlap with the filtered marker ligands and receptors of cluster ',each.ident))
+			next
+		}
+		
+		filtered.path.dat <- rbind(filtered.path.dat, cur.path.dat)
+	}
+	return(filtered.path.dat)
 }
 
 

@@ -222,6 +222,19 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 	return(plot)
 }
 
+#' To present a dot plot for top ligand-receptor pairs involved in the specific pathways in the selected clusters
+# dotPlot.pathway <- function(object, pathway, receptor.ident=NULL, ident.levels=NULL, return.data=FALSE){
+# 	options(stringsAsFactors=F)
+
+# object@
+
+
+
+
+
+
+
+# }
 #' To plot a heatmap of those differentially enriched pathways for each cluster
 #' @param object CommPath object
 #' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath; if NULL, diffAllPath would be run to get the acti.path.dat
