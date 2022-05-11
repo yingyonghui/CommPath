@@ -2,8 +2,7 @@
 % Please edit documentation in R/CommPath-visualization.R
 \name{pathHeatmap}
 \alias{pathHeatmap}
-\title{To present a dot plot for top ligand-receptor pairs involved in the specific pathways in the selected clusters
-To plot a heatmap of those differentially enriched pathways for each cluster}
+\title{To plot a heatmap of those differentially enriched pathways for each cluster}
 \usage{
 pathHeatmap(
   object,
@@ -49,6 +48,5 @@ pathHeatmap(
 Heatmap plot showing the top enriched patways in each cluster
 }
 \description{
-To present a dot plot for top ligand-receptor pairs involved in the specific pathways in the selected clusters
 To plot a heatmap of those differentially enriched pathways for each cluster
 }

@@ -464,7 +464,7 @@ filterLR <- function(object, acti.path.dat){
 	return(object)
 }
 
-### To remove those pathways containing only ligands which do not triger any pathway in the downstream clusters 
+#' To remove those pathways containing only ligands which do not triger any pathway in the downstream clusters 
 #' @param object CommPath object
 #' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
 #' @return Data frame including the statistic result of filtered pathways in each cluster

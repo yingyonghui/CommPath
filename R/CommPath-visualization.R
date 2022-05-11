@@ -101,7 +101,7 @@ circosPlot <- function(object, plot='count', ident.col=NULL, filter=TRUE, select
 #' @importFrom ggplot2 ggplot geom_point scale_color_manual labs theme element_text element_rect element_line aes scale_color_gradientn
 #' @return Dotplot showing the ligand-receptor interaction between the selected ligand.ident and receptor.ident
 #' @export
-dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, filter=TRUE, return.data=FALSE){
+DotPlot.LR <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, filter=TRUE, return.data=FALSE){
 	options(stringsAsFactors=F)
 	if (is.null(ligand.ident) & is.null(receptor.ident)){
 		stop("Either ligand.ident or ligand.ident need to be asigned")
@@ -149,7 +149,7 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 		inter.gene.dat <- inter.gene.dat[which(inter.gene.dat$cell.from %in% ligand.ident),]
 	}
 
-	inter.gene.dat$LR.info <- paste(inter.gene.dat$ligand, '/', inter.gene.dat$receptor)
+	inter.gene.dat$LR.info <- paste(inter.gene.dat$ligand, inter.gene.dat$receptor, sep='/')
 
 	### to find those LR pairs with largest log2FC.LR
 	max.fc <- by(data=inter.gene.dat$log2FC.LR, INDICES=inter.gene.dat$LR.info, function(x){max(x,na.rm=T)})
@@ -223,18 +223,129 @@ dotPlot <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels
 }
 
 #' To present a dot plot for top ligand-receptor pairs involved in the specific pathways in the selected clusters
-# dotPlot.pathway <- function(object, pathway, receptor.ident=NULL, ident.levels=NULL, return.data=FALSE){
-# 	options(stringsAsFactors=F)
+#' @param object CommPath object
+#' @param acti.path.dat Data frame of differential activation test result of filtered from diffAllPath
+#' @param pathway To present a dot plot for ligand-receptor pairs involved in which pathway
+#' @param ligand.ident Vector containing the ligand ident
+#' @param receptor.ident Vector containing the receptor ident
+#' @param ident.levels Vector of levels of the identities 
+#' @param top.n.inter Show the dotplot for the top n LR pairs with the largest product of Log2FC
+#' @param return.data Logical value indicating whether to return the data for the plot or not
+#' @importFrom ggplot2 ggplot geom_point scale_color_manual labs theme element_text element_rect element_line aes scale_color_gradientn
+#' @return Dotplot showing the ligand-receptor interaction involved in the specific pathways in the selected clusters
+#' @export
+DotPlot.pathway <- function(object, acti.path.dat, pathway, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, return.data=FALSE){
+	options(stringsAsFactors=F)
+	if (is.null(ligand.ident) & is.null(receptor.ident)){
+		stop("Either ligand.ident or ligand.ident need to be asigned")
+	}
+	if (length(ligand.ident)>1 & length(receptor.ident)>1){
+		stop("Specify one cluster for ligand or receptor analysis")
+	}
 
-# object@
+	if('t' %in% colnames(acti.path.dat)){
+		acti.path.dat <- acti.path.dat[which(acti.path.dat$mean.diff > 0 & acti.path.dat$P.val.adj < 0.05), c('description','ligand.in.path','receptor.in.path','cluster')]
+	}else{
+		acti.path.dat <- acti.path.dat[which(acti.path.dat$median.diff > 0 & acti.path.dat$P.val.adj < 0.05), c('description','ligand.in.path','receptor.in.path','cluster')]
+	}
+
+	if (!is.null(receptor.ident)){
+		cur.path.dat <- acti.path.dat[which(acti.path.dat$cluster==receptor.ident), ]
+		if(nrow(cur.path.dat)==0){
+			stop(paste0('There is no significantly up-regulatged ligand-containing pathways for cluster ', receptor.ident))
+		}
+
+		cur.rep.char <- unique(cur.path.dat[which(cur.path.dat$description==pathway), 'receptor.in.path'])
+		if((length(cur.rep.char)==0) | is.na(cur.rep.char)){
+			stop(paste0('The selected pathway is not up-regulatged in the cluster', receptor.ident, ' or the selected pathway does not contain any marker receptor'))
+		}
+
+		cur.rep.vec <- strsplit(cur.rep.char, split=';')[[1]]
+		up.ligand.dat <- findLigand(object, select.ident=receptor.ident, select.receptor=cur.rep.vec, filter=TRUE)
+		up.ligand.dat$Xaxis <- up.ligand.dat$cell.from
+		up.ligand.dat$Yaxis <- paste(up.ligand.dat$ligand, up.ligand.dat$receptor, sep='/')
+		plot.lr.dat <- up.ligand.dat
+		x.title <- paste0('Upstream clusters for cluster ',receptor.ident)
+
+	}else{
+		cur.path.dat <- acti.path.dat[which(acti.path.dat$cluster==ligand.ident), ]
+		if(nrow(cur.path.dat)==0){
+			stop(paste0('There is no significantly up-regulatged ligand-containing pathways for cluster ', ligand.ident))
+		}
+
+		lig.rep.char <- unique(cur.path.dat[which(cur.path.dat$description==pathway), 'ligand.in.path'])
+		if((length(lig.rep.char)==0) | is.na(lig.rep.char)){
+			stop(paste0('The selected pathway is not up-regulatged in the cluster', ligand.ident, ' or the selected pathway does not contain any marker ligand'))
+		}
+		
+		cur.lig.vec <- strsplit(lig.rep.char, split=';')[[1]]
+		down.ligand.dat <- findReceptor(object, select.ident=ligand.ident, select.ligand=cur.lig.vec, filter=TRUE)
+		down.ligand.dat$Xaxis <- down.ligand.dat$cell.to
+		down.ligand.dat$Yaxis <- paste(down.ligand.dat$ligand, down.ligand.dat$receptor, sep='/')
+		plot.lr.dat <- down.ligand.dat
+		x.title <- paste0('Downstream clusters for cluster ',ligand.ident)
+	}
+
+	if(top.n.inter <= length(unique(plot.lr.dat$Yaxis))){
+		maxfc.lr <- by(data=plot.lr.dat$log2FC.LR, INDICES=plot.lr.dat$Yaxis, FUN=function(x){max(x)})
+		maxfc.lr.name <- names(maxfc.lr[order(maxfc.lr, decreasing=TRUE)][1:top.n.inter])
+		plot.lr.dat <- plot.lr.dat[which(plot.lr.dat$Yaxis %in% maxfc.lr.name), ]
+	}else{
+		warning(paste0('There is(are) ', length(unique(plot.lr.dat$Yaxis)),' significant LR pair(s) involved in the selected pathway for the selected ident, and the input top.n.inter is ', top.n.inter))
+	}
+
+	if (return.data){
+		return.dat <- plot.lr.dat[,c('cell.from', 'cell.to', 'Yaxis', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR')]
+		colnames(return.dat) <- c('cell.from', 'cell.to', 'LR.info', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR')
+		return(return.dat)
+	}
+
+	plot.lr.dat$Log10.P.adj <- -log10(plot.lr.dat$P.val.adj.LR)
+	plot.lr.dat$Log10.P.adj <- p.remove.inf(plot.lr.dat$Log10.P.adj)
+	if(all(plot.lr.dat$Log10.P.adj==0)){ plot.lr.dat$Log10.P.adj='Infinite' }
+
+	### you may want to adjust the order of the clusters in the x axis
+	plot.lr.dat$Xaxis <- as.character(plot.lr.dat$Xaxis)
+	if (is.null(ident.levels)){
+		all.ident <- object@cell.info$Cluster
+		if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
+		ident.levels <- levels(all.ident)
+	}
+	x.levels <- ident.levels[ident.levels %in% plot.lr.dat$Xaxis]
+	if (all(plot.lr.dat$Xaxis %in% x.levels)){
+		plot.lr.dat$Xaxis <- factor(plot.lr.dat$Xaxis, levels=x.levels)
+	}else{
+		ident.missed <- unique(plot.lr.dat$Xaxis[!(plot.lr.dat$Xaxis %in% x.levels)])
+		ident.missed <- pasteIdent(ident.missed)
+		stop(paste0('The ident class ',ident.missed,' may be missed in the input ident.levels'))
+	}
+
+	if (all(plot.lr.dat$Log10.P.adj=='Infinite')){
+		plot <- ggplot(data=plot.lr.dat,aes(x=Xaxis,y=Yaxis)) + 
+			geom_point(aes(size=log2FC.LR,col='Infinite')) +
+			scale_color_manual(values='red') + 
+			labs(color='-log10(p.adj)',size='log2FC.LR',x=x.title,y="") + 
+			theme(axis.text=element_text(colour='black',size=12),
+			axis.title=element_text(colour='black',size=12),
+			panel.background=element_rect(fill="white",color="black"),
+			panel.grid=element_line(size=0.5,colour='gray')
+			)
+		warning('Adjusted p values for all LR pairs are 0')
+	}else{
+		plot <- ggplot(data=plot.lr.dat,aes(x=Xaxis,y=Yaxis)) + 
+			geom_point(aes(size=log2FC.LR,col=Log10.P.adj)) +
+			scale_color_gradientn(values = seq(0,1,0.2),colours=c("#0570b0", "grey", "#d7301f")) + 
+			labs(color='-log10(p.adj)',size='log2FC.LR',x=x.title,y="") + 
+			theme(axis.text=element_text(colour='black',size=12),
+			axis.title=element_text(colour='black',size=12),
+			panel.background=element_rect(fill="white",color="black"),
+			panel.grid=element_line(size=0.5,colour='gray')
+			)
+	}
+	return(plot)
+}
 
 
-
-
-
-
-
-# }
 #' To plot a heatmap of those differentially enriched pathways for each cluster
 #' @param object CommPath object
 #' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath; if NULL, diffAllPath would be run to get the acti.path.dat
