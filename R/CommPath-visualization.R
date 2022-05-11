@@ -101,7 +101,7 @@ circosPlot <- function(object, plot='count', ident.col=NULL, filter=TRUE, select
 #' @importFrom ggplot2 ggplot geom_point scale_color_manual labs theme element_text element_rect element_line aes scale_color_gradientn
 #' @return Dotplot showing the ligand-receptor interaction between the selected ligand.ident and receptor.ident
 #' @export
-DotPlot.LR <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, filter=TRUE, return.data=FALSE){
+dotPlot.LR <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, filter=TRUE, return.data=FALSE){
 	options(stringsAsFactors=F)
 	if (is.null(ligand.ident) & is.null(receptor.ident)){
 		stop("Either ligand.ident or ligand.ident need to be asigned")
@@ -234,7 +234,7 @@ DotPlot.LR <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.lev
 #' @importFrom ggplot2 ggplot geom_point scale_color_manual labs theme element_text element_rect element_line aes scale_color_gradientn
 #' @return Dotplot showing the ligand-receptor interaction involved in the specific pathways in the selected clusters
 #' @export
-DotPlot.pathway <- function(object, acti.path.dat, pathway, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, return.data=FALSE){
+dotPlot.pathway <- function(object, acti.path.dat, pathway, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, return.data=FALSE){
 	options(stringsAsFactors=F)
 	if (is.null(ligand.ident) & is.null(receptor.ident)){
 		stop("Either ligand.ident or ligand.ident need to be asigned")
