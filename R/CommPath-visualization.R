@@ -256,8 +256,10 @@ dotPlot.pathway <- function(object, acti.path.dat, pathway, ligand.ident=NULL, r
 		}
 
 		cur.rep.char <- unique(cur.path.dat[which(cur.path.dat$description==pathway), 'receptor.in.path'])
-		if((length(cur.rep.char)==0) | is.na(cur.rep.char)){
-			stop(paste0('The selected pathway is not up-regulatged in the cluster', receptor.ident, ' or the selected pathway does not contain any marker receptor'))
+		if(length(cur.rep.char)==0){
+			stop(paste0('The selected pathway is not up-regulatged in the cluster', receptor.ident))
+		}else if(length(cur.rep.char)==1 & is.na(cur.rep.char)){
+			stop('The selected pathway does not contain any marker receptor')
 		}
 
 		cur.rep.vec <- strsplit(cur.rep.char, split=';')[[1]]
@@ -274,8 +276,10 @@ dotPlot.pathway <- function(object, acti.path.dat, pathway, ligand.ident=NULL, r
 		}
 
 		lig.rep.char <- unique(cur.path.dat[which(cur.path.dat$description==pathway), 'ligand.in.path'])
-		if((length(lig.rep.char)==0) | is.na(lig.rep.char)){
-			stop(paste0('The selected pathway is not up-regulatged in the cluster', ligand.ident, ' or the selected pathway does not contain any marker ligand'))
+		if(length(lig.rep.char)==0){
+			stop(paste0('The selected pathway is not up-regulatged in the cluster', ligand.ident))
+		}else if(length(cur.rep.char)==1 & is.na(lig.rep.char)){
+			stop('The selected pathway does not contain any marker ligand')
 		}
 		
 		cur.lig.vec <- strsplit(lig.rep.char, split=';')[[1]]
