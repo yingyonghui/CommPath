@@ -4,12 +4,12 @@
 \alias{pathNet}
 \title{To integrate the statistics of LR interactions and associated activated pathways}
 \usage{
-pathNet(object, acti.path.dat)
+pathNet(object, acti.path.filtered.dat)
 }
 \arguments{
 \item{object}{CommPath object}
 
-\item{acti.path.dat}{Data frame of differential enrichment test result from diffAllPath}
+\item{acti.path.filtered.dat}{Data frame of differential enrichment test result from diffAllPath}
 }
 \value{
 CommPath object with statistics of LR interactions and associated pathways saved in the slot pathway.net

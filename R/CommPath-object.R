@@ -18,7 +18,7 @@ CommPath <- methods::setClass("CommPath",
 	interact = 'list',
 	interact.filter = 'list',
 	pathway = 'list',
-	pathway.net = 'data.frame'
+	pathway.net = 'list'
 	)
 )
 

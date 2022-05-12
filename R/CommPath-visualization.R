@@ -1580,19 +1580,18 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	return(plot)
 }
 
-
-#' To present a net plot for pathways and associated LR interactions
+#' To present a net plot for pathways and upstream or downstream associated LR interactions
 #' @param object CommPath object
 #' @param select.ident Cluster of interest
+#' @param plot To show the network of activated pathways and the upstream or downstream LR interactions; default is 'upstream'
 #' @param ident.col Vector of colors of each cluster; names of the col vector are supposed to be assigned to indicate each color for each cluster
 #' @param vert.size.attr Which statistical measures should be mapped to the size of vertex; Type "getNetAttr(object)" to retrieve the available statistical measures for pathways
 #' @param vert.size.LR Size of node representing LR interactions
 #' @param vert.size.path.adj pseudocount to adjust the size of node representing pathways
-
 #' @param top.n.path Top n activated pathways in the selected cluster of interest; if NULL, slelect all activated pathways
 #' @param path.order Sort criteria used to select the top n pathways, either "P.val" or "P.val.adj", which represent the original and adjusted p values, or "diff" which represents the mean (in t test) or median (in wilcox test) difference; default is "P.val.adj". This parameter would be masked if top.n.path is set as NULL.
 #' @param layout Network layout; defualt is Fruchterman-Reingold ('layout.fruchterman.reingold'). Refer to the igraph package for more information. Note: an error would be raised if the selected layout do not apply to the graph.
-#' @param LR.label Logical value indicating to display the label of LR interactions or not; default is FALSE
+#' @param LR.label To show which label on the node representing LR interactions. Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label); default is NA
 #' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
 #' @param edge.arrow.size Size of arrow
 #' @param vertex.label.cex Font size of vertex label
@@ -1606,17 +1605,51 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 #' @importFrom plyr rbind.fill mapvalues
 #' @return Net plot showing the activated pathways and associated LR interactions
 #' @export
-pathNetPlot <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label=FALSE, pathway.label=TRUE, edge.arrow.size=0.2, vertex.label.cex=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+pathNetPlot <- function(object, select.ident, plot='upstream', ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label=NA, pathway.label=TRUE, edge.arrow.size=0.2, vertex.label.cex=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+	if(plot=='upstream'){
+		pathNetPlot.upstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, vertex.label.cex=vertex.label.cex, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
+	}else if(plot=='downstream'){
+		pathNetPlot.downstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, vertex.label.cex=vertex.label.cex, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
+	}else{
+		stop('Wrong "plot" parameter! Available options: upstream (to show the network of activated pathways and the upstream LR interactions) or downstream (to show the network of activated pathways and the downstream LR interactions)')
+	}
+}
+
+#' To present a net plot for pathways and upstream associated LR interactions
+#' @param object CommPath object
+#' @param select.ident Cluster of interest
+#' @param ident.col Vector of colors of each cluster; names of the col vector are supposed to be assigned to indicate each color for each cluster
+#' @param vert.size.attr Which statistical measures should be mapped to the size of vertex; Type "getNetAttr(object)" to retrieve the available statistical measures for pathways
+#' @param vert.size.LR Size of node representing LR interactions
+#' @param vert.size.path.adj pseudocount to adjust the size of node representing pathways
+#' @param top.n.path Top n activated pathways in the selected cluster of interest; if NULL, slelect all activated pathways
+#' @param path.order Sort criteria used to select the top n pathways, either "P.val" or "P.val.adj", which represent the original and adjusted p values, or "diff" which represents the mean (in t test) or median (in wilcox test) difference; default is "P.val.adj". This parameter would be masked if top.n.path is set as NULL.
+#' @param layout Network layout; defualt is Fruchterman-Reingold ('layout.fruchterman.reingold'). Refer to the igraph package for more information. Note: an error would be raised if the selected layout do not apply to the graph.
+#' @param LR.label To show which label on the node representing LR interactions. Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label); default is NA
+#' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
+#' @param edge.arrow.size Size of arrow
+#' @param vertex.label.cex Font size of vertex label
+#' @param vertex.label.color color of vertex label
+#' @param vertex.label.family Font family of the label
+#' @param vertex.frame.color Color of Node border
+#' @param node.pie Logical value indicating to show the node representing pathways in pie charts or not; default is TRUE
+#' @param return.net Logical value indicating to return the igraph object or not; default is FALSE
+#' @param return.data Logical value indicating to return the link dataframe or not; default is FALSE. This parameter allows users to export the link data in a dataframe, which could be analyzed in other network visualization tools, for example Cytoscape.
+#' @importFrom igraph graph_from_data_frame V E degree layout_with_fr
+#' @importFrom plyr rbind.fill mapvalues
+#' @return Net plot showing the activated pathways and associated LR interactions
+#' @export
+pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label=NA, pathway.label=TRUE, edge.arrow.size=0.2, vertex.label.cex=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
 	options(stringsAsFactors=F)
 
-	path.net.dat <- object@pathway.net
+	path.net.dat <- object@pathway.net$upstream
 	if (!(select.ident %in% path.net.dat$cell.to)){
 		stop(paste0('There is no significantly up-regulatged pathways for cluster ', select.ident, ' or the up-regulatged pathways contain no marker receptor'))
 	}
-	path.fibro.dat <- path.net.dat[which(path.net.dat$cell.to==select.ident), ]
+	path.curcell.dat <- path.net.dat[which(path.net.dat$cell.to==select.ident), ]
 
 	### node of pathway
-	node.path <- unique(path.fibro.dat[, c('path.contain.rep.unfold','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')])
+	node.path <- unique(path.curcell.dat[, c('path.contain.rep.unfold','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')])
 	colnames(node.path) <- c('ID','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')
 	node.path$type <- 'Pathway'
 
@@ -1646,17 +1679,17 @@ pathNetPlot <- function(object, select.ident, ident.col=NULL, vert.size.attr="de
 		stop('Wrong "top.n.path" parameter! Input an positive integer to select the corresponding number of up-regulatged pathway(s)')
 	}	
 	node.path <- node.path[1:top.n.path, ]
-	path.fibro.dat <- path.fibro.dat[which(path.fibro.dat$path.contain.rep.unfold %in% node.path$ID), ]
+	path.curcell.dat <- path.curcell.dat[which(path.curcell.dat$path.contain.rep.unfold %in% node.path$ID), ]
 
 	### node of LR
-	node.LR <- unique(path.fibro.dat[, c('LR.type','LR.pair','cell.from', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR')])	
-	colnames(node.LR) <- c('ID','LR.pair','cell.from', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR')
+	node.LR <- unique(path.curcell.dat[, c('LR.type','LR.pair','cell.from','cell.to','ligand','receptor','log2FC.LR', 'P.val.LR', 'P.val.adj.LR')])	
+	colnames(node.LR) <- c('ID','LR.pair','cell.from','cell.to', 'ligand', 'receptor', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR')
 	node.LR$type <- 'LR'
 	node.LR <- node.LR[which(!duplicated(node.LR$ID)),]
 
 	### get the node of all vertex and construct the net
 	node.dat <- rbind.fill(node.LR, node.path)
-	link.dat <- path.fibro.dat[, c('LR.type', 'path.contain.rep.unfold')]
+	link.dat <- path.curcell.dat[, c('LR.type', 'path.contain.rep.unfold')]
 	net <- graph_from_data_frame(d=link.dat, vertices=node.dat, directed=T)
 	### return the igraph object if ordered by user
 	if(return.net){
@@ -1664,10 +1697,10 @@ pathNetPlot <- function(object, select.ident, ident.col=NULL, vert.size.attr="de
 	}
 
 	if(return.data){
-		if('t.path' %in% colnames(path.fibro.dat)){
-			return(path.fibro.dat[,c('cell.from', 'cell.to', 'LR.pair', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR','description.path','mean.diff.path', 'mean.1.path', 'mean.2.path', 't.path', 'df.path', 'P.val.path', 'P.val.adj.path')])
+		if('t.path' %in% colnames(path.curcell.dat)){
+			return(path.curcell.dat[,c('cell.from', 'cell.to', 'ligand', 'receptor', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR','description.path','mean.diff.path', 'mean.1.path', 'mean.2.path', 't.path', 'df.path', 'P.val.path', 'P.val.adj.path')])
 		}else{
-			return(path.fibro.dat[,c('cell.from', 'cell.to', 'LR.pair', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR','description.path','median.diff.path', 'median.1.path', 'median.2.path', 'W.path', 'P.val.path', 'P.val.adj.path')])
+			return(path.curcell.dat[,c('cell.from', 'cell.to', 'ligand', 'receptor', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR','description.path','median.diff.path', 'median.1.path', 'median.2.path', 'W.path', 'P.val.path', 'P.val.adj.path')])
 		}
 	}
 
@@ -1675,16 +1708,23 @@ pathNetPlot <- function(object, select.ident, ident.col=NULL, vert.size.attr="de
 	vert.attr.list <- get.vertex.attribute(net)
 	node.dat.id <- vert.attr.list$name
 	### vertex label
-	if(LR.label){
+	if(is.na(LR.label)){
+		vert.label <- rep(NA,length(node.dat.id))
+	}else if(LR.label=='L'){
+		vert.label <- vert.attr.list$ligand
+	}else if(LR.label=='R'){
+		vert.label <- vert.attr.list$receptor
+	}else if(LR.label=='LR'){
 		vert.label <- vert.attr.list$LR.pair
-		if(pathway.label){
-			vert.label[which(is.na(vert.label))] <- node.dat.id[which(is.na(vert.label))]
-		}
 	}else{
-		if(pathway.label){
+		stop('Wrong LR.label parameter! Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label) ')
+	}
+
+	if(pathway.label){
+		if(all(is.na(vert.label))){
 			vert.label <- vert.attr.list$description.path
 		}else{
-			vert.label <- rep(NA,length(node.dat.id))
+			vert.label[which(is.na(vert.label))] <- node.dat.id[which(is.na(vert.label))]
 		}
 	}
 
@@ -1735,7 +1775,7 @@ pathNetPlot <- function(object, select.ident, ident.col=NULL, vert.size.attr="de
 	vertex.frame.na.color <- mapvalues(vert.attr.list$type, from=c('LR','Pathway'), to=c(NA,vertex.frame.color), warn_missing=FALSE) 
 	
 	### pie chart composition
-	pie.comp.path <- as.data.frame.array(table(path.fibro.dat[,c('cell.from','path.contain.rep.unfold')]))
+	pie.comp.path <- as.data.frame.array(table(path.curcell.dat[,c('cell.from','path.contain.rep.unfold')]))
 	pie.comp.path <- pie.comp.path[vert.cluster.ident, ]
 	pie.comp.node <- as.data.frame.array(table(node.dat[,c('cell.from','ID')]))
 	pie.comp.node <- pie.comp.node[vert.cluster.ident, node.dat$ID]
@@ -1749,6 +1789,194 @@ pathNetPlot <- function(object, select.ident, ident.col=NULL, vert.size.attr="de
 		scales.color <- scales::hue_pal(c=100)(length(ident.label))
 		vert.cluster.color <- scales.color[which(ident.label %in% as.character(vert.attr.list$cell.from))]
 		vert.color <- mapvalues(vert.attr.list$cell.from, from=c(vert.cluster.ident,NA), to=c(vert.cluster.color,'tomato'), warn_missing=FALSE) 
+	}
+
+	### layout
+	l <- do.call(layout, list(net))
+
+	if(node.pie){
+		plot(net, vertex.shape="pie", vertex.pie=pie.comp.node, edge.arrow.size=edge.arrow.size, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.na.color, vertex.pie.color=vertex.pie.color)
+		legend(x=1.1, y=1, legend=vert.cluster.ident, pch=21, col=vertex.frame.color, pt.bg=vert.cluster.color, pt.cex=1, cex=.5, bty="n", ncol=1)
+	}else{
+		plot(net, edge.arrow.size=edge.arrow.size, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.color, vertex.color=vert.color)
+		legend(x=1.1, y=1, legend=vert.cluster.ident, pch=21, col=vertex.frame.color, pt.bg=vert.cluster.color, pt.cex=1, cex=.5, bty="n", ncol=1)
+	}
+}
+
+#' To present a net plot for pathways and downstream associated LR interactions
+#' @param object CommPath object
+#' @param select.ident Cluster of interest
+#' @param ident.col Vector of colors of each cluster; names of the col vector are supposed to be assigned to indicate each color for each cluster
+#' @param vert.size.attr Which statistical measures should be mapped to the size of vertex; Type "getNetAttr(object)" to retrieve the available statistical measures for pathways
+#' @param vert.size.LR Size of node representing LR interactions
+#' @param vert.size.path.adj pseudocount to adjust the size of node representing pathways
+#' @param top.n.path Top n activated pathways in the selected cluster of interest; if NULL, slelect all activated pathways
+#' @param path.order Sort criteria used to select the top n pathways, either "P.val" or "P.val.adj", which represent the original and adjusted p values, or "diff" which represents the mean (in t test) or median (in wilcox test) difference; default is "P.val.adj". This parameter would be masked if top.n.path is set as NULL.
+#' @param layout Network layout; defualt is Fruchterman-Reingold ('layout.fruchterman.reingold'). Refer to the igraph package for more information. Note: an error would be raised if the selected layout do not apply to the graph.
+#' @param LR.label To show which label on the node representing LR interactions. Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label); default is NA
+#' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
+#' @param edge.arrow.size Size of arrow
+#' @param vertex.label.cex Font size of vertex label
+#' @param vertex.label.color color of vertex label
+#' @param vertex.label.family Font family of the label
+#' @param vertex.frame.color Color of Node border
+#' @param node.pie Logical value indicating to show the node representing pathways in pie charts or not; default is TRUE
+#' @param return.net Logical value indicating to return the igraph object or not; default is FALSE
+#' @param return.data Logical value indicating to return the link dataframe or not; default is FALSE. This parameter allows users to export the link data in a dataframe, which could be analyzed in other network visualization tools, for example Cytoscape.
+#' @importFrom igraph graph_from_data_frame V E degree layout_with_fr
+#' @importFrom plyr rbind.fill mapvalues
+#' @return Net plot showing the activated pathways and associated LR interactions
+#' @export
+pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label=NA, pathway.label=TRUE, edge.arrow.size=0.2, vertex.label.cex=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+	options(stringsAsFactors=F)
+
+	path.net.dat <- object@pathway.net$downstream
+	if (!(select.ident %in% path.net.dat$cell.from)){
+		stop(paste0('There is no significantly up-regulatged pathways for cluster ', select.ident, ' or the up-regulatged pathways contain no marker ligand'))
+	}
+	path.curcell.dat <- path.net.dat[which(path.net.dat$cell.from==select.ident), ]
+
+	### node of pathway
+	node.path <- unique(path.curcell.dat[, c('path.contain.lig.unfold','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')])
+	colnames(node.path) <- c('ID','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')
+	node.path$type <- 'Pathway'
+
+	if('t.path' %in% colnames(node.path)){
+		node.path$diff <- node.path$mean.diff
+	}else{
+		node.path$diff <- node.path$median.diff
+	}
+
+	### select the top n pathways
+	if (is.null(top.n.path)){
+		top.n.path <- nrow(node.path)
+	}else if (is.numeric(top.n.path) & (top.n.path%%1==0)){
+		if (path.order=='P.val.adj'){
+			node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'diff']),]
+		}else if(path.order=='P.val'){
+			node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'diff']),]
+		}else if(path.order=='diff'){
+			node.path <- node.path[order(-node.path[,'diff'], node.path[,'P.val.adj.path']),]
+		}
+
+		if (top.n.path > nrow(node.path)){
+			warning(paste0('There is(are) ', nrow(node.path),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+			top.n.path <- nrow(node.path)
+		}
+	}else{
+		stop('Wrong "top.n.path" parameter! Input an positive integer to select the corresponding number of up-regulatged pathway(s)')
+	}	
+	node.path <- node.path[1:top.n.path, ]
+	path.curcell.dat <- path.curcell.dat[which(path.curcell.dat$path.contain.lig.unfold %in% node.path$ID), ]
+
+	### node of LR
+	node.LR <- unique(path.curcell.dat[, c('LR.type','LR.pair','cell.from','cell.to','ligand','receptor','log2FC.LR', 'P.val.LR', 'P.val.adj.LR')])	
+	colnames(node.LR) <- c('ID','LR.pair','cell.from','cell.to','ligand', 'receptor', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR')
+	node.LR$type <- 'LR'
+	node.LR <- node.LR[which(!duplicated(node.LR$ID)),]
+
+	### get the node of all vertex and construct the net
+	node.dat <- rbind.fill(node.LR, node.path)
+	link.dat <- path.curcell.dat[, c('path.contain.lig.unfold','LR.type')]
+	net <- graph_from_data_frame(d=link.dat, vertices=node.dat, directed=T)
+	### return the igraph object if ordered by user
+	if(return.net){
+		return(net)
+	}
+
+	if(return.data){
+		if('t.path' %in% colnames(path.curcell.dat)){
+			return(path.curcell.dat[,c('cell.from', 'cell.to', 'ligand', 'receptor', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR','description.path','mean.diff.path', 'mean.1.path', 'mean.2.path', 't.path', 'df.path', 'P.val.path', 'P.val.adj.path')])
+		}else{
+			return(path.curcell.dat[,c('cell.from', 'cell.to', 'ligand', 'receptor', 'log2FC.LR', 'P.val.LR', 'P.val.adj.LR','description.path','median.diff.path', 'median.1.path', 'median.2.path', 'W.path', 'P.val.path', 'P.val.adj.path')])
+		}
+	}
+
+	### network plot
+	vert.attr.list <- get.vertex.attribute(net)
+	node.dat.id <- vert.attr.list$name
+	### vertex label
+	if(is.na(LR.label)){
+		vert.label <- rep(NA,length(node.dat.id))
+	}else if(LR.label=='L'){
+		vert.label <- vert.attr.list$ligand
+	}else if(LR.label=='R'){
+		vert.label <- vert.attr.list$receptor
+	}else if(LR.label=='LR'){
+		vert.label <- vert.attr.list$LR.pair
+	}else{
+		stop('Wrong LR.label parameter! Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label) ')
+	}
+
+	if(pathway.label){
+		if(all(is.na(vert.label))){
+			vert.label <- vert.attr.list$description.path
+		}else{
+			vert.label[which(is.na(vert.label))] <- node.dat.id[which(is.na(vert.label))]
+		}
+	}
+
+	### vertex size
+	if(vert.size.attr=='degree'){
+		vert.size <- igraph::degree(net, mode="out")
+		vert.size[which(vert.size==0)] <- NA
+	}else{
+		if(vert.size.attr=='logP'){
+			vert.size <- vert.attr.list[['P.val.path']]
+			vert.size <- -log10(vert.size)
+		}else if(vert.size.attr=='logP.adj'){
+				vert.size <- vert.attr.list[['P.val.adj.path']]
+				vert.size <- -log10(vert.size)
+		}else{
+			vert.size <- vert.attr.list[[paste0(vert.size.attr,'.path')]]
+			if(is.null(vert.size)){
+				stop(paste0('Wrong "vert.size.attr" parameter! There is no valid attribute named as ',vert.size.attr,'\nType "getPathAttr(object)" for available attribute'))
+			}
+		}
+	}
+	vert.size <- scale_1(vert.size)
+	vert.size <- vert.size * vert.size.path.adj
+	vert.size[which(is.na(vert.size))] <- vert.size.LR
+	
+	### vertex color
+	all.ident <- object@cell.info$Cluster
+	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
+	ident.label <- levels(all.ident)
+	vert.cluster.ident <- ident.label[which(ident.label %in% as.character(vert.attr.list$cell.to))]
+	if(is.null(ident.col)){
+		scales.color <- scales::hue_pal(c=100)(length(ident.label))
+		vert.cluster.color <- scales.color[which(ident.label %in% as.character(vert.attr.list$cell.to))]
+	}else{
+		col.name <- names(ident.col)
+		if(is.null(col.name)){
+			stop(paste0('Wrong "ident.col" parameter! The colors should be named according to the clusters'))
+		}else{
+			ident.missed <- vert.cluster.ident[which(!(vert.cluster.ident %in% col.name))]
+			if(length(ident.missed) > 0){
+				stop(paste0('The color of ',pasteIdent(ident.missed),' may be missed in the input color'))
+			}
+			vert.cluster.color <- as.vector(ident.col[vert.cluster.ident])
+		}
+	}
+	vertex.pie.color <- list(vert.cluster.color)
+	### pie border
+	vertex.frame.na.color <- mapvalues(vert.attr.list$type, from=c('LR','Pathway'), to=c(NA,vertex.frame.color), warn_missing=FALSE) 
+	
+	### pie chart composition
+	pie.comp.path <- as.data.frame.array(table(path.curcell.dat[,c('cell.to','path.contain.lig.unfold')]))
+	pie.comp.path <- pie.comp.path[vert.cluster.ident, ]
+	pie.comp.node <- as.data.frame.array(table(node.dat[,c('cell.to','ID')]))
+	pie.comp.node <- pie.comp.node[vert.cluster.ident, node.dat$ID]
+
+	for(each.path in colnames(pie.comp.path)){
+		pie.comp.node[ ,each.path] <- pie.comp.path[ ,each.path] 
+	}
+	pie.comp.node <- lapply(pie.comp.node, function(x){x})
+
+	if(!node.pie){
+		scales.color <- scales::hue_pal(c=100)(length(ident.label))
+		vert.cluster.color <- scales.color[which(ident.label %in% as.character(vert.attr.list$cell.to))]
+		vert.color <- mapvalues(vert.attr.list$cell.to, from=c(vert.cluster.ident,NA), to=c(vert.cluster.color,'tomato'), warn_missing=FALSE) 
 	}
 
 	### layout

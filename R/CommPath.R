@@ -377,6 +377,7 @@ diffPath <- function(object, select.ident.1, select.ident.2=NULL, method='t.test
 #' @return Data frame including the statistic result comparing the pathway enrichment sorces between cells in each cluster and all other clusters, the significant recetor and ligand in the pathways, and the corresponding up stream identity class and ligand
 #' @export
 diffAllPath <- function(object, method='t.test', only.posi=FALSE, only.sig=FALSE){
+	options(stringsAsFactors=F)
 	if (method=='t.test'){
 		all.test.dat <- data.frame(matrix(NA,0,12))
 	}else{
@@ -404,11 +405,51 @@ diffAllPath <- function(object, method='t.test', only.posi=FALSE, only.sig=FALSE
 #' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
 #' @return CommPath object with LR interactions filtered by activated pathways in each cluster
 #' @export
-filterLR <- function(object, acti.path.dat){
-	# if (is.null(acti.path.dat)){
-	# 		acti.path.dat <- diffAllPath(object)
-	# }
-	
+filterInter <- function(object, acti.path.dat){
+	options(stringsAsFactors=F)
+	object <- filterLR.path.contain.rep(object=object, acti.path.dat=acti.path.dat)
+	acti.path.filtered.dat <- filterPath(object=object, acti.path.dat=acti.path.dat)
+	object <- filterLR.path.contain.lig(object=object, acti.path.filtered.dat=acti.path.filtered.dat)
+	return(object)
+}
+
+
+#' To retrieve activated pathways containing the ligand
+#' @param object CommPath object
+#' @param acti.path.filtered.dat Data frame of differential enrichment test result from diffAllPath
+#' @return CommPath object with LR interactions filtered by activated pathways in each cluster
+#' @export
+filterLR.path.contain.lig <- function(object, acti.path.filtered.dat){
+	options(stringsAsFactors=F)
+	interact.dat <- object@interact.filter$InteractGene
+	path.contain.lig <- apply(interact.dat, 1, function(LR.line){
+		cur.cell.up <- LR.line['cell.from']
+		cur.lig <- LR.line['ligand']
+		cur.path.dat <- acti.path.filtered.dat[which(acti.path.filtered.dat$cluster==cur.cell.up), ]
+		cur.path.lig.vec <- cur.path.dat$ligand.in.path
+		names(cur.path.lig.vec) <- cur.path.dat$description
+		cur.path.lig.list <- sapply(cur.path.lig.vec, function(eachSet){ 
+			strsplit(eachSet,split=';')
+			})
+		cur.path.contain.lig.vec <- unlist(lapply(cur.path.lig.list, function(eachSet){ cur.lig %in% eachSet }))
+		cur.path.contain.lig.char <- paste(names(cur.path.contain.lig.vec)[which(cur.path.contain.lig.vec)], collapse=';')
+		cur.path.contain.lig.char
+	})
+	path.contain.lig[which(path.contain.lig=='')] <- NA
+	interact.dat$path.contain.lig <- path.contain.lig
+	interact.dat$path.contain.lig.cluster <- interact.dat$cell.from
+	object@interact.filter$InteractGene <- interact.dat 
+	return(object)
+}
+
+
+#' To screen LR pairs with receptors involved in activated pathways in the receiver cells
+#' @param object CommPath object
+#' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
+#' @return CommPath object with LR interactions filtered by activated pathways in each cluster
+#' @export
+filterLR.path.contain.rep <- function(object, acti.path.dat){
+	options(stringsAsFactors=F)
 	### select the highly enriched pathways
 	if ('mean.diff' %in% colnames(acti.path.dat)){
 		acti.path.dat$diff <- acti.path.dat$mean.diff
@@ -437,6 +478,7 @@ filterLR <- function(object, acti.path.dat){
 		return(path.contain.cur.rep)
 		})
 	interact.dat$path.contain.rep <- as.character(allpath.contain.rep)
+	interact.dat$path.contain.rep.cluster <- interact.dat$cell.to
 	lr.unfold.filter.dat <- interact.dat[which(interact.dat$path.contain.rep!=''), ]
 
 	### to construct the slot Interact
@@ -470,6 +512,7 @@ filterLR <- function(object, acti.path.dat){
 #' @return Data frame including the statistic result of filtered pathways in each cluster
 #' @export
 filterPath <- function(object, acti.path.dat){
+	options(stringsAsFactors=F)
 	all.marker.L <- object@interact.filter$markerL
 	all.ident <- object@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
@@ -511,20 +554,62 @@ filterPath <- function(object, acti.path.dat){
 	return(filtered.path.dat)
 }
 
-
 #' To integrate the statistics of LR interactions and associated activated pathways
 #' @param object CommPath object
-#' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
+#' @param acti.path.filtered.dat Data frame of differential enrichment test result from diffAllPath
 #' @return CommPath object with statistics of LR interactions and associated pathways saved in the slot pathway.net
 #' @export
-pathNet <- function(object, acti.path.dat){
+pathNet <- function(object, acti.path.filtered.dat){
+	options(stringsAsFactors=F)
 	Interact <- object@interact.filter$InteractGene
+	Interact$LR.pair <- paste(Interact$ligand, Interact$receptor, sep='/')
+	acti.path.filtered.dat$ligand.in.path <- NULL
+	acti.path.filtered.dat$receptor.in.path <- NULL
+	object@pathway.net <- list(upstream=NA, downstream=NA)
+	colnames(acti.path.filtered.dat) <- paste0(colnames(acti.path.filtered.dat), '.path')
+	object@pathway.net$upstream <- pathNet.rep.path.stat(Interact=Interact, acti.path.filtered.dat=acti.path.filtered.dat)
+	object@pathway.net$downstream <- pathNet.lig.path.stat(Interact=Interact, acti.path.filtered.dat=acti.path.filtered.dat)
+	return(object)
+}
 
+#' To integrate the statistics of LR interactions and the ligand-associated activated pathways
+#' @param object CommPath object
+#' @param acti.path.filtered.dat Data frame of differential enrichment test result from diffAllPath
+#' @return Dataframe with statistics of LR interactions and the ligand-associated activated pathways stored
+#' @export
+pathNet.lig.path.stat <- function(Interact, acti.path.filtered.dat){
+	options(stringsAsFactors=F)
+	Interact <- Interact[which(!is.na(Interact$path.contain.lig)), ]
+
+	path.contain.lig <- Interact$path.contain.lig
+	names(path.contain.lig) <- rownames(Interact)
+	path.vec <- unlist(sapply(path.contain.lig, function(x){
+		strsplit(x, split=';')
+		}))
+	path.vec <- as.character(path.vec)
+
+	path.num <- unlist(sapply(path.contain.lig, function(x){
+		length(strsplit(x, split=';')[[1]])
+		}))
+	LR.type.vec <- rep(names(path.num),times=path.num)
+	InteractUnfold <- data.frame(LR.type=LR.type.vec, path.contain.lig.unfold=path.vec)
+	InteractUnfold <- cbind(Interact[match(InteractUnfold$LR.type, rownames(Interact)), ], InteractUnfold)
+	
+	lig.path.id.unfold <- paste(InteractUnfold$cell.from, InteractUnfold$path.contain.lig.unfold, sep='--')
+	lig.path.id.score <- paste(acti.path.filtered.dat$cluster.path, acti.path.filtered.dat$description.path, sep='--')
+	InteractUnfold <- cbind(InteractUnfold, acti.path.filtered.dat[match(lig.path.id.unfold,lig.path.id.score), ])
+	return(InteractUnfold)
+}
+
+#' To integrate the statistics of LR interactions and the receptor-associated activated pathways
+#' @param object CommPath object
+#' @param acti.path.filtered.dat Data frame of differential enrichment test result from diffAllPath
+#' @return Dataframe with statistics of LR interactions and the receptor-associated activated pathways stored
+#' @export
+pathNet.rep.path.stat <- function(Interact, acti.path.filtered.dat){
+	options(stringsAsFactors=F)
 	path.contain.rep <- Interact$path.contain.rep
 	names(path.contain.rep) <- rownames(Interact)
-
-	Interact$LR.pair <- paste(Interact$ligand, Interact$receptor, sep='/')
-
 	path.vec <- unlist(sapply(path.contain.rep, function(x){
 		strsplit(x, split=';')
 		}))
@@ -538,11 +623,9 @@ pathNet <- function(object, acti.path.dat){
 	InteractUnfold <- cbind(Interact[match(InteractUnfold$LR.type, rownames(Interact)), ], InteractUnfold)
 	
 	rep.path.id.unfold <- paste(InteractUnfold$cell.to, InteractUnfold$path.contain.rep.unfold, sep='--')
-	colnames(acti.path.dat) <- paste0(colnames(acti.path.dat), '.path')
-	rep.path.id.score <- paste(acti.path.dat$cluster.path, acti.path.dat$description.path, sep='--')
-	InteractUnfold <- cbind(InteractUnfold, acti.path.dat[match(rep.path.id.unfold,rep.path.id.score), ])
-	object@pathway.net <- InteractUnfold
-	return(object)
+	rep.path.id.score <- paste(acti.path.filtered.dat$cluster.path, acti.path.filtered.dat$description.path, sep='--')
+	InteractUnfold <- cbind(InteractUnfold, acti.path.filtered.dat[match(rep.path.id.unfold,rep.path.id.score), ])
+	return(InteractUnfold)
 }
 
 #' To find the downstream identity class of specific ligand released by specific upstream identity class
