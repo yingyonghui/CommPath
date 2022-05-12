@@ -278,7 +278,7 @@ dotPlot.pathway <- function(object, acti.path.dat, pathway, ligand.ident=NULL, r
 		lig.rep.char <- unique(cur.path.dat[which(cur.path.dat$description==pathway), 'ligand.in.path'])
 		if(length(lig.rep.char)==0){
 			stop(paste0('The selected pathway is not up-regulatged in the cluster', ligand.ident))
-		}else if(length(cur.rep.char)==1 & is.na(lig.rep.char)){
+		}else if(length(lig.rep.char)==1 & is.na(lig.rep.char)){
 			stop('The selected pathway does not contain any marker ligand')
 		}
 		
