@@ -7,9 +7,9 @@
 pathNet.rep.path.stat(Interact, acti.path.filtered.dat)
 }
 \arguments{
-\item{acti.path.filtered.dat}{Data frame of differential enrichment test result from diffAllPath}
+\item{Interact}{Dataframe with statistics of filtered LR interactions}
 
-\item{object}{CommPath object}
+\item{acti.path.filtered.dat}{Data frame of differential enrichment test result from diffAllPath}
 }
 \value{
 Dataframe with statistics of LR interactions and the receptor-associated activated pathways stored

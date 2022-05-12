@@ -370,9 +370,11 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 	### select the highly enriched pathways
 	if ('mean.diff' %in% colnames(acti.path.dat)){
 		acti.path.dat <- subset(acti.path.dat, mean.diff > 0)
+		acti.path.dat$stat <- acti.path.dat$t
 		acti.path.dat$diff <- acti.path.dat$mean.diff
 	}else if('median.diff' %in% colnames(acti.path.dat)){
 		acti.path.dat <- subset(acti.path.dat, median.diff > 0)
+		acti.path.dat$stat <- acti.path.dat$W
 		acti.path.dat$diff <- acti.path.dat$median.diff
 	}else{
 		stop('Please input the intact test result computed from diffAllPath')
@@ -380,7 +382,7 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 
 	### select top n pathways
 	if (path.order=='P.val.adj' | path.order=='P.val'){
-		acti.path.dat <- acti.path.dat[order(acti.path.dat[[path.order]], -acti.path.dat[['diff']]), ]
+		acti.path.dat <- acti.path.dat[order(acti.path.dat[[path.order]], -acti.path.dat[['stat']]), ]
 	}else if (path.order=='diff'){
 		acti.path.dat <- acti.path.dat[order(-acti.path.dat[['diff']], acti.path.dat[['P.val.adj']],), ]
 	}else{
@@ -578,9 +580,11 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 	}
 	if ('t' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & t > 0)
+		ident.path.dat$stat <- ident.path.dat$t
 		ident.path.dat$diff <- ident.path.dat$mean.diff
 	}else if ('W' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & median.diff > 0)
+		ident.path.dat$stat <- ident.path.dat$W
 		ident.path.dat$diff <- ident.path.dat$median.diff
 	}else{
 		stop('Please input the integrate ident.path.dat computed from diffPath')
@@ -593,7 +597,7 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 	if (nrow(ident.path.dat)==0){ stop(paste0('There is no marker receptor in the significantly up-regulatged pathways for cluster ', select.ident )) }
 
 	if (path.order=='P.val.adj' | path.order=='P.val'){
-		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'diff']),]
+		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'stat']),]
 	}else if(path.order=='diff'){
 		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
@@ -781,9 +785,11 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 	ident.path.dat <- diff.path.dat
 	if ('t' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & t > 0)
+		ident.path.dat$stat <- ident.path.dat$t
 		ident.path.dat$diff <- ident.path.dat$mean.diff
 	}else if ('W' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & median.diff > 0)
+		ident.path.dat$stat <- ident.path.dat$W
 		ident.path.dat$diff <- ident.path.dat$median.diff
 	}else{
 		stop('Please input the integrate ident.path.dat computed from diffPath')
@@ -796,7 +802,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 	if (nrow(ident.path.dat)==0){ stop(paste0('There is no marker receptor in the significantly up-regulatged pathways for cluster ', select.ident )) }
 
 	if (path.order=='P.val.adj' | path.order=='P.val'){
-		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'diff']),]
+		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'stat']),]
 	}else if(path.order=='diff'){
 		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
@@ -996,9 +1002,11 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 
 	if ('t' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & t > 0)
+		ident.path.dat$stat <- ident.path.dat$t
 		ident.path.dat$diff <- ident.path.dat$mean.diff
 	}else if ('W' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & median.diff > 0)
+		ident.path.dat$stat <- ident.path.dat$W
 		ident.path.dat$diff <- ident.path.dat$median.diff
 	}else{
 		stop('Please input the integrate acti.path.dat computed from diffPath')
@@ -1007,7 +1015,7 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	if (nrow(ident.path.dat)==0){ stop(paste0('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
 
 	if (path.order=='P.val.adj' | path.order=='P.val'){
-		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'diff']),]
+		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'stat']),]
 	}else if(path.order=='diff'){
 		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
@@ -1294,9 +1302,11 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	ident.path.dat <- diff.path.dat
 	if ('t' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & t > 0)
+		ident.path.dat$stat <- ident.path.dat$t
 		ident.path.dat$diff <- ident.path.dat$mean.diff
 	}else if ('W' %in% colnames(ident.path.dat)){
 		ident.path.dat <- subset(ident.path.dat, P.val.adj < p.thre & median.diff > 0)
+		ident.path.dat$stat <- ident.path.dat$W
 		ident.path.dat$diff <- ident.path.dat$median.diff
 	}else{
 		stop('Please input the integrate acti.path.dat computed from comparePath')
@@ -1305,7 +1315,7 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	if (nrow(ident.path.dat)==0){ stop(paste0('There is no significantly up-regulatged pathways for cluster ', select.ident )) }
 
 	if (path.order=='P.val.adj' | path.order=='P.val'){
-		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'diff']),]
+		ident.path.dat <- ident.path.dat[order(ident.path.dat[,path.order], -ident.path.dat[,'stat']),]
 	}else if(path.order=='diff'){
 		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
@@ -1649,24 +1659,27 @@ pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size
 	path.curcell.dat <- path.net.dat[which(path.net.dat$cell.to==select.ident), ]
 
 	### node of pathway
-	node.path <- unique(path.curcell.dat[, c('path.contain.rep.unfold','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')])
-	colnames(node.path) <- c('ID','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')
-	node.path$type <- 'Pathway'
-
-	if('t.path' %in% colnames(node.path)){
+	if('t.path' %in% colnames(path.curcell.dat)){
+		node.path <- unique(path.curcell.dat[, c('path.contain.rep.unfold','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')])
+		colnames(node.path) <- c('ID','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')
+		node.path$stat <- node.path$t.path
 		node.path$diff <- node.path$mean.diff
 	}else{
+		node.path <- unique(path.curcell.dat[, c('path.contain.rep.unfold','description.path','mean.diff.path', 'W.path', 'P.val.path', 'P.val.adj.path')])
+		colnames(node.path) <- c('ID','description.path','mean.diff.path', 'W.path', 'P.val.path', 'P.val.adj.path')
+		node.path$stat <- node.path$W.path
 		node.path$diff <- node.path$median.diff
 	}
+	node.path$type <- 'Pathway'
 
 	### select the top n pathways
 	if (is.null(top.n.path)){
 		top.n.path <- nrow(node.path)
 	}else if (is.numeric(top.n.path) & (top.n.path%%1==0)){
 		if (path.order=='P.val.adj'){
-			node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'diff']),]
+			node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'stat']),]
 		}else if(path.order=='P.val'){
-			node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'diff']),]
+			node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'stat']),]
 		}else if(path.order=='diff'){
 			node.path <- node.path[order(-node.path[,'diff'], node.path[,'P.val.adj.path']),]
 		}
@@ -1677,8 +1690,9 @@ pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size
 		}
 	}else{
 		stop('Wrong "top.n.path" parameter! Input an positive integer to select the corresponding number of up-regulatged pathway(s)')
-	}	
+	}
 	node.path <- node.path[1:top.n.path, ]
+	node.path$stat <- NULL
 	path.curcell.dat <- path.curcell.dat[which(path.curcell.dat$path.contain.rep.unfold %in% node.path$ID), ]
 
 	### node of LR
@@ -1837,24 +1851,27 @@ pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.si
 	path.curcell.dat <- path.net.dat[which(path.net.dat$cell.from==select.ident), ]
 
 	### node of pathway
-	node.path <- unique(path.curcell.dat[, c('path.contain.lig.unfold','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')])
-	colnames(node.path) <- c('ID','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')
-	node.path$type <- 'Pathway'
-
-	if('t.path' %in% colnames(node.path)){
+	if('t.path' %in% colnames(path.curcell.dat)){
+		node.path <- unique(path.curcell.dat[, c('path.contain.lig.unfold','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')])
+		colnames(node.path) <- c('ID','description.path','mean.diff.path', 't.path', 'P.val.path', 'P.val.adj.path')
+		node.path$stat <- node.path$t.path
 		node.path$diff <- node.path$mean.diff
 	}else{
+		node.path <- unique(path.curcell.dat[, c('path.contain.lig.unfold','description.path','mean.diff.path', 'W.path', 'P.val.path', 'P.val.adj.path')])
+		colnames(node.path) <- c('ID','description.path','mean.diff.path', 'W.path', 'P.val.path', 'P.val.adj.path')
+		node.path$stat <- node.path$W.path
 		node.path$diff <- node.path$median.diff
 	}
+	node.path$type <- 'Pathway'
 
 	### select the top n pathways
 	if (is.null(top.n.path)){
 		top.n.path <- nrow(node.path)
 	}else if (is.numeric(top.n.path) & (top.n.path%%1==0)){
 		if (path.order=='P.val.adj'){
-			node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'diff']),]
+			node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'stat']),]
 		}else if(path.order=='P.val'){
-			node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'diff']),]
+			node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'stat']),]
 		}else if(path.order=='diff'){
 			node.path <- node.path[order(-node.path[,'diff'], node.path[,'P.val.adj.path']),]
 		}
@@ -1867,6 +1884,7 @@ pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.si
 		stop('Wrong "top.n.path" parameter! Input an positive integer to select the corresponding number of up-regulatged pathway(s)')
 	}	
 	node.path <- node.path[1:top.n.path, ]
+	node.path$stat <- NULL
 	path.curcell.dat <- path.curcell.dat[which(path.curcell.dat$path.contain.lig.unfold %in% node.path$ID), ]
 
 	### node of LR

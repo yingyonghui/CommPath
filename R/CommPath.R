@@ -573,7 +573,7 @@ pathNet <- function(object, acti.path.filtered.dat){
 }
 
 #' To integrate the statistics of LR interactions and the ligand-associated activated pathways
-#' @param object CommPath object
+#' @param Interact Dataframe with statistics of filtered LR interactions
 #' @param acti.path.filtered.dat Data frame of differential enrichment test result from diffAllPath
 #' @return Dataframe with statistics of LR interactions and the ligand-associated activated pathways stored
 #' @export
@@ -602,7 +602,7 @@ pathNet.lig.path.stat <- function(Interact, acti.path.filtered.dat){
 }
 
 #' To integrate the statistics of LR interactions and the receptor-associated activated pathways
-#' @param object CommPath object
+#' @param Interact Dataframe with statistics of filtered LR interactions
 #' @param acti.path.filtered.dat Data frame of differential enrichment test result from diffAllPath
 #' @return Dataframe with statistics of LR interactions and the receptor-associated activated pathways stored
 #' @export
