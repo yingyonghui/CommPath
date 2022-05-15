@@ -224,7 +224,7 @@ pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "upstream",
 dev.off()
 
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.png" height=500, width=530>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.png" height=600, width=690>
 
 In the above network graph, the pie charts represent the activated pathways in the selected  cells (here endothelial cells) and the scatter points represent the LR pairs of which the receptors are included in the genesets of the linked pathways. Colors of scatter points indicate the upstream clusters releasing the corresponding ligands. Sizes of pie charts indicate their total in-degree and the proportions indicate the in-degree from different upstream clusters.
 
@@ -238,7 +238,7 @@ pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "downstream
     vertex.label.cex.LR=0.25, vertex.label.cex.path=0.35)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.downstream.Endothelial.png" height=500, width=550>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.downstream.Endothelial.png" height=600, width=720>
 
 The legend of the above network graph is generally the same to that of the previous network plot, except that: (i) the scatter points represent the LR pairs of which the ligands are included in the genesets of the linked pathways; (ii) colors of scatter points indicate the downstream clusters expressing the corresponding receptors; (iii) sizes of pie charts indicate their total out-degree and the proportions indicate the out-degree to different downstream clusters.
 
@@ -250,7 +250,7 @@ pdf('dotPlot.Ras.pathway.upstream.endothelial.pdf',height=5,width=7)
 dotPlot.pathway(object = tumor.obj, pathway = pathway, acti.path.filtered.dat = acti.path.filtered.dat, receptor.ident = select.ident, top.n.inter = 10)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/dotPlot.Ras.pathway.upstream.endothelial.png" height=300, width=630>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/dotPlot.Ras.pathway.upstream.endothelial.png" height=300, width=430>
 
 ```
 # To visualize the downstream LR pairs of which the ligands are released by endothelial cells and are included in the pathway "Cytokine-cytokine receptor interaction"
@@ -258,7 +258,7 @@ pdf('dotPlot.Ras.pathway.downstream.endothelial.pdf',height=5,width=7)
 dotPlot.pathway(object = tumor.obj, pathway = pathway, acti.path.filtered.dat = acti.path.filtered.dat, ligand.ident = select.ident, top.n.inter = 10)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/dotPlot.Ras.pathway.downstream.endothelial.png" height=300, width=630>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/dotPlot.Ras.pathway.downstream.endothelial.png" height=300, width=430>
 
 #### Identification of pathway-mediated cell-cell communication chain
 For a specific cell cluster, here named as B for demonstration, CommPath identifies the upstream cluster A sending signals to B, the downstream cluster C receiving signals from B, and the significantly activated pathways in B to mediate the A-B-C communication chain. More exactly, through LR and pathways analysis described above, CommPath is able to identify LR pairs between A and B, LR pairs between B and C, and pathways activated in B. Then CommPath screens for pathways in B which involve both the receptors to interact with A and ligands to interact with C.
@@ -272,7 +272,7 @@ pathPlot(object = tumor.obj,
 dev.off()
 ```
 
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot.png" height=300, width=390>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot.png" height=300, width=400>
 
 In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream  cluster and endothelial cells via the specific receptors; the sizes and colors of dots in the ***Receptor*** column represent the average *log2FC* and *-log10(P)* from differential expression tests comparing the receptor  expression in endothelial cells to that in all other cells; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and *-log10(P)* form differential activation tests comparing the pathway scores in endothelial cells to those in all other cells.
 
@@ -323,7 +323,7 @@ pathPlot.compare(object.1 = tumor.obj,
 dev.off()
 ```
 
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot-compare.png" height=300, width=390>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot-compare.png" height=300, width=400>
 
 In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream clusters and endothelial cells via the specific receptors, and the colors indicate the interaction intensity is upregulated (red) or downregulated (blue) in tumor tissues (object.1) compared to that in normal tissues (object.2); the sizes and colors of dots in the ***Receptor*** column represent the average *log2FC* and *-log10(P)* of expression of receptors in endothelial cells compared to all other cells in tumor tissues; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and *-log10(P)* of pathway scores of endothelail cells in tumor tissues compared to that in normal tissues.
 
