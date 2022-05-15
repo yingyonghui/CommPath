@@ -7,12 +7,12 @@ devtools::install_github("yingyonghui/CommPath")
 library(CommPath)
 ```
 ### Dependencies
-- [Matrix](https://cran.r-project.org/web/packages/Matrix/index.html)
-- [circlize](https://cran.r-project.org/web/packages/circlize/index.html)
-- [ggplot2](https://cran.r-project.org/web/packages/ggplot2/index.html)
-- [dplyr](https://cran.r-project.org/web/packages/dplyr/index.html)
-- [reshape2](https://cran.r-project.org/web/packages/reshape2/index.html)
-- [GSVA](https://www.bioconductor.org/packages/release/bioc/html/GSVA.html) (suggested)
+- library([Matrix](https://cran.r-project.org/web/packages/Matrix/index.html))
+- library([circlize](https://cran.r-project.org/web/packages/circlize/index.html))
+- library([ggplot2](https://cran.r-project.org/web/packages/ggplot2/index.html))
+- library([dplyr](https://cran.r-project.org/web/packages/dplyr/index.html))
+- library([reshape2](https://cran.r-project.org/web/packages/reshape2/index.html))
+- library([GSVA](https://www.bioconductor.org/packages/release/bioc/html/GSVA.html)) (suggested)
 
 ## Tutorials
 In this vignette we show CommPath's steps and functionalities for inference and analysis of ligand-receptor interactions by applying it to a scRNA-seq data (GEO accession number: GSE156337) on cells from hepatocellular carcinoma (HCC) patients.
