@@ -25,6 +25,6 @@ To define the CommPath object and the key slots
 
 \item{\code{pathway}}{list containing information of pathways associated with ligands and receptors}
 
-\item{\code{pathway.net}}{data frame of the statistics of LR interactions and associated pathways}
+\item{\code{pathway.net}}{list containing the integrated information of the statistics of LR interactions and associated pathways}
 }}
 

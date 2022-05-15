@@ -224,7 +224,7 @@ dotPlot.LR <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.lev
 
 #' To present a dot plot for top ligand-receptor pairs involved in the specific pathways in the selected clusters
 #' @param object CommPath object
-#' @param acti.path.dat Data frame of differential activation test result of filtered from diffAllPath
+#' @param acti.path.filtered.dat Data frame of differential activation test result of filtered from diffAllPath
 #' @param pathway To present a dot plot for ligand-receptor pairs involved in which pathway
 #' @param ligand.ident Vector containing the ligand ident
 #' @param receptor.ident Vector containing the receptor ident
@@ -234,7 +234,7 @@ dotPlot.LR <- function(object, ligand.ident=NULL, receptor.ident=NULL, ident.lev
 #' @importFrom ggplot2 ggplot geom_point scale_color_manual labs theme element_text element_rect element_line aes scale_color_gradientn
 #' @return Dotplot showing the ligand-receptor interaction involved in the specific pathways in the selected clusters
 #' @export
-dotPlot.pathway <- function(object, acti.path.dat, pathway, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, return.data=FALSE){
+dotPlot.pathway <- function(object, acti.path.filtered.dat, pathway, ligand.ident=NULL, receptor.ident=NULL, ident.levels=NULL, top.n.inter=10, return.data=FALSE){
 	options(stringsAsFactors=F)
 	if (is.null(ligand.ident) & is.null(receptor.ident)){
 		stop("Either ligand.ident or ligand.ident need to be asigned")
@@ -651,10 +651,11 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 	
 	#### rect for pathway
 	path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'diff']
+	path.rect.stat <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'stat']
 	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'P.val.adj']
 	if (all(path.rect.pval==0)){
-		path.rect.pval <- path.rect.length
-		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the mean (in t test) or median (in wilcox test) difference of pathways')
+		path.rect.pval <- path.rect.stat
+		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the t values (in t test) or W values (in wilcox test) from difference tests')
 	}else{
 		path.rect.pval <- -log10(path.rect.pval)
 		path.rect.pval <- p.remove.inf(path.rect.pval)
@@ -869,11 +870,12 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 	
 	#### rect for pathway
 	path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'diff']
+	path.rect.stat <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'stat']
 	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'P.val.adj']
 
 	if (all(path.rect.pval==0)){
-		path.rect.pval <- path.rect.length
-		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the mean (in t test) or median (in wilcox test) difference of pathways')
+		path.rect.pval <- path.rect.stat
+		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the t values (in t test) or W values (in wilcox test) from difference tests')
 	}else{
 		path.rect.pval <- -log10(path.rect.pval)
 		path.rect.pval <- p.remove.inf(path.rect.pval)
@@ -1102,11 +1104,12 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	
 	#### rect for pathway
 	path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'diff']
+	path.rect.stat <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'stat']
 	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'P.val.adj']
 
 	if (all(path.rect.pval==0)){
-		path.rect.pval <- path.rect.length
-		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the mean (in t test) or median (in wilcox test) difference of pathways')
+		path.rect.pval <- path.rect.stat
+		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the t values (in t test) or W values (in wilcox test) from difference tests')
 	}else{
 		path.rect.pval <- -log10(path.rect.pval)
 		path.rect.pval <- p.remove.inf(path.rect.pval)
@@ -1431,11 +1434,12 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	
 	#### rect for pathway
 	path.rect.length <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'diff']
+	path.rect.stat <- ident.path.dat[match(path.uniq.name, ident.path.dat$description),'stat']
 	path.rect.pval <-  ident.path.dat[match(path.uniq.name, ident.path.dat$description),'P.val.adj']
 
 	if (all(path.rect.pval==0)){
-		path.rect.pval <- path.rect.length
-		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the mean (in t test) or median (in wilcox test) difference of pathways')
+		path.rect.pval <- path.rect.stat
+		warning('All adjusted p values for the selected pathways are 0. The colors of bars representing pathways are adjusted to indicate the t values (in t test) or W values (in wilcox test) from difference tests')
 	}else{
 		path.rect.pval <- -log10(path.rect.pval)
 		path.rect.pval <- p.remove.inf(path.rect.pval)
@@ -1608,7 +1612,9 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 #' @param LR.label To show which label on the node representing LR interactions. Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label); default is NA
 #' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
 #' @param edge.arrow.size Size of arrow
-#' @param vertex.label.cex Font size of vertex label
+#' @param edge.color Color of edge
+#' @param vertex.label.cex.LR Font size of LR label
+#' @param vertex.label.cex.path Font size of pathway label
 #' @param vertex.label.color color of vertex label
 #' @param vertex.label.family Font family of the label
 #' @param vertex.frame.color Color of Node border
@@ -1619,11 +1625,11 @@ pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 #' @importFrom plyr rbind.fill mapvalues
 #' @return Net plot showing the activated pathways and associated LR interactions
 #' @export
-pathNetPlot <- function(object, select.ident, plot='upstream', ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label=NA, pathway.label=TRUE, edge.arrow.size=0.2, vertex.label.cex=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+pathNetPlot <- function(object, select.ident, plot='upstream', ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label='LR', pathway.label=TRUE, edge.arrow.size=0.2, edge.color='gray75', vertex.label.cex.LR=0.5,vertex.label.cex.path=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
 	if(plot=='upstream'){
-		pathNetPlot.upstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, vertex.label.cex=vertex.label.cex, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
+		pathNetPlot.upstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, edge.color=edge.color, vertex.label.cex.LR=vertex.label.cex.LR, vertex.label.cex.path=vertex.label.cex.path, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
 	}else if(plot=='downstream'){
-		pathNetPlot.downstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, vertex.label.cex=vertex.label.cex, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
+		pathNetPlot.downstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, edge.color=edge.color, vertex.label.cex.LR=vertex.label.cex.LR, vertex.label.cex.path=vertex.label.cex.path, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
 	}else{
 		stop('Wrong "plot" parameter! Available options: upstream (to show the network of activated pathways and the upstream LR interactions) or downstream (to show the network of activated pathways and the downstream LR interactions)')
 	}
@@ -1642,7 +1648,9 @@ pathNetPlot <- function(object, select.ident, plot='upstream', ident.col=NULL, v
 #' @param LR.label To show which label on the node representing LR interactions. Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label); default is NA
 #' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
 #' @param edge.arrow.size Size of arrow
-#' @param vertex.label.cex Font size of vertex label
+#' @param edge.color Color of edge
+#' @param vertex.label.cex.LR Font size of LR label
+#' @param vertex.label.cex.path Font size of pathway label
 #' @param vertex.label.color color of vertex label
 #' @param vertex.label.family Font family of the label
 #' @param vertex.frame.color Color of Node border
@@ -1653,7 +1661,7 @@ pathNetPlot <- function(object, select.ident, plot='upstream', ident.col=NULL, v
 #' @importFrom plyr rbind.fill mapvalues
 #' @return Net plot showing the activated pathways and associated LR interactions
 #' @export
-pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label=NA, pathway.label=TRUE, edge.arrow.size=0.2, vertex.label.cex=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label='LR', pathway.label=TRUE, edge.arrow.size=0.2,  edge.color='gray75', vertex.label.cex.LR=0.5, vertex.label.cex.path=0.5,vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
 	options(stringsAsFactors=F)
 
 	path.net.dat <- object@pathway.net$upstream
@@ -1811,12 +1819,12 @@ pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size
 
 	### layout
 	l <- do.call(layout, list(net))
-
+	vertex.label.cex <- as.numeric(mapvalues(vert.attr.list$type, from=c('LR','Pathway'), to=c(vertex.label.cex.LR, vertex.label.cex.path), warn_missing=FALSE))
 	if(node.pie){
-		plot(net, vertex.shape="pie", vertex.pie=pie.comp.node, edge.arrow.size=edge.arrow.size, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.na.color, vertex.pie.color=vertex.pie.color)
+		plot(net, vertex.shape="pie", vertex.pie=pie.comp.node, edge.arrow.size=edge.arrow.size, edge.color=edge.color, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.na.color, vertex.pie.color=vertex.pie.color)
 		legend(x=1.1, y=1, legend=vert.cluster.ident, pch=21, col=vertex.frame.color, pt.bg=vert.cluster.color, pt.cex=1, cex=.5, bty="n", ncol=1)
 	}else{
-		plot(net, edge.arrow.size=edge.arrow.size, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.color, vertex.color=vert.color)
+		plot(net, edge.arrow.size=edge.arrow.size, edge.color=edge.color, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.color, vertex.color=vert.color)
 		legend(x=1.1, y=1, legend=vert.cluster.ident, pch=21, col=vertex.frame.color, pt.bg=vert.cluster.color, pt.cex=1, cex=.5, bty="n", ncol=1)
 	}
 }
@@ -1834,7 +1842,9 @@ pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size
 #' @param LR.label To show which label on the node representing LR interactions. Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label); default is NA
 #' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
 #' @param edge.arrow.size Size of arrow
-#' @param vertex.label.cex Font size of vertex label
+#' @param edge.color Color of edge
+#' @param vertex.label.cex.LR Font size of LR label
+#' @param vertex.label.cex.path Font size of pathway label
 #' @param vertex.label.color color of vertex label
 #' @param vertex.label.family Font family of the label
 #' @param vertex.frame.color Color of Node border
@@ -1845,7 +1855,7 @@ pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size
 #' @importFrom plyr rbind.fill mapvalues
 #' @return Net plot showing the activated pathways and associated LR interactions
 #' @export
-pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label=NA, pathway.label=TRUE, edge.arrow.size=0.2, vertex.label.cex=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label='LR', pathway.label=TRUE, edge.arrow.size=0.2, edge.color='gray75', vertex.label.cex.LR=0.5, vertex.label.cex.path=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
 	options(stringsAsFactors=F)
 
 	path.net.dat <- object@pathway.net$downstream
@@ -2003,12 +2013,12 @@ pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.si
 
 	### layout
 	l <- do.call(layout, list(net))
-
+	vertex.label.cex <- as.numeric(mapvalues(vert.attr.list$type, from=c('LR','Pathway'), to=c(vertex.label.cex.LR, vertex.label.cex.path), warn_missing=FALSE))
 	if(node.pie){
-		plot(net, vertex.shape="pie", vertex.pie=pie.comp.node, edge.arrow.size=edge.arrow.size, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.na.color, vertex.pie.color=vertex.pie.color)
+		plot(net, vertex.shape="pie", vertex.pie=pie.comp.node, edge.arrow.size=edge.arrow.size, edge.color=edge.color, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.na.color, vertex.pie.color=vertex.pie.color)
 		legend(x=1.1, y=1, legend=vert.cluster.ident, pch=21, col=vertex.frame.color, pt.bg=vert.cluster.color, pt.cex=1, cex=.5, bty="n", ncol=1)
 	}else{
-		plot(net, edge.arrow.size=edge.arrow.size, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.color, vertex.color=vert.color)
+		plot(net, edge.arrow.size=edge.arrow.size, edge.color=edge.color, layout=l, vertex.size=vert.size, vertex.label=vert.label, vertex.label.color=vertex.label.color, vertex.label.cex=vertex.label.cex, vertex.label.family=vertex.label.family,vertex.frame.color=vertex.frame.color, vertex.color=vert.color)
 		legend(x=1.1, y=1, legend=vert.cluster.ident, pch=21, col=vertex.frame.color, pt.bg=vert.cluster.color, pt.cex=1, cex=.5, bty="n", ncol=1)
 	}
 }

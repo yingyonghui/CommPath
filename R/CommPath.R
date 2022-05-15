@@ -405,7 +405,7 @@ diffAllPath <- function(object, method='t.test', only.posi=FALSE, only.sig=FALSE
 #' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
 #' @return CommPath object with LR interactions filtered by activated pathways in each cluster
 #' @export
-filterInter <- function(object, acti.path.dat){
+filterLR <- function(object, acti.path.dat){
 	options(stringsAsFactors=F)
 	object <- filterLR.path.contain.rep(object=object, acti.path.dat=acti.path.dat)
 	acti.path.filtered.dat <- filterPath(object=object, acti.path.dat=acti.path.dat)

@@ -6,7 +6,15 @@ Author: Hao Lu
 Maintainer: The package maintainer <luh678@163.com>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
-Depends: R (>= 3.6.0),circlize,reshape2,plyr,dplyr,ggplot2,Matrix,igraph
+Depends: R (>= 3.6.0)
+Imports:
+    circlize,
+    reshape2,
+    plyr,
+    dplyr,
+    ggplot2,
+    Matrix,
+    igraph
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

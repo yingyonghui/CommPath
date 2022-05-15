@@ -6,7 +6,7 @@
 \usage{
 dotPlot.pathway(
   object,
-  acti.path.dat,
+  acti.path.filtered.dat,
   pathway,
   ligand.ident = NULL,
   receptor.ident = NULL,
@@ -18,7 +18,7 @@ dotPlot.pathway(
 \arguments{
 \item{object}{CommPath object}
 
-\item{acti.path.dat}{Data frame of differential activation test result of filtered from diffAllPath}
+\item{acti.path.filtered.dat}{Data frame of differential activation test result of filtered from diffAllPath}
 
 \item{pathway}{To present a dot plot for ligand-receptor pairs involved in which pathway}
 

@@ -14,10 +14,12 @@ pathNetPlot.upstream(
   top.n.path = NULL,
   path.order = "P.val.adj",
   layout = "layout.auto",
-  LR.label = NA,
+  LR.label = "LR",
   pathway.label = TRUE,
   edge.arrow.size = 0.2,
-  vertex.label.cex = 0.5,
+  edge.color = "gray75",
+  vertex.label.cex.LR = 0.5,
+  vertex.label.cex.path = 0.5,
   vertex.label.color = "black",
   vertex.label.family = "Helvetica",
   vertex.frame.color = "#ffffff",
@@ -51,7 +53,11 @@ pathNetPlot.upstream(
 
 \item{edge.arrow.size}{Size of arrow}
 
-\item{vertex.label.cex}{Font size of vertex label}
+\item{edge.color}{Color of edge}
+
+\item{vertex.label.cex.LR}{Font size of LR label}
+
+\item{vertex.label.cex.path}{Font size of pathway label}
 
 \item{vertex.label.color}{color of vertex label}
 
