@@ -223,7 +223,7 @@ pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "upstream",
     LR.label = 'R', vertex.label.cex.LR=0.25, vertex.label.cex.path=0.3)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.png" height=600, width=690>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.png" height=600, width=720>
 
 In the above network graph, the pie charts represent the activated pathways in the selected  cells (here Endothelial cells) and the scatter points represent the LR pairs of which the receptors are included in the genesets of the linked pathways. Colors of scatter points indicate the upstream clusters releasing the corresponding ligands. Sizes of pie charts indicate their total in-degree and the proportions indicate the in-degree from different upstream clusters.
 
@@ -237,7 +237,7 @@ pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "downstream
     LR.label = 'L', vertex.label.cex.LR=0.25, vertex.label.cex.path=0.3)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.downstream.Endothelial.png" height=600, width=720>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.downstream.Endothelial.png" height=600, width=740>
 
 The legend of the above network graph is generally the same to that of the previous network plot, except that: (i) the scatter points represent the LR pairs of which the ligands are included in the genesets of the linked pathways; (ii) colors of scatter points indicate the downstream clusters expressing the corresponding receptors; (iii) sizes of pie charts indicate their total out-degree and the proportions indicate the out-degree to different downstream clusters.
 
