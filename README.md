@@ -223,7 +223,7 @@ pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "upstream",
     LR.label = 'R', vertex.label.cex.LR=0.25, vertex.label.cex.path=0.3)
 dev.off()
 ```
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.png" height=600, width=740>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.png" height=600, width=750>
 
 In the above network graph, the pie charts represent the activated pathways in the selected  cells (here Endothelial cells) and the scatter points represent the LR pairs of which the receptors are included in the genesets of the linked pathways. Colors of scatter points indicate the upstream clusters releasing the corresponding ligands. Sizes of pie charts indicate their total in-degree and the proportions indicate the in-degree from different upstream clusters.
 
