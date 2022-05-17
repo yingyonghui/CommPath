@@ -243,14 +243,14 @@ dotPlot.pathway <- function(object, acti.path.filtered.dat, pathway, ligand.iden
 		stop("Specify one cluster for ligand or receptor analysis")
 	}
 
-	if('t' %in% colnames(acti.path.dat)){
-		acti.path.dat <- acti.path.dat[which(acti.path.dat$mean.diff > 0 & acti.path.dat$P.val.adj < 0.05), c('description','ligand.in.path','receptor.in.path','cluster')]
+	if('t' %in% colnames(acti.path.filtered.dat)){
+		acti.path.filtered.dat <- acti.path.filtered.dat[which(acti.path.filtered.dat$mean.diff > 0 & acti.path.filtered.dat$P.val.adj < 0.05), c('description','ligand.in.path','receptor.in.path','cluster')]
 	}else{
-		acti.path.dat <- acti.path.dat[which(acti.path.dat$median.diff > 0 & acti.path.dat$P.val.adj < 0.05), c('description','ligand.in.path','receptor.in.path','cluster')]
+		acti.path.filtered.dat <- acti.path.filtered.dat[which(acti.path.filtered.dat$median.diff > 0 & acti.path.filtered.dat$P.val.adj < 0.05), c('description','ligand.in.path','receptor.in.path','cluster')]
 	}
 
 	if (!is.null(receptor.ident)){
-		cur.path.dat <- acti.path.dat[which(acti.path.dat$cluster==receptor.ident), ]
+		cur.path.dat <- acti.path.filtered.dat[which(acti.path.filtered.dat$cluster==receptor.ident), ]
 		if(nrow(cur.path.dat)==0){
 			stop(paste0('There is no significantly up-regulatged ligand-containing pathways for cluster ', receptor.ident))
 		}
@@ -270,7 +270,7 @@ dotPlot.pathway <- function(object, acti.path.filtered.dat, pathway, ligand.iden
 		x.title <- paste0('Upstream clusters for cluster ',receptor.ident)
 
 	}else{
-		cur.path.dat <- acti.path.dat[which(acti.path.dat$cluster==ligand.ident), ]
+		cur.path.dat <- acti.path.filtered.dat[which(acti.path.filtered.dat$cluster==ligand.ident), ]
 		if(nrow(cur.path.dat)==0){
 			stop(paste0('There is no significantly up-regulatged ligand-containing pathways for cluster ', ligand.ident))
 		}
@@ -780,7 +780,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 	options(stringsAsFactors=F)
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
-		diff.path.dat <- comparePath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
+		diff.path.dat <- comparePath(object.1, object.2, select.ident, method='t.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
 	}
 	all.ident <- object.1@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
@@ -993,7 +993,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 #' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors
 #' @export
-pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	all.ident <- object@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
@@ -1294,11 +1294,11 @@ pathInterPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 #' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two CommPath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
-pathInterPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
-		diff.path.dat <- comparePath(object.1, object.2, select.ident, method='wilcox.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
+		diff.path.dat <- comparePath(object.1, object.2, select.ident, method='t.test', p.adjust='BH', min.size=10, only.posi=FALSE, only.sig=TRUE)
 	}
 	
 	all.ident <- object.1@cell.info$Cluster

@@ -4,12 +4,14 @@
 \alias{filterPath}
 \title{To remove those pathways containing only ligands which do not triger any pathway in the downstream clusters}
 \usage{
-filterPath(object, acti.path.dat)
+filterPath(object, acti.path.dat, select.ident = NULL)
 }
 \arguments{
 \item{object}{CommPath object}
 
 \item{acti.path.dat}{Data frame of differential enrichment test result from diffAllPath}
+
+\item{select.ident}{To filter the pathways only for a selected cluster}
 }
 \value{
 Data frame including the statistic result of filtered pathways in each cluster

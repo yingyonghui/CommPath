@@ -509,9 +509,10 @@ filterLR.path.contain.rep <- function(object, acti.path.dat){
 #' To remove those pathways containing only ligands which do not triger any pathway in the downstream clusters 
 #' @param object CommPath object
 #' @param acti.path.dat Data frame of differential enrichment test result from diffAllPath
+#' @param select.ident To filter the pathways only for a selected cluster
 #' @return Data frame including the statistic result of filtered pathways in each cluster
 #' @export
-filterPath <- function(object, acti.path.dat){
+filterPath <- function(object, acti.path.dat, select.ident=NULL){
 	options(stringsAsFactors=F)
 	all.marker.L <- object@interact.filter$markerL
 	all.ident <- object@cell.info$Cluster
@@ -521,6 +522,13 @@ filterPath <- function(object, acti.path.dat){
 	filtered.path.dat <- data.frame(matrix(NA,0,ncol(acti.path.dat)))
 	colnames(filtered.path.dat) <- colnames(acti.path.dat)
 
+	if(!is.null(select.ident)){
+		if(select.ident %in% unique.label){ 
+			unique.label <- select.ident 
+		}else{
+			stop(paste0('Wrong "select.ident" parameter! Select a cluster from ', pasteIdent(unique.label)))
+		}
+	}
 	for (each.ident in unique.label){
 		message(paste0('Screening pathways for cluster ',each.ident,'...'))
 		cur.path.dat <- acti.path.dat[which(acti.path.dat$cluster == each.ident), ]
@@ -905,7 +913,6 @@ comparePath <- function(object.1, object.2, select.ident, method='t.test', p.adj
 	cell.ident <- c(1:ncol(score.mat.1))
 	cell.other <- c(1:ncol(score.mat.2)) + ncol(score.mat.1)
 
-
 	if (method!='wilcox.test' & method!='t.test'){
 		stop("Select t.test or wilcox.test to conduct differential analysis")
 	}
@@ -943,10 +950,12 @@ comparePath <- function(object.1, object.2, select.ident, method='t.test', p.adj
 	test.res.dat$P.val.adj <- p.adjust(test.res.dat$P.val, method=p.adjust)
 	test.res.dat$description <- rownames(expr.mat)
 
-	ident.path.dat <- diffPath(object=object.1, select.ident.1=select.ident, only.posi=FALSE, only.sig=FALSE)
-	test.res.dat <- subset(test.res.dat, description %in% ident.path.dat$description)
-	ident.path.dat <- ident.path.dat[match(test.res.dat$description, ident.path.dat$description), c('ligand.in.path', 'receptor.in.path')]
-	test.res.dat <- cbind(test.res.dat, ident.path.dat)
+	ident.path.dat <- diffPath(object = object.1, select.ident.1 = select.ident, only.posi = FALSE, only.sig = FALSE)
+	ident.path.dat$cluster <- select.ident
+	acti.path.filtered.dat <- filterPath(object = object.1, acti.path.dat = ident.path.dat, select.ident = select.ident)
+	test.res.dat <- subset(test.res.dat, description %in% acti.path.filtered.dat$description)
+	acti.path.filtered.dat <- acti.path.filtered.dat[match(test.res.dat$description, acti.path.filtered.dat$description), c('ligand.in.path', 'receptor.in.path')]
+	test.res.dat <- cbind(test.res.dat, acti.path.filtered.dat)
 
 	if (only.posi){
 		if (method=='t.test'){

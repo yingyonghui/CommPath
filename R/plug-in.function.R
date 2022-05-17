@@ -145,7 +145,7 @@ order.and.top <- function(x, n){
 cluster.lr.inten <- function(top.rep.name, object, select.ident, ident.label, find) {
 	if(find=='ligand'){
 		top.rep.LR.inten <- sapply(top.rep.name, function(eachrep){
-			up.ligand.dat <- findLigand(object, select.ident=select.ident, select.receptor=eachrep, filter=FALSE)
+			up.ligand.dat <- findLigand(object, select.ident=select.ident, select.receptor=eachrep, filter=TRUE)
 			max.cluster.sum.LR <- by(data=up.ligand.dat$log2FC.LR, INDICES=up.ligand.dat$cell.from, sum)
 			each.cluster.inten <- max.cluster.sum.LR[ident.label]
 			names(each.cluster.inten) <- ident.label
@@ -153,7 +153,7 @@ cluster.lr.inten <- function(top.rep.name, object, select.ident, ident.label, fi
 		})
 	}else if(find=='receptor'){
 		top.rep.LR.inten <- sapply(top.rep.name, function(eachrep){
-			up.ligand.dat <- findReceptor(object, select.ident=select.ident, select.ligand=eachrep, filter=FALSE)
+			up.ligand.dat <- findReceptor(object, select.ident=select.ident, select.ligand=eachrep, filter=TRUE)
 			max.cluster.sum.LR <- by(data=up.ligand.dat$log2FC.LR, INDICES=up.ligand.dat$cell.to, sum)
 			each.cluster.inten <- max.cluster.sum.LR[ident.label]
 			names(each.cluster.inten) <- ident.label

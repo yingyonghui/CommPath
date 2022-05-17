@@ -9,8 +9,9 @@
 #' @slot interact.filter list containing information of filtered LR interaction among clusters
 #' @slot pathway list containing information of pathways associated with ligands and receptors
 #' @slot pathway.net list containing the integrated information of the statistics of LR interactions and associated pathways
+#' @importFrom methods setClass
 #' @exportClass CommPath
-CommPath <- methods::setClass("CommPath",
+CommPath <- setClass("CommPath",
 	slots = c(data = 'ANY',
 	cell.info = 'data.frame',
 	meta.info = 'list',
