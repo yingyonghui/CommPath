@@ -23,7 +23,7 @@ The expression matrix and cell indentity information are required for CommPath i
 We here illustrate the CommPath steps for data from the tumor tissues. And analysis for data from the normal tissues would be roughly in the same manner.
 
 ```
-# load(url("https://figshare.com/ndownloader/files/34914603"))
+# load(url("https://figshare.com/ndownloader/files/35185522"))
 load("path_to_download/HCC.tumor.3k.RData")
 ```
 
@@ -292,7 +292,7 @@ The legend of the above line plot is generally the same to that of the previous 
 CommPath also provides useful utilities to compare cell-cell communication between two conditions such as disease and control. Here we, for example, use CommPath to compare the cell-cell communication between cells from HCC tumor and normal tissues. We have pre-created the CommPath object for the normal samples following the above steps, and the data are also available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
 
 ```
-# load(url("https://figshare.com/ndownloader/files/34914606"))
+# load(url("https://figshare.com/ndownloader/files/35185525"))
 load("path_to_download/HCC.normal.3k.RData")
 ```
 
