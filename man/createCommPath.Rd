@@ -11,7 +11,7 @@ createCommPath(expr.mat, cell.info, species)
 
 \item{cell.info}{Vector of lables indicating identity classes of cells in the expression matrix, and the order of lables should match the order of cells in the expression matrix; or a data frame containing the meta infomation of cells with the row names matching the cells in the expression matrix and a column named as "Cluster" must be included to indicate identity classes of cells}
 
-\item{species}{Species, either 'hsapiens'('human') or 'mmusculus'('mouse')}
+\item{species}{Species, either 'hsapiens'('human'), 'mmusculus'('mouse'), or 'rnorvegicus'('rat')}
 }
 \value{
 CommPath object

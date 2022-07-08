@@ -68,6 +68,16 @@ CommPathData <- CommpathData
 save(CommPathData, file='CommathData.RData')
 save(CommPathData, file='CommathData.RData', compress="xz")
 load("/Users/haolu/Documents/GitHub/CommPath/data/CommPathData.RData")
-load("/Users/haolu/Documents/GitHub/CommPath/data/CommPathData.RData")
 ls()
 CommPathData$DataLR$mmusculus
+load("/Users/haolu/Documents/GitHub/CommPath/data/CommPathData.RData")
+ls()
+CommPathData
+load("/Users/haolu/Documents/GitHub/CommPath/data/CommPathData.RData")
+ls()
+head(CommPathData$DataLR$hsapiens)
+head(CommPathData$DataLR$mmusculus)
+load("/Users/haolu/Documents/GitHub/CommPath/data/CommPathData.RData")
+head(CommPathData$DataLR$hsapiens)
+(CommPathData$DataLR$hsapiens)dim
+dim(CommPathData$DataLR$hsapiens)
