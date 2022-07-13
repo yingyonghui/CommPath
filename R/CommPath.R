@@ -458,7 +458,7 @@ filterLR.path.contain.rep <- function(object, acti.path.dat){
 	}else{
 		stop('Please input the intact test result computed from diffAllPath')
 	}
-	acti.path.dat <- subset(acti.path.dat, (mean.diff > 0) & (P.val.adj < 0.05) & (!(is.na(receptor.in.path))))
+	acti.path.dat <- subset(acti.path.dat, (diff > 0) & (P.val.adj < 0.05) & (!(is.na(receptor.in.path))))
 
 	### to filter the LR interactions
 	interact.dat <- object@interact$InteractGene
