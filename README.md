@@ -40,6 +40,8 @@ tumor.obj <- createCommPath(expr.mat = tumor.expr,
 		species = "hsapiens")
 ```
 
+CommPath contains LR and pathway databases for human (hsapiens), mouse (mmusculus) and rat (rnorvegicus) species.
+
 Firstly we're supposed to identify marker ligands and receptors (ligands and receptors that are significantly highly expressed) for each cluster of cells in the expression matrix. CommPath provide **findLRmarker** to identify these markers by *t.test* or *wilcox.test*.
 
 ```
