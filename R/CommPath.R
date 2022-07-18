@@ -204,34 +204,39 @@ findLRpairs <- function(object, logFC.thre=0, p.thre=0.05){
 #' To find those pathways in which the genesets show overlap with the marker ligand and receptor genes in our dataset
 #' @param object CommPath object
 #' @param category Character to indicate which pathway to investigate; one of "go" (GO terms), "kegg" (for KEGG pathways), 'wiki' (for WikiPathways), and "reactome" (for reactome pathways), or "all" for all pathways
+#' @param pathway List of pathways or genesets defined by users; default is null. If set, the category parameter would be neglected
 #' @return CommPath object containing the ligand-receptor interaction information and the pathways showing overlap with the marker ligand and receptor genes in the dataset
 #' @export
-findLRpath <- function(object, category='all'){
+findLRpath <- function(object, category='all', pathway=NULL){
 	options(stringsAsFactors=F)
-	if (category!='all' & category!='go' & category!='kegg' & category!='wiki' & category!='reactome'){
-		stop("Wrong category selected. Select one of 'go', 'kegg', 'wiki', and 'reactome', or 'all' for all pathways")
-	}
 	species <- object@meta.info$species
 
-	### select one category
-	if (category=='all'){
-		path.go.list <- CommPathData$DataGOterm[[species]]
-		path.kegg.list <- CommPathData$DataKEGGpathway[[species]]
-		path.wiki.list <- CommPathData$DataWikiPathway[[species]]
-		path.reac.list <- CommPathData$DataReactome[[species]]
-		path.list <- c(path.go.list, path.kegg.list, path.wiki.list, path.reac.list)
-		path.list <- path.list[which(!duplicated(names(path.list)))]
+	if (is.null(pathway)){
+		if (category!='all' & category!='go' & category!='kegg' & category!='wiki' & category!='reactome'){
+			stop("Wrong category selected. Select one of 'go', 'kegg', 'wiki', and 'reactome', or 'all' for all pathways")
+		}
 
-	}else if (category=='go'){
-		path.list <- CommPathData$DataGOterm[[species]]
-	}else if(category=='kegg'){
-		path.list <- CommPathData$DataKEGGpathway[[species]]
-	}else if(category=='wiki'){
-		path.list <- CommPathData$DataWikiPathway[[species]]
-	}else if(category=='reactome'){
-		path.list <- CommPathData$DataReactome[[species]]
+		### select one category
+		if (category=='all'){
+			path.go.list <- CommPathData$DataGOterm[[species]]
+			path.kegg.list <- CommPathData$DataKEGGpathway[[species]]
+			path.wiki.list <- CommPathData$DataWikiPathway[[species]]
+			path.reac.list <- CommPathData$DataReactome[[species]]
+			path.list <- c(path.go.list, path.kegg.list, path.wiki.list, path.reac.list)
+			path.list <- path.list[which(!duplicated(names(path.list)))]
+
+		}else if (category=='go'){
+			path.list <- CommPathData$DataGOterm[[species]]
+		}else if(category=='kegg'){
+			path.list <- CommPathData$DataKEGGpathway[[species]]
+		}else if(category=='wiki'){
+			path.list <- CommPathData$DataWikiPathway[[species]]
+		}else if(category=='reactome'){
+			path.list <- CommPathData$DataReactome[[species]]
+		}
+	}else{
+		path.list <- pathway
 	}
-
 	marker.lig.dat <- object@interact$markerL
 	marker.rep.dat <- object@interact$markerR
 	lr.gene <- unique(c(marker.lig.dat$gene,marker.rep.dat$gene))
