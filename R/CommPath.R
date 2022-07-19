@@ -437,7 +437,7 @@ filterLR.path.contain.lig <- function(object, acti.path.filtered.dat){
 			cur.path.lig.vec <- cur.path.dat$ligand.in.path
 			names(cur.path.lig.vec) <- cur.path.dat$description
 			cur.path.lig.list <- sapply(cur.path.lig.vec, function(eachSet){ 
-			strsplit(eachSet,split=';')
+				strsplit(eachSet,split=';')
 			})
 			cur.path.contain.lig.vec <- unlist(lapply(cur.path.lig.list, function(eachSet){ cur.lig %in% eachSet }))
 			cur.path.contain.lig.char <- paste(names(cur.path.contain.lig.vec)[which(cur.path.contain.lig.vec)], collapse=';')
