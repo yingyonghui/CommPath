@@ -431,14 +431,18 @@ filterLR.path.contain.lig <- function(object, acti.path.filtered.dat){
 		cur.cell.up <- LR.line['cell.from']
 		cur.lig <- LR.line['ligand']
 		cur.path.dat <- acti.path.filtered.dat[which(acti.path.filtered.dat$cluster==cur.cell.up), ]
-		cur.path.lig.vec <- cur.path.dat$ligand.in.path
-		names(cur.path.lig.vec) <- cur.path.dat$description
-		cur.path.lig.list <- sapply(cur.path.lig.vec, function(eachSet){ 
+		if(nrow(cur.path.dat)==0){
+			return('')
+		}else{
+			cur.path.lig.vec <- cur.path.dat$ligand.in.path
+			names(cur.path.lig.vec) <- cur.path.dat$description
+			cur.path.lig.list <- sapply(cur.path.lig.vec, function(eachSet){ 
 			strsplit(eachSet,split=';')
 			})
-		cur.path.contain.lig.vec <- unlist(lapply(cur.path.lig.list, function(eachSet){ cur.lig %in% eachSet }))
-		cur.path.contain.lig.char <- paste(names(cur.path.contain.lig.vec)[which(cur.path.contain.lig.vec)], collapse=';')
-		cur.path.contain.lig.char
+			cur.path.contain.lig.vec <- unlist(lapply(cur.path.lig.list, function(eachSet){ cur.lig %in% eachSet }))
+			cur.path.contain.lig.char <- paste(names(cur.path.contain.lig.vec)[which(cur.path.contain.lig.vec)], collapse=';')
+			return(cur.path.contain.lig.char)
+		}
 	})
 	path.contain.lig[which(path.contain.lig=='')] <- NA
 	interact.dat$path.contain.lig <- path.contain.lig
@@ -446,7 +450,6 @@ filterLR.path.contain.lig <- function(object, acti.path.filtered.dat){
 	object@interact.filter$InteractGene <- interact.dat 
 	return(object)
 }
-
 
 #' To screen LR pairs with receptors involved in activated pathways in the receiver cells
 #' @param object CommPath object
