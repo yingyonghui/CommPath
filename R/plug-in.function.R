@@ -194,9 +194,14 @@ rotated.axis.element.text <- function(angle,position='x'){
 #' @return scaled x with minimum equal to 1 and maximum equal to 2
 #' @export
 scale_1 <- function(x){
-	x.min <- min(x, na.rm=TRUE)
-	x.max <- max(x, na.rm=TRUE)
-	x.scale <- (x - x.min) / (x.max - x.min) + 1
+	if (length(which(!is.na(x)))==1) {
+		x.scale <- rep(NA, length(x))
+		x.scale[which(!is.na(x))] <- 1
+	}else{
+		x.min <- min(x, na.rm=TRUE)
+		x.max <- max(x, na.rm=TRUE)
+		x.scale <- (x - x.min) / (x.max - x.min) + 1
+	}
 	return(x.scale)
 }
 
@@ -215,4 +220,20 @@ getPathAttr <- function(object){
 		print(c('median.diff','median','W','P.val','P.val.adj'))
 	}
 
+}
+
+#' To subset a matrix while keeping the dimension
+#' @param mat matrix
+#' @param row.select rows slected
+#' @param col.select columns selected
+#' @return subset of the matrix
+#' @export
+subsetMatrix <- function(mat, row.select=NULL, col.select=NULL){
+	if (is.null(row.select)){ row.select <- rownames(mat) }
+	if (is.null(col.select)){ col.select <- colnames(mat) }
+	new.mat <- as.matrix(mat[row.select, col.select])
+	if (nrow(mat)==1 | length(row.select)==1){ new.mat <- t(new.mat) }
+	rownames(new.mat) <- row.select
+	colnames(new.mat) <- col.select
+	return(new.mat)
 }

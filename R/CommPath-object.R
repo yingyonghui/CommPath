@@ -31,17 +31,24 @@ CommPath <- setClass("CommPath",
 #' @export
 createCommPath <- function(expr.mat, cell.info, species){
 	if (length(species) > 1){
-		stop("Select one species from hsapiens (human), mmusculus (mouse), or rnorvegicus(rat)")
+		stop("Select one species from hsapiens (human), mmusculus (mouse), rnorvegicus (rat), drerio (zebrafish), dmelanogaster (fruitfly), or celegans (worm)")
 	}else if(species=='human'){
 		species <- 'hsapiens'
 	}else if(species=='mouse'){
 		species <- 'mmusculus'
 	}else if(species=='rat'){
 		species <- 'rnorvegicus'
+	}else if(species=='zebrafish'){
+		species <- 'drerio'
+	}else if(species=='fruitfly'){
+		species <- 'dmelanogaster'
+	}else if(species=='worm'){
+		species <- 'celegans'
 	}
 
-	if (!(species %in% c('hsapiens', 'mmusculus', 'rnorvegicus'))){
-		stop("Select one species from hsapiens (human), mmusculus (mouse), or rnorvegicus(rat)")
+
+	if (!(species %in% c('hsapiens', 'mmusculus', 'rnorvegicus', 'drerio', 'dmelanogaster', 'celegans'))){
+		stop("Select one species from hsapiens (human), mmusculus (mouse), rnorvegicus (rat),drerio (zebrafish), dmelanogaster (fruitfly), or celegans (worm)")
 	}
 
 	if(is.vector(cell.info) | is.factor(cell.info)){

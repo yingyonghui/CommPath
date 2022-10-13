@@ -14,6 +14,7 @@ pathNetPlot(
   vert.size.path.adj = 5,
   top.n.path = NULL,
   path.order = "P.val.adj",
+  select.path = "all",
   layout = "layout.auto",
   LR.label = "LR",
   pathway.label = TRUE,
@@ -47,6 +48,8 @@ pathNetPlot(
 \item{top.n.path}{Top n activated pathways in the selected cluster of interest; if NULL, slelect all activated pathways}
 
 \item{path.order}{Sort criteria used to select the top n pathways, either "P.val" or "P.val.adj", which represent the original and adjusted p values, or "diff" which represents the mean (in t test) or median (in wilcox test) difference; default is "P.val.adj". This parameter would be masked if top.n.path is set as NULL.}
+
+\item{select.path}{Vector of pathways for which users want to present a chain plot; default is all, which means to plot all pathways. The parameters top.n.path and path.order would be masked if this one is set with specific pathways.}
 
 \item{layout}{Network layout; defualt is Fruchterman-Reingold ('layout.fruchterman.reingold'). Refer to the igraph package for more information. Note: an error would be raised if the selected layout do not apply to the graph.}
 

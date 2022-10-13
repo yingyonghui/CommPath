@@ -19,7 +19,7 @@ In this vignette we show CommPath's steps and functionalities for inference and 
 ### Brief description of CommPath object
 We start CommPath analysis by creating a CommPath object, which is a S4 object and consists of six slots including (i) ***data***, a matrix containing the normalized expression values by gene * cell; (ii) ***cell.info***, a dataframe contain the information of cells; (iii) ***meta.info***, a list containing some important parameters used during the analysis; (iv) ***LR.marker***, a dataframe containing the result of differential expression test of ligands and receptors; (v) ***interact***, a list containing the  information of LR interaction among clusters; (vi) ***interact.filter***, a list containing the  information of filtered LR interaction among clusters; (vii) ***pathway***, a list containing the information of pathways related to the ligands and receptors; (viii) ***pathway.net***, a list containing the integrated information of the statistics of LR interactions and associated pathways.
 ### CommPath input
-The expression matrix and cell indentity information are required for CommPath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of CommPath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
+The expression matrix and cell identity information are required for CommPath input. We downloaded the processed HCC scRNA-seq data from [Mendeley data](https://doi.org/10.17632/6wmzcskt6k.1). For a fast review and illustration of CommPath's functionalities, we randomly selected the expression data of 3000 cells across the top 5000 highly variable genes from the tumor and normal tissues, respectively. The example data are available in [figshare](https://figshare.com/articles/dataset/HCC_tumor_normal_3k_RData/19090553).
 We here illustrate the CommPath steps for data from the tumor tissues. And analysis for data from the normal tissues would be roughly in the same manner.
 
 ```
@@ -29,7 +29,7 @@ load("path_to_download/HCC.tumor.3k.RData")
 
 This dataset consists of 3 varibles, 2 of which are required for CommPath input:
 ***tumor.expr*** : the expression matrix of gene * cell. Expression values are required to be first normalized by the library-size and log-transformed;
-***tumor.label*** : a vector of lables indicating identity classes of cells in the expression matrix, and the order of lables should match the order of cells in the expression matrix.
+***tumor.label*** : a vector of labels indicating identity classes of cells in the expression matrix, and the order of labels should match the order of cells in the expression matrix.
 The remaining one variable ***tumor.obj*** is the CommPath object created from ***tumor.expr*** and ***tumor.label*** and processed by CommPath standard procedures. This variable would be temporarily ignored since we will recreate it by the following steps. 
 #### Identification of marker ligands and receptors
 We start CommPath analysis by creating a CommPath object:
@@ -40,7 +40,7 @@ tumor.obj <- createCommPath(expr.mat = tumor.expr,
 		species = "hsapiens")
 ```
 
-CommPath contains LR and pathway databases for human (hsapiens), mouse (mmusculus) and rat (rnorvegicus) species.
+CommPath contains LR and pathway databases for human (hsapiens), mouse (mmusculus), rat (rnorvegicus), zebrafish (drerio), fruitfly (dmelanogaster), and worm (celegans) species.
 
 Firstly we're supposed to identify marker ligands and receptors (ligands and receptors that are significantly highly expressed) for each cluster of cells in the expression matrix. CommPath provide **findLRmarker** to identify these markers by *t.test* or *wilcox.test*.
 
@@ -300,7 +300,7 @@ load("path_to_download/HCC.normal.3k.RData")
 
 This dataset consists of 3 varibles:
 ***normal.expr*** : expression matrix for cells from normal tissues;
-***normal.label*** : indentity lables for cells from normal tissues;
+***normal.label*** : identity labels for cells from normal tissues;
 ***normal.obj*** : CommPath object created from ***normal.expr*** and ***normal.label***, and processed by CommPath steps described above.
 
 To compare 2 CommPath objects, we shall first identify the differentially activated pathways between the same cluster of cells in the 2 objects.

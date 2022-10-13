@@ -8,9 +8,11 @@ pathPlot.compare(
   object.1,
   object.2,
   select.ident,
+  up.ident = NULL,
   diff.path.dat = NULL,
   top.n.path = 5,
   path.order = "P.val.adj",
+  select.path = "all",
   p.thre = 0.05,
   top.n.receptor = 10,
   dot.ident.col = NULL,
@@ -29,11 +31,15 @@ pathPlot.compare(
 
 \item{select.ident}{Plot the activated pathways for which cluster or cell type?}
 
+\item{up.ident}{Upstream clusters in the communication chain; default is all clusters}
+
 \item{diff.path.dat}{Data frame of defferential activation test result from comparePath; if NULL, comparePath would be run to get diff.path.dat}
 
 \item{top.n.path}{Top n pathways with the smallest adjusted p values to plot}
 
 \item{path.order}{Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference}
+
+\item{select.path}{Vector of pathways for which users want to present a chain plot; default is all, which means to plot all pathways. The parameter top.n.path would be masked if this one is set with specific pathways.}
 
 \item{p.thre}{Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered}
 

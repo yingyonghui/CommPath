@@ -554,9 +554,11 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 #' To present the interactions for a selected cluster, including the upstream clusters and the activated pathways in the selected cluster
 #' @param object CommPath object
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
+#' @param up.ident Upstream clusters in the communication chain; default is all clusters
 #' @param acti.path.dat Data frame of differential activation test result from diffAllPath
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
 #' @param path.order Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
+#' @param select.path Vector of pathways for which users want to present a chain plot; default is all, which means to plot all pathways. The parameter top.n.path would be masked if this one is set with specific pathways.
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
 #' @param top.n.receptor Top n receptor with the largest log2FCs to plot
 #' @param dot.ident.col Color of the dots representing clusters
@@ -570,11 +572,23 @@ pathHeatmap <- function(object, acti.path.dat=NULL, top.n.pathway=10, path.order
 #' @importFrom graphics strwidth
 #' @return Network plot showing the significantly activated pathways in the select cluster compared to all other clusters, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
-pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathPlot <- function(object, select.ident, up.ident=NULL, acti.path.dat=NULL, top.n.path=5, path.order='P.val.adj', select.path='all', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	all.ident <- object@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
 	ident.label <- levels(all.ident)
+	
+	# check the input up.ident
+	if (!is.null(up.ident)){
+		up.in.ident <- up.ident[which(up.ident %in% ident.label)]
+		if (length(up.in.ident)==0){
+			stop('Wrong up.ident parameter! All selected up.idents are not present in the dataset!')
+		}
+		up.missed.ident <- up.ident[which(!(up.ident %in% ident.label))]
+		if (length(up.missed.ident) > 0){ warning(paste0('These selected up.idents are not present in the dataset: ', pasteIdent(up.missed.ident), '.')) }
+	}else{
+		up.in.ident <- ident.label
+	}
 
 	### check the input and select significant pathways
 	if (is.null(acti.path.dat)) {
@@ -606,17 +620,32 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
 
-	if (top.n.path > nrow(ident.path.dat)){
-		warning(paste0('There is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
-		top.n.path <- nrow(ident.path.dat)
+	### select user-defined pathways, with the select.path parameter
+	if (length(select.path) > 1 | (length(select.path)==1 & select.path[1]!='all')){
+		path.num.plot <- which(ident.path.dat$description %in% select.path)
+		if (length(path.num.plot) > 0){
+			ident.path.dat <- ident.path.dat[path.num.plot, ]
+		}else{
+			stop('All pathways selected are not up-regulatged in the selected cluster. Run diffPath to retrieve all up-regulatged pathways.')
+		}
+		top.n.path <- length(path.num.plot)
+		path.missed <- select.path[which(!(select.path %in% ident.path.dat$description))]
+		if (length(path.missed) > 0){
+			warning(paste0('These pathways are not up-regulatged in the selected cluster: ', pasteIdent(path.missed), '. Run diffPath to retrieve all up-regulatged pathways.'))
+		}
+	}else{
+		### select top n pathways, if the select.path parameter is not set
+		if (top.n.path > nrow(ident.path.dat)){
+			warning(paste0('There is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+			top.n.path <- nrow(ident.path.dat)
+		}
+		ident.path.dat <- ident.path.dat[1:top.n.path, ]
 	}
-	ident.path.dat <- ident.path.dat[1:top.n.path, ]
 	all.sig.path <- as.vector(ident.path.dat$description)
 
 	### data for plot of receptors and upstream clusters
-	receptor.in.path <- ident.path.dat[, 'receptor.in.path']
+	receptor.in.path <- as.character(ident.path.dat[, 'receptor.in.path'])
 	names(receptor.in.path) <- all.sig.path
-	# receptor.in.path <- receptor.in.path[which(!is.na(receptor.in.path))]
 	cur.rep <- as.vector(unlist(sapply(receptor.in.path, function(x) {strsplit(x, split=';')})))
 	path.times <- sapply(receptor.in.path, function(x) {length(strsplit(x, split=';')[[1]])})
 	cur.path <- rep(names(path.times), times=path.times)
@@ -625,23 +654,21 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 	### select the top n receptors
 	cur.uniq.rep <- as.vector(unique(plot.receptor.to.pathway.dat$cur.rep))
 	cur.rep.LR.inten <- cluster.lr.inten(cur.uniq.rep, object, select.ident, ident.label, find='ligand')
+	cur.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, row.select=up.in.ident)
+	keep.rep <- names(which(colSums(is.na(cur.rep.LR.inten)) < nrow(cur.rep.LR.inten)))
+	cur.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, col.select=keep.rep)
+
 	cur.rep.max.LR.inten <- apply(cur.rep.LR.inten, 2, function(x){max(x, na.rm=TRUE)})
 	cur.rep.max.LR.inten <- cur.rep.max.LR.inten[order(cur.rep.max.LR.inten, decreasing=TRUE)]
 	
-	if (length(cur.uniq.rep) < top.n.receptor){
-		warning(paste0('There is(are) ', length(cur.uniq.rep),' marker receptors(s) in the selected ident associated with the selected pathways, and the input top.n.receptor is ', top.n.receptor))
-		top.n.receptor <- length(cur.uniq.rep)
+	if (length(cur.rep.max.LR.inten) < top.n.receptor){
+		warning(paste0('There is(are) ', length(cur.rep.max.LR.inten),' marker receptors(s) in the selected ident associated with the selected pathways, and the input top.n.receptor is ', top.n.receptor))
+		top.n.receptor <- length(cur.rep.max.LR.inten)
 	}
 	
 	top.rep.name <- names(cur.rep.max.LR.inten)[1:top.n.receptor]
-	top.rep.LR.inten <- cur.rep.LR.inten[, top.rep.name]
-
-	### if only one top.rep.name
-	if (is.null(dim(top.rep.LR.inten))){
-		top.rep.LR.inten <- as.matrix(top.rep.LR.inten)
-		colnames(top.rep.LR.inten) <- top.rep.name
-	}
 	plot.receptor.to.pathway.dat <- subset(plot.receptor.to.pathway.dat, cur.rep %in% top.rep.name)
+	top.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, col.select=top.rep.name)
 	plot.ident.to.receprtor.dat <- melt(top.rep.LR.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=TRUE)
 	plot.ident.to.receprtor.dat <- factor.to.character(plot.ident.to.receprtor.dat)
 
@@ -685,16 +712,22 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 
 
 	### the upstream ident and their coordinate, and their color
-	up.uniq.ident <- factor(ident.label, levels=ident.label)
+	up.uniq.ident <- factor(up.in.ident, levels=up.in.ident)
 	up.uniq.ident <- up.uniq.ident[order(up.uniq.ident, decreasing=TRUE)]
 	n.up.ident <- length(up.uniq.ident)
 	if (is.null(dot.ident.col)){
-		dot.ident.col <- rev(scales::hue_pal(c=100)(n.up.ident))
-	}else if(length(dot.ident.col) < n.up.ident){
-		stop(paste0('There is(are) ',n.up.ident,' cluster(s), but only ',length(dot.ident.col),' colors provided.'))
+		dot.ident.col <- rev(scales::hue_pal(c=100)(length(ident.label)))
+		names(dot.ident.col) <- ident.label
 	}else{
-		dot.ident.col <- rev(dot.ident.col[1:n.up.ident])
+		dot.ident.names.col <- names(dot.ident.col)
+		if (is.null(dot.ident.names.col)){
+			stop(paste0('Wrong dot.ident.col parameter! The colors should be named according to their clusters'))
+		}else{
+			all.missed.ident <- up.in.ident[which(!(up.in.ident %in% dot.ident.names.col))]
+			if (length(all.missed.ident) > 0){ stop(paste0('Wrong dot.ident.col parameter! Please add colors for these clusters: ', pasteIdent(all.missed.ident), '.')) }
+		}
 	}
+	dot.up.ident.col <- rev(dot.ident.col[up.in.ident])
 	
 	### adjust the coordinate of each element
 	max.limit <- max(n.up.ident, n.rep, top.n.path)
@@ -716,13 +749,13 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 	bar.pathway.length <- 2 * path.rect.length / max(path.rect.length)
 	bar_pathway <- geom_rect(aes(xmin=3, xmax=3+bar.pathway.length, ymin=pathway.new.coor-bar_pathway_width, ymax=pathway.new.coor+bar_pathway_width), size=1, fill=bar.path.col, alpha=1, show.legend=F)
 	point_receptor <- geom_point(aes(x=2,y=rep.new.coor),size=rep.size,color=dot.rep.col) 
-	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
+	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.up.ident.col,shape=16) 
 
 	### lines between elements
 	### lines between up idents and receptors
 	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$receptor, cur.uniq.rep)]
-	line.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
+	line.col <- dot.up.ident.col[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.width <- LRinten.to.width(plot.ident.to.receprtor.dat$LR.inten)
 
 	line_ident_to_receptor <- geom_segment(aes(x=1, xend=2, y=line.ident.to.rep.y.coor,yend=line.ident.to.rep.yend.coor), size=line.ident.width, color=line.col, show.legend=F, alpha=0.6)
@@ -762,9 +795,11 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 #' @param object.1 CommPath object 1
 #' @param object.2 CommPath object 2 for comparison
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
+#' @param up.ident Upstream clusters in the communication chain; default is all clusters
 #' @param diff.path.dat Data frame of defferential activation test result from comparePath; if NULL, comparePath would be run to get diff.path.dat
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
 #' @param path.order Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
+#' @param select.path Vector of pathways for which users want to present a chain plot; default is all, which means to plot all pathways. The parameter top.n.path would be masked if this one is set with specific pathways.
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
 #' @param top.n.receptor Top n receptor with the largest log2FCs to plot
 #' @param dot.ident.col Color of the dots representing clusters
@@ -776,7 +811,7 @@ pathPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, pat
 #' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two CommPath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
-pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathPlot.compare <- function(object.1, object.2, select.ident, up.ident=NULL, diff.path.dat=NULL, top.n.path=5, path.order='P.val.adj', select.path='all', p.thre=0.05, top.n.receptor=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
@@ -785,6 +820,18 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 	all.ident <- object.1@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
 	ident.label <- levels(all.ident)
+	
+	# check the input up.ident
+	if (!is.null(up.ident)){
+		up.in.ident <- up.ident[which(up.ident %in% ident.label)]
+		if (length(up.in.ident)==0){
+			stop('Wrong up.ident parameter! All selected up.idents are not present in the dataset!')
+		}
+		up.missed.ident <- up.ident[which(!(up.ident %in% ident.label))]
+		if (length(up.missed.ident) > 0){ warning(paste0('These selected up.idents are not present in the dataset: ', pasteIdent(up.missed.ident), '.')) }
+	}else{
+		up.in.ident <- ident.label
+	}
 
 	### check the input and select significant pathways
 	ident.path.dat <- diff.path.dat
@@ -812,15 +859,31 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
 
-	if (top.n.path > nrow(ident.path.dat)){
-		warning(paste0('There is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
-		top.n.path <- nrow(ident.path.dat)
+	### select user-defined pathways, with the select.path parameter
+	if (length(select.path) > 1 | (length(select.path)==1 & select.path[1]!='all')){
+		path.num.plot <- which(ident.path.dat$description %in% select.path)
+		if (length(path.num.plot) > 0){
+			ident.path.dat <- ident.path.dat[path.num.plot, ]
+		}else{
+			stop('All pathways selected are not up-regulatged in the selected cluster. Run comparePath to retrieve all up-regulatged pathways.')
+		}
+		top.n.path <- length(path.num.plot)
+		path.missed <- select.path[which(!(select.path %in% ident.path.dat$description))]
+		if (length(path.missed) > 0){
+			warning(paste0('These pathways are not up-regulatged in the selected cluster: ', pasteIdent(path.missed), '. Run comparePath to retrieve all up-regulatged pathways.'))
+		}
+	}else{
+		### select top n pathways, if the select.path parameter is not set
+		if (top.n.path > nrow(ident.path.dat)){
+			warning(paste0('There is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+			top.n.path <- nrow(ident.path.dat)
+		}
+		ident.path.dat <- ident.path.dat[1:top.n.path, ]
 	}
-	ident.path.dat <- ident.path.dat[1:top.n.path, ]
 	all.sig.path <- as.vector(ident.path.dat$description)
 
 	### data for plot of receptors and upstream clusters
-	receptor.in.path <- ident.path.dat[, 'receptor.in.path']
+	receptor.in.path <- as.character(ident.path.dat[, 'receptor.in.path'])
 	names(receptor.in.path) <- all.sig.path
 	# receptor.in.path <- receptor.in.path[which(!is.na(receptor.in.path))]
 	cur.rep <- as.vector(unlist(sapply(receptor.in.path, function(x) {strsplit(x, split=';')})))
@@ -831,27 +894,28 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 	### select the top n receptors
 	cur.uniq.rep <- as.vector(unique(plot.receptor.to.pathway.dat$cur.rep))
 	cur.rep.LR.inten <- cluster.lr.inten(cur.uniq.rep, object.1, select.ident, ident.label, find='ligand')
+	cur.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, row.select=up.in.ident)
+	keep.rep <- names(which(colSums(is.na(cur.rep.LR.inten)) < nrow(cur.rep.LR.inten)))
+	cur.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, col.select=keep.rep)
+
 	cur.rep.max.LR.inten <- apply(cur.rep.LR.inten, 2, function(x){max(x, na.rm=TRUE)})
 	cur.rep.max.LR.inten <- cur.rep.max.LR.inten[order(cur.rep.max.LR.inten, decreasing=TRUE)]
 	
-	if (length(cur.uniq.rep) < top.n.receptor){
-		warning(paste0('There is(are) ', length(cur.uniq.rep),' marker receptors(s) in the selected ident associated with the selected pathways, and the input top.n.receptor is ', top.n.receptor))
-		top.n.receptor <- length(cur.uniq.rep)
+	if (length(cur.rep.max.LR.inten) < top.n.receptor){
+		warning(paste0('There is(are) ', length(cur.rep.max.LR.inten),' marker receptors(s) in the selected ident associated with the selected pathways, and the input top.n.receptor is ', top.n.receptor))
+		top.n.receptor <- length(cur.rep.max.LR.inten)
 	}
 	
 	top.rep.name <- names(cur.rep.max.LR.inten)[1:top.n.receptor]
 	plot.receptor.to.pathway.dat <- subset(plot.receptor.to.pathway.dat, cur.rep %in% top.rep.name)
-
-	top.rep.LR.inten <- cur.rep.LR.inten[, top.rep.name]
-	if (is.null(dim(top.rep.LR.inten))){
-		top.rep.LR.inten <- as.matrix(top.rep.LR.inten)
-		colnames(top.rep.LR.inten) <- top.rep.name
-	}
+	top.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, col.select=top.rep.name)
 	plot.ident.to.receprtor.obj1.dat <- melt(top.rep.LR.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ident.to.receprtor.obj1.dat <- factor.to.character(plot.ident.to.receprtor.obj1.dat)
 
 	### LR.inten for obj.2
 	cur.rep.LR.obj2.inten <- cluster.lr.inten(top.rep.name, object.2, select.ident, ident.label, find='ligand')
+	cur.rep.LR.obj2.inten <- subsetMatrix(cur.rep.LR.obj2.inten, row.select=up.in.ident, col.select=top.rep.name)
+
 	plot.ident.to.receprtor.obj2.dat <- melt(cur.rep.LR.obj2.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ident.to.receprtor.obj2.dat <- factor.to.character(plot.ident.to.receprtor.obj2.dat)
 
@@ -905,18 +969,25 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 
 	
 	### the upstream ident and their coordinate, and their color
-	up.uniq.ident <- factor(ident.label, levels=ident.label)
+	up.uniq.ident <- factor(up.in.ident, levels=up.in.ident)
 	up.uniq.ident <- up.uniq.ident[order(up.uniq.ident, decreasing=TRUE)]
-	
 	n.up.ident <- length(up.uniq.ident)
+	### color for dots representing ident
 	if (is.null(dot.ident.col)){
-		dot.ident.col <- rev(scales::hue_pal(c=100)(n.up.ident))
-	}else if(length(dot.ident.col) < n.up.ident){
-		stop(paste0('There is(are) ',n.up.ident,' cluster(s), but only ',length(dot.ident.col),' colors provided.'))
+		dot.ident.col <- rev(scales::hue_pal(c=100)(length(ident.label)))
+		names(dot.ident.col) <- ident.label
 	}else{
-		dot.ident.col <- rev(dot.ident.col[1:n.up.ident])
+		dot.ident.names.col <- names(dot.ident.col)
+		if (is.null(dot.ident.names.col)){
+			stop(paste0('Wrong dot.ident.col parameter! The colors should be named according to their clusters'))
+		}else{
+			all.missed.ident <- up.in.ident[which(!(up.in.ident %in% dot.ident.names.col))]
+			if (length(all.missed.ident) > 0){ stop(paste0('Wrong dot.ident.col parameter! Please add colors for these clusters: ', pasteIdent(all.missed.ident), '.')) }
+		}
+
 	}
-	
+	dot.up.ident.col <- rev(dot.ident.col[up.in.ident])
+
 	### adjust the coordinate of each element
 	max.limit <- max(n.up.ident, n.rep, top.n.path)
 	up.ident.new.coor <- seq(from=1, to=max.limit, length.out=n.up.ident)
@@ -937,7 +1008,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 	bar.pathway.length <- 2 * path.rect.length / max(path.rect.length)
 	bar_pathway <- geom_rect(aes(xmin=3, xmax=3+bar.pathway.length, ymin=pathway.new.coor-bar_pathway_width, ymax=pathway.new.coor+bar_pathway_width), size=1, fill=bar.path.col, alpha=1, show.legend=F)
 	point_receptor <- geom_point(aes(x=2,y=rep.new.coor),size=rep.size,color=dot.rep.col) 
-	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
+	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.up.ident.col,shape=16) 
 
 	### lines between elements
 	### lines between up idents and receptors
@@ -960,8 +1031,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 	label_receptor <- annotate('text', hjust=0.5, x=2, y=rep.new.coor-0.4,label=cur.uniq.rep, size=5*label.text.size)
 	text_pathway <- geom_text(aes(x=3, y=pathway.new.coor), hjust=0, label=path.uniq.name, size=5*label.text.size)
 	label_title <- annotate('text', hjust=c(0.5,0.5,0), x=1:3, y=max.limit+0.8,label=c('Upstream', 'Receptor', 'Pathway annotation'), size=5*label.title.size) 
-	
-	
+
 	pathplot.theme <- theme(axis.title=element_blank(), axis.text=element_blank(),axis.ticks=element_blank(), axis.line=element_blank(), panel.background=element_rect(fill="white"))
 	plot <- ggplot() + 
 		line_ident_to_receptor + line_receptor_to_pathway +
@@ -978,9 +1048,12 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 #' To present the interactions for a selected cluster, including both the upstream and downstream clusters which are connected by specific pathways in the selected cluster
 #' @param object CommPath object
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
+#' @param up.ident Upstream clusters in the communication chain; default is all clusters
+#' @param down.ident down.ident clusters in the communication chain; default is all clusters
 #' @param acti.path.dat Data frame of differential activation test result from diffAllPath
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
 #' @param path.order Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
+#' @param select.path Vector of pathways for which users want to present a chain plot; default is all, which means to plot all pathways. The parameter top.n.path would be masked if this one is set with specific pathways.
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
 #' @param top.n.receptor Top n receptor with the largest log2FCs to plot
 #' @param top.n.ligand Top n ligand with the largest log2FCs to plot
@@ -993,11 +1066,35 @@ pathPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NUL
 #' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing receptors in the selected cluster, the upstream clusters which show L-R connections with the selected cluster, and the significant pathways involved in the receptors
 #' @export
-pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathChainPlot <- function(object, select.ident, up.ident=NULL, down.ident=NULL, acti.path.dat=NULL, top.n.path=5, path.order='P.val.adj', select.path='all', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	all.ident <- object@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
 	ident.label <- levels(all.ident)
+	
+	# check the input up.ident
+	if (!is.null(up.ident)){
+		up.in.ident <- up.ident[which(up.ident %in% ident.label)]
+		if (length(up.in.ident)==0){
+			stop('Wrong up.ident parameter! All selected up.idents are not present in the dataset!')
+		}
+		up.missed.ident <- up.ident[which(!(up.ident %in% ident.label))]
+		if (length(up.missed.ident) > 0){ warning(paste0('These selected up.idents are not present in the dataset: ', pasteIdent(up.missed.ident), '.')) }
+	}else{
+		up.in.ident <- ident.label
+	}
+
+	# check the input down.ident
+	if (!is.null(down.ident)){
+		down.in.ident <- down.ident[which(down.ident %in% ident.label)]
+		if (length(down.in.ident)==0){
+			stop('Wrong down.ident parameter! All selected down.idents are not present in the dataset!')
+		}
+		down.missed.ident <- down.ident[which(!(down.ident %in% ident.label))]
+		if (length(down.missed.ident) > 0){ warning(paste0('These selected down.ident are not present in the dataset: ', pasteIdent(down.missed.ident), '.')) }
+	}else{
+		down.in.ident <- ident.label
+	}
 
 	### check the input and select significant pathways
 	if (is.null(acti.path.dat)) {
@@ -1025,15 +1122,32 @@ pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	}else if(path.order=='diff'){
 		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
-	if (top.n.path > nrow(ident.path.dat)){
-		warning(paste0('There is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
-		top.n.path <- nrow(ident.path.dat)
+
+	### select user-defined pathways, with the select.path parameter
+	if (length(select.path) > 1 | (length(select.path)==1 & select.path[1]!='all')){
+		path.num.plot <- which(ident.path.dat$description %in% select.path)
+		if (length(path.num.plot) > 0){
+			ident.path.dat <- ident.path.dat[path.num.plot, ]
+		}else{
+			stop('All pathways selected are not up-regulatged in the selected cluster. Run diffPath to retrieve all up-regulatged pathways.')
+		}
+		top.n.path <- length(path.num.plot)
+		path.missed <- select.path[which(!(select.path %in% ident.path.dat$description))]
+		if (length(path.missed) > 0){
+			warning(paste0('These pathways are not up-regulatged in the selected cluster: ', pasteIdent(path.missed), '. Run diffPath to retrieve all up-regulatged pathways.'))
+		}
+	}else{
+		### select top n pathways, if the select.path parameter is not set
+		if (top.n.path > nrow(ident.path.dat)){
+			warning(paste0('There is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+			top.n.path <- nrow(ident.path.dat)
+		}
+		ident.path.dat <- ident.path.dat[1:top.n.path, ]
 	}
-	ident.path.dat <- ident.path.dat[1:top.n.path, ]
 	all.sig.path <- as.vector(ident.path.dat$description)
 
 	### data for plot of receptors and upstream clusters
-	receptor.in.path <- ident.path.dat[, 'receptor.in.path']
+	receptor.in.path <- as.character(ident.path.dat[, 'receptor.in.path'])
 	if (all(is.na(receptor.in.path))){
 		stop('There is no marker receptor in the selected pathways\nselect more pathways and try again')
 	}
@@ -1046,29 +1160,29 @@ pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	### select the top n receptors
 	cur.uniq.rep <- as.vector(unique(plot.receptor.to.pathway.dat$cur.rep))
 	cur.rep.LR.inten <- cluster.lr.inten(cur.uniq.rep, object, select.ident, ident.label, find='ligand')
+	cur.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, row.select=up.in.ident)
+	keep.rep <- names(which(colSums(is.na(cur.rep.LR.inten)) < nrow(cur.rep.LR.inten)))
+	cur.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, col.select=keep.rep)
+
 	cur.rep.max.LR.inten <- apply(cur.rep.LR.inten, 2, function(x){max(x, na.rm=TRUE)})
 	cur.rep.max.LR.inten <- cur.rep.max.LR.inten[order(cur.rep.max.LR.inten, decreasing=TRUE)]
 	
-	if (length(cur.uniq.rep) < top.n.receptor){
-		warning(paste0('There is(are) ', length(cur.uniq.rep),' marker receptor(s) in the selected ident associated with the selected pathways, and the input top.n.receptor is ', top.n.receptor))
-		top.n.receptor <- length(cur.uniq.rep)
+	if (length(cur.rep.max.LR.inten) < top.n.receptor){
+		warning(paste0('There is(are) ', length(cur.rep.max.LR.inten),' marker receptor(s) in the selected ident associated with the selected pathways, and the input top.n.receptor is ', top.n.receptor))
+		top.n.receptor <- length(cur.rep.max.LR.inten)
 	}
 	
 	top.rep.name <- names(cur.rep.max.LR.inten)[1:top.n.receptor]
 	plot.receptor.to.pathway.dat <- subset(plot.receptor.to.pathway.dat, cur.rep %in% top.rep.name)
+	top.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, col.select=top.rep.name)
 
-	top.rep.LR.inten <- cur.rep.LR.inten[, top.rep.name]
-	if (is.null(dim(top.rep.LR.inten))){
-		top.rep.LR.inten <- as.matrix(top.rep.LR.inten)
-		colnames(top.rep.LR.inten) <- top.rep.name
-	}
 	plot.ident.to.receprtor.dat <- melt(top.rep.LR.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=TRUE)
 	plot.ident.to.receprtor.dat <- factor.to.character(plot.ident.to.receprtor.dat)
 	
 	### data for plot of ligands and downstream clusters
-	ligand.in.path <- ident.path.dat[, 'ligand.in.path']
+	ligand.in.path <- as.character(ident.path.dat[, 'ligand.in.path'])
 	if (all(is.na(ligand.in.path))){
-		stop('There is no marker ligand in the selected pathways\nselect more pathways and try again')
+		stop('There is no marker ligand in the selected pathways\nselect more pathways and try again\nor you may want to try pathPlot instead')
 	}
 	names(ligand.in.path) <- all.sig.path
 	ligand.in.path <- ligand.in.path[which(!is.na(ligand.in.path))]
@@ -1079,22 +1193,23 @@ pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	### select the top n ligands
 	cur.uniq.lig <- as.vector(unique(plot.pathway.to.ligand.dat$cur.lig))
 	cur.lig.LR.inten <- cluster.lr.inten(cur.uniq.lig, object, select.ident, ident.label, find='receptor')
+
+	cur.lig.LR.inten <- subsetMatrix(cur.lig.LR.inten, row.select=down.in.ident)
+	keep.lig <- names(which(colSums(is.na(cur.lig.LR.inten)) < nrow(cur.lig.LR.inten)))
+	cur.lig.LR.inten <- subsetMatrix(cur.lig.LR.inten, col.select=keep.lig)
+
 	cur.lig.max.LR.inten <- apply(cur.lig.LR.inten, 2, function(x){max(x, na.rm=TRUE)})
 	cur.lig.max.LR.inten <- cur.lig.max.LR.inten[order(cur.lig.max.LR.inten, decreasing=TRUE)]
 	
-	if (length(cur.uniq.lig) < top.n.ligand){
-		warning(paste0('There is(are) ', length(cur.uniq.lig),' marker ligand(s) in the selected ident associated with the selected pathways, and the input top.n.ligand is ', top.n.ligand))
-		top.n.ligand <- length(cur.uniq.lig)
+	if (length(cur.lig.max.LR.inten) < top.n.ligand){
+		warning(paste0('There is(are) ', length(cur.lig.max.LR.inten),' marker ligand(s) in the selected ident associated with the selected pathways, and the input top.n.ligand is ', top.n.ligand))
+		top.n.ligand <- length(cur.lig.max.LR.inten)
 	}
 	
 	top.lig.name <- names(cur.lig.max.LR.inten)[1:top.n.ligand]
 	plot.pathway.to.ligand.dat <- subset(plot.pathway.to.ligand.dat, cur.lig %in% top.lig.name)
+	top.lig.LR.inten <- subsetMatrix(cur.lig.LR.inten, col.select=top.lig.name)
 
-	top.lig.LR.inten <- cur.lig.LR.inten[, top.lig.name]
-	if (is.null(dim(top.lig.LR.inten))){
-		top.lig.LR.inten <- as.matrix(top.lig.LR.inten)
-		colnames(top.lig.LR.inten) <- top.rep.name
-	}
 	plot.ligand.to.ident.dat <- melt(top.lig.LR.inten, varnames=c('cell.to','ligand'),value.name="LR.inten",  na.rm=TRUE)
 	plot.ligand.to.ident.dat <- factor.to.character(plot.ligand.to.ident.dat)
 
@@ -1160,35 +1275,46 @@ pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	}
 	dot.lig.col <- LRcolor(lig.pval, user.set.col=dot.gene.col)
 
-
-	### the upstream and downstream ident and their coordinate, and their color
-	up.uniq.ident <- factor(ident.label, levels=ident.label)
+	### the upstream ident and their coordinate, and their color
+	up.uniq.ident <- factor(up.in.ident, levels=up.in.ident)
 	up.uniq.ident <- up.uniq.ident[order(up.uniq.ident, decreasing=TRUE)]
 	### n.up.ident is also the n.down.ident
 	n.up.ident <- length(up.uniq.ident)
 	if (is.null(dot.ident.col)){
-		dot.ident.col <- rev(scales::hue_pal(c=100)(n.up.ident))
-	}else if(length(dot.ident.col) < n.up.ident){
-		stop(paste0('There is(are) ',n.up.ident,' cluster(s), but only ',length(dot.ident.col),' colors provided.'))
+		dot.ident.col <- rev(scales::hue_pal(c=100)(length(ident.label)))
+		names(dot.ident.col) <- ident.label
 	}else{
-		dot.ident.col <- rev(dot.ident.col[1:n.up.ident])
+		dot.ident.names.col <- names(dot.ident.col)
+		if (is.null(dot.ident.names.col)){
+			stop(paste0('Wrong dot.ident.col parameter! The colors should be named according to their clusters'))
+		}else{
+			all.in.ident <- unique(c(up.in.ident, down.in.ident))
+			all.missed.ident <- all.in.ident[which(!(all.in.ident %in% dot.ident.names.col))]
+			if (length(all.missed.ident) > 0){ stop(paste0('Wrong dot.ident.col parameter! Please add colors for these clusters: ', pasteIdent(all.missed.ident), '.')) }
+		}
+
 	}
-	
+	dot.up.ident.col <- rev(dot.ident.col[up.in.ident])
+	### the downstream ident and their coordinate, and their color
+	down.uniq.ident <- factor(down.in.ident, levels=down.in.ident)
+	down.uniq.ident <- down.uniq.ident[order(down.uniq.ident, decreasing=TRUE)]
+	### n.up.ident is also the n.down.ident
+	n.down.ident <- length(down.uniq.ident)
+	dot.down.ident.col <- rev(dot.ident.col[down.in.ident])
+
 	### adjust the coordinate of each element
-	max.limit <- max(n.up.ident, n.rep, top.n.path, n.lig)
+	max.limit <- max(n.up.ident, n.rep, top.n.path, n.lig, n.down.ident)
 	up.ident.new.coor <- seq(from=1, to=max.limit, length.out=n.up.ident)
 	rep.new.coor <- seq(from=1, to=max.limit, length.out=n.rep)
 	pathway.new.coor <- seq(from=1, to=max.limit, length.out=top.n.path)
 	lig.new.coor <- seq(from=1, to=max.limit, length.out=n.lig)
-	down.ident.new.coor <- seq(from=1, to=max.limit, length.out=n.up.ident)
+	down.ident.new.coor <- seq(from=1, to=max.limit, length.out=n.down.ident)
 
-	if (n.up.ident==1){ 
-		up.ident.new.coor <- median(1:max.limit) 
-		down.ident.new.coor <- median(1:max.limit) 
-	}
+	if (n.up.ident==1){ up.ident.new.coor <- median(1:max.limit) }
 	if (n.rep==1){ rep.new.coor <- median(1:max.limit) }
 	if (top.n.path==1){ pathway.new.coor <- median(1:max.limit) }
 	if (n.lig==1){ lig.new.coor <- median(1:max.limit) }
+	if (n.down.ident==1){ down.ident.new.coor <- median(1:max.limit) }
 	
 	if (length(pathway.new.coor)==1){
 		bar_pathway_width <- 0.3
@@ -1199,17 +1325,17 @@ pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	#bar.pathway.length <- bar.pathway.width*path.name.max.width*path.rect.length
 	bar.pathway.length <- 2 * path.rect.length / max(path.rect.length)
 	bar_pathway <- geom_rect(aes(xmin=6, xmax=6+bar.pathway.length, ymin=pathway.new.coor-bar_pathway_width, ymax=pathway.new.coor+bar_pathway_width), size=1, fill=bar.path.col, alpha=1, show.legend=F)
-	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
+	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.up.ident.col,shape=16) 
 	point_receptor <- geom_point(aes(x=2,y=rep.new.coor),size=rep.size,color=dot.rep.col)
 	point_pathway <- geom_point(aes(x=3,y=pathway.new.coor),size=8*dot.ident.size,color='black',shape=21,fill='white')
 	point_ligand <- geom_point(aes(x=4,y=lig.new.coor),size=lig.size,color=dot.lig.col) 
-	point_down_ident <- geom_point(aes(x=5,y=down.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
+	point_down_ident <- geom_point(aes(x=5,y=down.ident.new.coor),size=8*dot.ident.size,color=dot.down.ident.col,shape=16) 
 
 	### lines between elements
 	### lines between up idents and receptors
 	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$receptor, cur.uniq.rep)]
-	line.ident.to.rep.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
+	line.ident.to.rep.col <- dot.up.ident.col[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.to.rep.width <- LRinten.to.width(plot.ident.to.receprtor.dat$LR.inten)
 	line_ident_to_receptor <- geom_segment(aes(x=1, xend=2, y=line.ident.to.rep.y.coor,yend=line.ident.to.rep.yend.coor), size=line.ident.to.rep.width, color=line.ident.to.rep.col, show.legend=F, alpha=0.6)
 	### lines between receptors and pathways
@@ -1224,8 +1350,8 @@ pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	line_pathway_to_ligand <- geom_segment(aes(x=3, xend=4, y=line.path.to.lig.y.coor,yend=line.path.to.lig.yend.coor),size=1, color=path.lig.line.col, show.legend=F)
 	### lines between ligands and down idents
 	line.lig.to.ident.y.coor <- lig.new.coor[match(plot.ligand.to.ident.dat$ligand, cur.uniq.lig)]
-	line.lig.to.ident.yend.coor <- up.ident.new.coor[match(plot.ligand.to.ident.dat$cell.to, up.uniq.ident)]
-	line.lig.to.ident.col <- dot.ident.col[match(plot.ligand.to.ident.dat$cell.to, up.uniq.ident)]
+	line.lig.to.ident.yend.coor <- down.ident.new.coor[match(plot.ligand.to.ident.dat$cell.to, down.uniq.ident)]
+	line.lig.to.ident.col <- dot.down.ident.col[match(plot.ligand.to.ident.dat$cell.to, down.uniq.ident)]
 	line.lig.to.ident.width <- LRinten.to.width(plot.ligand.to.ident.dat$LR.inten)
 	line_ligand_to_ident <- geom_segment(aes(x=4, xend=5, y=line.lig.to.ident.y.coor,yend=line.lig.to.ident.yend.coor), size=line.lig.to.ident.width, color=line.lig.to.ident.col, show.legend=F, alpha=0.6)
 
@@ -1238,18 +1364,17 @@ pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 	label_pathway_circle <- annotate('text', hjust=0.5, x=3, y=pathway.new.coor, label=length(path.uniq.name):1, size=5*label.text.size)
 	label_pathway_bar <- annotate('text', hjust=1, x=6, y=pathway.new.coor, label=length(path.uniq.name):1, size=5*label.text.size)
 	label_ligand <- annotate('text', hjust=0.5, x=4, y=lig.new.coor-0.4,label=cur.uniq.lig, size=5*label.text.size)
-	label_down_ident <- annotate('text', hjust=0.5, x=5, y=down.ident.new.coor-0.4,label=up.uniq.ident, size=5*label.text.size)
-	label_title <- annotate('text', hjust=c(0.5,0.5,0.5,0.5,0.5,0), x=1:6, y=max.limit+0.8,label=c('Upstream', 'Receptor', 'Pathway', 'Ligand', 'Downstream','Pathway annotation'), size=5*label.title.size) 
-
+	label_down_ident <- annotate('text', hjust=0.5, x=5, y=down.ident.new.coor-0.4,label=down.uniq.ident, size=5*label.text.size)
+	label_title <- annotate('text', hjust=c(0.5,0.5,0.5,0.5,0.5,0), x=1:6, y=max.limit+0.8,label=c('Upstream', 'Receptor', 'Pathway', 'Ligand', 'Downstream','Pathway annotation'), size=5*label.title.size)
 
 	pathplot.theme <- theme(axis.title=element_blank(), axis.text=element_blank(),axis.ticks=element_blank(), axis.line=element_blank(), panel.background=element_rect(fill="white"))
 
 	# the max limit of x axis is dependent on the longest pathway
 	# this limit may need to be adjusted
 	plot <- ggplot() +
-	line_pathway_to_ligand +
 	line_ident_to_receptor +
 	line_receptor_to_pathway + 
+	line_pathway_to_ligand +
 	line_ligand_to_ident +
 	
 	point_up_ident +
@@ -1279,9 +1404,12 @@ pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 #' @param object.1 CommPath object 1
 #' @param object.2 CommPath object 2 for comparison
 #' @param select.ident Plot the activated pathways for which cluster or cell type?
+#' @param up.ident Upstream clusters in the communication chain; default is all clusters
+#' @param down.ident down.ident clusters in the communication chain; default is all clusters
 #' @param diff.path.dat Data frame of defferential activation test result from comparePath; if NULL, comparePath would be run to get diff.path.dat
 #' @param top.n.path Top n pathways with the smallest adjusted p values to plot
 #' @param path.order Sort criteria used to select the top n pathways, either 'P.val' or 'P.val.adj', which represent the original and adjusted p values, or 'diff' which represents the mean (in t test) or median (in wilcox test) difference
+#' @param select.path Vector of pathways for which users want to present a chain plot; default is all, which means to plot all pathways. The parameter top.n.path would be masked if this one is set with specific pathways.
 #' @param p.thre Threshold for adjust p values; Only pathways with a adjust p valua < p.thre would be considered
 #' @param top.n.receptor Top n receptor with the largest log2FCs to plot
 #' @param top.n.ligand Top n ligand with the largest log2FCs to plot
@@ -1294,7 +1422,7 @@ pathChainPlot <- function(object, select.ident, acti.path.dat=NULL, top.n.path=5
 #' @param label.title.size Text size of the title annotation of the plot
 #' @return Network plot showing the significantly differentially activated pathways between the selected clusters of two CommPath object, receptors involved in the pathways, and the upstream clusters which show LR connections with the selected cluster
 #' @export
-pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.dat=NULL, top.n.path=5, path.order='P.val.adj', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
+pathChainPlot.compare <- function(object.1, object.2, select.ident, up.ident=NULL, down.ident=NULL, diff.path.dat=NULL, top.n.path=5, path.order='P.val.adj', select.path='all', p.thre=0.05, top.n.receptor=10, top.n.ligand=10, dot.ident.col=NULL, dot.ident.size=1, dot.gene.col=NULL, dot.gene.size=1, bar.pathway.col=NULL, label.text.size=1, label.title.size=1){
 	options(stringsAsFactors=F)
 	if (is.null(diff.path.dat)){
 		message(paste0('Identifying differentially activated pathways between cluster ',select.ident,' in object 1 and object 2'))
@@ -1304,6 +1432,30 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	all.ident <- object.1@cell.info$Cluster
 	if (!is.factor(all.ident)){ all.ident <- factor(all.ident) }
 	ident.label <- levels(all.ident)
+	
+	# check the input up.ident
+	if (!is.null(up.ident)){
+		up.in.ident <- up.ident[which(up.ident %in% ident.label)]
+		if (length(up.in.ident)==0){
+			stop('Wrong up.ident parameter! All selected up.idents are not present in the dataset!')
+		}
+		up.missed.ident <- up.ident[which(!(up.ident %in% ident.label))]
+		if (length(up.missed.ident) > 0){ warning(paste0('These selected up.idents are not present in the dataset: ', pasteIdent(up.missed.ident), '.')) }
+	}else{
+		up.in.ident <- ident.label
+	}
+	
+	# check the input down.ident
+	if (!is.null(down.ident)){
+		down.in.ident <- down.ident[which(down.ident %in% ident.label)]
+		if (length(down.in.ident)==0){
+			stop('Wrong down.ident parameter! All selected down.idents are not present in the dataset!')
+		}
+		down.missed.ident <- down.ident[which(!(down.ident %in% ident.label))]
+		if (length(down.missed.ident) > 0){ warning(paste0('These selected down.ident are not present in the dataset: ', pasteIdent(down.missed.ident), '.')) }
+	}else{
+		down.in.ident <- ident.label
+	}
 
 	### check the input and select significant pathways
 	ident.path.dat <- diff.path.dat
@@ -1327,17 +1479,33 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 		ident.path.dat <- ident.path.dat[order(-ident.path.dat[,'diff'], ident.path.dat[,'P.val.adj']),]
 	}
 
-	if (top.n.path > nrow(ident.path.dat)){
-		warning(paste0('There is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
-		top.n.path <- nrow(ident.path.dat)
+	### select user-defined pathways, with the select.path parameter
+	if (length(select.path) > 1 | (length(select.path)==1 & select.path[1]!='all')){
+		path.num.plot <- which(ident.path.dat$description %in% select.path)
+		if (length(path.num.plot) > 0){
+			ident.path.dat <- ident.path.dat[path.num.plot, ]
+		}else{
+			stop('All pathways selected are not up-regulatged in the selected cluster. Run comparePath to retrieve all up-regulatged pathways.')
+		}
+		top.n.path <- length(path.num.plot)
+		path.missed <- select.path[which(!(select.path %in% ident.path.dat$description))]
+		if (length(path.missed) > 0){
+			warning(paste0('These pathways are not up-regulatged in the selected cluster: ', pasteIdent(path.missed), '. Run comparePath to retrieve all up-regulatged pathways.'))
+		}
+	}else{
+		### select top n pathways, if the select.path parameter is not set
+		if (top.n.path > nrow(ident.path.dat)){
+			warning(paste0('There is(are) ', nrow(ident.path.dat),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+			top.n.path <- nrow(ident.path.dat)
+		}
+		ident.path.dat <- ident.path.dat[1:top.n.path, ]
 	}
-	ident.path.dat <- ident.path.dat[1:top.n.path, ]
 	all.sig.path <- as.vector(ident.path.dat$description)
 
 	### data for plot of receptors and upstream clusters
-	receptor.in.path <- ident.path.dat[, 'receptor.in.path']
+	receptor.in.path <- as.character(ident.path.dat[, 'receptor.in.path'])
 	if (all(is.na(receptor.in.path))){
-		stop('There is no marker receptor in the selected pathways\nselect more pathways and try again')
+		stop('There is no marker receptor in the selected pathways\nselect more pathways and try again\nor you may want to try pathPlot.compare instead')
 	}
 	names(receptor.in.path) <- all.sig.path
 	receptor.in.path <- receptor.in.path[which(!is.na(receptor.in.path))]
@@ -1348,27 +1516,30 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	### select the top n receptors
 	cur.uniq.rep <- as.vector(unique(plot.receptor.to.pathway.dat$cur.rep))
 	cur.rep.LR.inten <- cluster.lr.inten(cur.uniq.rep, object.1, select.ident, ident.label, find='ligand')
+
+	cur.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, row.select=up.in.ident)
+	keep.rep <- names(which(colSums(is.na(cur.rep.LR.inten)) < nrow(cur.rep.LR.inten)))
+	cur.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, col.select=keep.rep)
+
 	cur.rep.max.LR.inten <- apply(cur.rep.LR.inten, 2, function(x){max(x, na.rm=TRUE)})
 	cur.rep.max.LR.inten <- cur.rep.max.LR.inten[order(cur.rep.max.LR.inten, decreasing=TRUE)]
 	
-	if (length(cur.uniq.rep) < top.n.receptor){
-		warning(paste0('There is(are) ', length(cur.uniq.rep),' marker receptor(s) in the selected ident associated with the selected pathways, and the input top.n.receptor is ', top.n.receptor))
-		top.n.receptor <- length(cur.uniq.rep)
+	if (length(cur.rep.max.LR.inten) < top.n.receptor){
+		warning(paste0('There is(are) ', length(cur.rep.max.LR.inten),' marker receptor(s) in the selected ident associated with the selected pathways, and the input top.n.receptor is ', top.n.receptor))
+		top.n.receptor <- length(cur.rep.max.LR.inten)
 	}
 	
 	top.rep.name <- names(cur.rep.max.LR.inten)[1:top.n.receptor]
 	plot.receptor.to.pathway.dat <- subset(plot.receptor.to.pathway.dat, cur.rep %in% top.rep.name)
 
-	top.rep.LR.inten <- cur.rep.LR.inten[, top.rep.name]
-	if (is.null(dim(top.rep.LR.inten))){
-		top.rep.LR.inten <- as.matrix(top.rep.LR.inten)
-		colnames(top.rep.LR.inten) <- top.rep.name
-	}
+	top.rep.LR.inten <- subsetMatrix(cur.rep.LR.inten, col.select=top.rep.name)
 	plot.ident.to.receprtor.obj1.dat <- melt(top.rep.LR.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ident.to.receprtor.obj1.dat <- factor.to.character(plot.ident.to.receprtor.obj1.dat)
 	
 	### LR.inten for obj.2 for receptor
 	cur.rep.LR.obj2.inten <- cluster.lr.inten(top.rep.name, object.2, select.ident, ident.label, find='ligand')
+	cur.rep.LR.obj2.inten <- subsetMatrix(cur.rep.LR.obj2.inten, row.select=up.in.ident, col.select=top.rep.name)
+
 	plot.ident.to.receprtor.obj2.dat <- melt(cur.rep.LR.obj2.inten, varnames=c('cell.from','receptor'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ident.to.receprtor.obj2.dat <- factor.to.character(plot.ident.to.receprtor.obj2.dat)
 
@@ -1382,7 +1553,7 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	plot.ident.to.receprtor.dat <- plot.ident.to.receprtor.obj1.dat
 	
 	### data for plot of ligands and downstream clusters
-	ligand.in.path <- ident.path.dat[, 'ligand.in.path']
+	ligand.in.path <- as.character(ident.path.dat[, 'ligand.in.path'])
 	if (all(is.na(ligand.in.path))){
 		stop('There is no marker ligand in the selected pathways\nselect more pathways and try again')
 	}
@@ -1395,27 +1566,30 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	### select the top n ligands
 	cur.uniq.lig <- as.vector(unique(plot.pathway.to.ligand.dat$cur.lig))
 	cur.lig.LR.inten <- cluster.lr.inten(cur.uniq.lig, object.1, select.ident, ident.label, find='receptor')
+
+	cur.lig.LR.inten <- subsetMatrix(cur.lig.LR.inten, row.select=down.in.ident)
+	keep.lig <- names(which(colSums(is.na(cur.lig.LR.inten)) < nrow(cur.lig.LR.inten)))
+	cur.lig.LR.inten <- subsetMatrix(cur.lig.LR.inten, col.select=keep.lig)
+
 	cur.lig.max.LR.inten <- apply(cur.lig.LR.inten, 2, function(x){max(x, na.rm=TRUE)})
 	cur.lig.max.LR.inten <- cur.lig.max.LR.inten[order(cur.lig.max.LR.inten, decreasing=TRUE)]
 	
-	if (length(cur.uniq.lig) < top.n.ligand){
-		warning(paste0('There is(are) ', length(cur.uniq.lig),' marker ligand(s) in the selected ident associated with the selected pathways, and the input top.n.ligand is ', top.n.ligand))
-		top.n.ligand <- length(cur.uniq.lig)
+	if (length(cur.lig.max.LR.inten) < top.n.ligand){
+		warning(paste0('There is(are) ', length(cur.lig.max.LR.inten),' marker ligand(s) in the selected ident associated with the selected pathways, and the input top.n.ligand is ', top.n.ligand))
+		top.n.ligand <- length(cur.lig.max.LR.inten)
 	}
 	
 	top.lig.name <- names(cur.lig.max.LR.inten)[1:top.n.ligand]
 	plot.pathway.to.ligand.dat <- subset(plot.pathway.to.ligand.dat, cur.lig %in% top.lig.name)
-
-	top.lig.LR.inten <- cur.lig.LR.inten[, top.lig.name]
-	if (is.null(dim(top.lig.LR.inten))){
-		top.lig.LR.inten <- as.matrix(top.lig.LR.inten)
-		colnames(top.lig.LR.inten) <- top.rep.name
-	}
+	
+	top.lig.LR.inten <- subsetMatrix(cur.lig.LR.inten, col.select=top.lig.name)
 	plot.ligand.to.ident.obj1.dat <- melt(top.lig.LR.inten, varnames=c('cell.to','ligand'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ligand.to.ident.obj1.dat <- factor.to.character(plot.ligand.to.ident.obj1.dat)
 
 	### LR.inten for obj.2 for ligand
 	cur.lig.LR.obj2.inten <- cluster.lr.inten(top.lig.name, object.2, select.ident, ident.label, find='receptor')
+	cur.lig.LR.obj2.inten <- subsetMatrix(cur.lig.LR.obj2.inten, row.select=down.in.ident, col.select=top.lig.name)
+
 	plot.ligand.to.ident.obj2.dat <- melt(cur.lig.LR.obj2.inten, varnames=c('cell.to','ligand'),value.name="LR.inten",  na.rm=FALSE)
 	plot.ligand.to.ident.obj2.dat <- factor.to.character(plot.ligand.to.ident.obj2.dat)
 
@@ -1488,34 +1662,45 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	dot.lig.col <- LRcolor(lig.pval, user.set.col=dot.gene.col)
 
 	### the upstream and downstream ident and their coordinate, and their color
-	up.uniq.ident <- factor(ident.label, levels=ident.label)
+	up.uniq.ident <- factor(up.in.ident, levels=up.in.ident)
 	up.uniq.ident <- up.uniq.ident[order(up.uniq.ident, decreasing=TRUE)]
-	### n.up.ident is also the n.down.ident
 	n.up.ident <- length(up.uniq.ident)
+	### color for dots representing ident
 	if (is.null(dot.ident.col)){
-		dot.ident.col <- rev(scales::hue_pal(c=100)(n.up.ident))
-	}else if(length(dot.ident.col) < n.up.ident){
-		stop(paste0('There is(are) ',n.up.ident,' cluster(s), but only ',length(dot.ident.col),' colors provided.'))
+		dot.ident.col <- rev(scales::hue_pal(c=100)(length(ident.label)))
+		names(dot.ident.col) <- ident.label
 	}else{
-		dot.ident.col <- rev(dot.ident.col[1:n.up.ident])
+		dot.ident.names.col <- names(dot.ident.col)
+		if (is.null(dot.ident.names.col)){
+			stop(paste0('Wrong dot.ident.col parameter! The colors should be named according to their clusters'))
+		}else{
+			all.in.ident <- unique(c(up.in.ident, down.in.ident))
+			all.missed.ident <- all.in.ident[which(!(all.in.ident %in% dot.ident.names.col))]
+			if (length(all.missed.ident) > 0){ stop(paste0('Wrong dot.ident.col parameter! Please add colors for these clusters: ', pasteIdent(all.missed.ident), '.')) }
+		}
+
 	}
-	
+	dot.up.ident.col <- rev(dot.ident.col[up.in.ident])
+	### the downstream ident and their coordinate, and their color
+	down.uniq.ident <- factor(down.in.ident, levels=down.in.ident)
+	down.uniq.ident <- down.uniq.ident[order(down.uniq.ident, decreasing=TRUE)]
+	n.down.ident <- length(down.uniq.ident)
+	dot.down.ident.col <- rev(dot.ident.col[down.in.ident])
+
 	### adjust the coordinate of each element
-	max.limit <- max(n.up.ident, n.rep, top.n.path, n.lig)
+	max.limit <- max(n.up.ident, n.rep, top.n.path, n.lig, n.down.ident)
 	up.ident.new.coor <- seq(from=1, to=max.limit, length.out=n.up.ident)
 	rep.new.coor <- seq(from=1, to=max.limit, length.out=n.rep)
 	pathway.new.coor <- seq(from=1, to=max.limit, length.out=top.n.path)
 	lig.new.coor <- seq(from=1, to=max.limit, length.out=n.lig)
-	down.ident.new.coor <- seq(from=1, to=max.limit, length.out=n.up.ident)
+	down.ident.new.coor <- seq(from=1, to=max.limit, length.out=n.down.ident)
 
-	if (n.up.ident==1){ 
-		up.ident.new.coor <- median(1:max.limit) 
-		down.ident.new.coor <- median(1:max.limit) 
-	}
+	if (n.up.ident==1){ up.ident.new.coor <- median(1:max.limit) }
 	if (n.rep==1){ rep.new.coor <- median(1:max.limit) }
 	if (top.n.path==1){ pathway.new.coor <- median(1:max.limit) }
 	if (n.lig==1){ lig.new.coor <- median(1:max.limit) }
-	
+	if (n.down.ident==1){ down.ident.new.coor <- median(1:max.limit) }
+
 	if (length(pathway.new.coor)==1){
 		bar_pathway_width <- 0.3
 	}else{
@@ -1524,17 +1709,16 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	path.name.max.width <- max(strwidth(path.uniq.name, units="inches", cex=1))
 	bar.pathway.length <- 2 * path.rect.length / max(path.rect.length)
 	bar_pathway <- geom_rect(aes(xmin=6, xmax=6+bar.pathway.length, ymin=pathway.new.coor-bar_pathway_width, ymax=pathway.new.coor+bar_pathway_width), size=1, fill=bar.path.col, alpha=1, show.legend=F)
-	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
+	point_up_ident <- geom_point(aes(x=1,y=up.ident.new.coor),size=8*dot.ident.size,color=dot.up.ident.col,shape=16) 
 	point_receptor <- geom_point(aes(x=2,y=rep.new.coor),size=rep.size,color=dot.rep.col)
 	point_pathway <- geom_point(aes(x=3,y=pathway.new.coor),size=8*dot.ident.size,color='black',shape=21,fill='white')
 	point_ligand <- geom_point(aes(x=4,y=lig.new.coor),size=lig.size,color=dot.lig.col) 
-	point_down_ident <- geom_point(aes(x=5,y=down.ident.new.coor),size=8*dot.ident.size,color=dot.ident.col,shape=16) 
+	point_down_ident <- geom_point(aes(x=5,y=down.ident.new.coor),size=8*dot.ident.size,color=dot.down.ident.col,shape=16) 
 
 	### lines between elements
 	### lines between up idents and receptors
 	line.ident.to.rep.y.coor <- up.ident.new.coor[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.to.rep.yend.coor <- rep.new.coor[match(plot.ident.to.receprtor.dat$receptor, cur.uniq.rep)]
-	#line.ident.to.rep.col <- dot.ident.col[match(plot.ident.to.receprtor.dat$cell.from, up.uniq.ident)]
 	line.ident.to.rep.col <- ifelse(plot.ident.to.receprtor.dat$LR.inten.diff > 0, 'red', 'blue')
 	line.ident.to.lig.width <- LRinten.to.width(plot.ident.to.receprtor.dat$LR.inten)
 	line_ident_to_receptor <- geom_segment(aes(x=1, xend=2, y=line.ident.to.rep.y.coor,yend=line.ident.to.rep.yend.coor), size=line.ident.to.lig.width, color=line.ident.to.rep.col, show.legend=F, alpha=0.6)
@@ -1550,8 +1734,7 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	line_pathway_to_ligand <- geom_segment(aes(x=3, xend=4, y=line.path.to.lig.y.coor,yend=line.path.to.lig.yend.coor),size=1, color=path.lig.line.col, show.legend=F)
 	### lines between ligands and down idents
 	line.lig.to.ident.y.coor <- lig.new.coor[match(plot.ligand.to.ident.dat$ligand, cur.uniq.lig)]
-	line.lig.to.ident.yend.coor <- up.ident.new.coor[match(plot.ligand.to.ident.dat$cell.to, up.uniq.ident)]
-	#line.lig.to.ident.col <- dot.ident.col[match(plot.ligand.to.ident.dat$cell.to, up.uniq.ident)]
+	line.lig.to.ident.yend.coor <- down.ident.new.coor[match(plot.ligand.to.ident.dat$cell.to, down.uniq.ident)]
 	line.lig.to.ident.col <- ifelse(plot.ligand.to.ident.dat$LR.inten.diff > 0, 'red', 'blue')
 	line.lig.to.ident.width <- LRinten.to.width(plot.ligand.to.ident.dat$LR.inten)
 	line_ligand_to_ident <- geom_segment(aes(x=4, xend=5, y=line.lig.to.ident.y.coor,yend=line.lig.to.ident.yend.coor), size=line.lig.to.ident.width, color=line.lig.to.ident.col, show.legend=F, alpha=0.6)
@@ -1564,7 +1747,7 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 	label_pathway_circle <- annotate('text', hjust=0.5, x=3, y=pathway.new.coor, label=length(path.uniq.name):1, size=5*label.text.size)
 	label_pathway_bar <- annotate('text', hjust=1, x=6, y=pathway.new.coor, label=length(path.uniq.name):1, size=5*label.text.size)
 	label_ligand <- annotate('text', hjust=0.5, x=4, y=lig.new.coor-0.4,label=cur.uniq.lig, size=5*label.text.size)
-	label_down_ident <- annotate('text', hjust=0.5, x=5, y=down.ident.new.coor-0.4,label=up.uniq.ident, size=5*label.text.size)
+	label_down_ident <- annotate('text', hjust=0.5, x=5, y=down.ident.new.coor-0.4,label=down.uniq.ident, size=5*label.text.size)
 	label_title <- annotate('text', hjust=c(0.5,0.5,0.5,0.5,0.5,0), x=1:6, y=max.limit+0.8,label=c('Upstream', 'Receptor', 'Pathway', 'Ligand', 'Downstream','Pathway annotation'), size=5*label.title.size) 
 
 	pathplot.theme <- theme(axis.title=element_blank(), axis.text=element_blank(),axis.ticks=element_blank(), axis.line=element_blank(), panel.background=element_rect(fill="white"))
@@ -1608,6 +1791,7 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 #' @param vert.size.path.adj pseudocount to adjust the size of node representing pathways
 #' @param top.n.path Top n activated pathways in the selected cluster of interest; if NULL, slelect all activated pathways
 #' @param path.order Sort criteria used to select the top n pathways, either "P.val" or "P.val.adj", which represent the original and adjusted p values, or "diff" which represents the mean (in t test) or median (in wilcox test) difference; default is "P.val.adj". This parameter would be masked if top.n.path is set as NULL.
+#' @param select.path Vector of pathways for which users want to present a chain plot; default is all, which means to plot all pathways. The parameters top.n.path and path.order would be masked if this one is set with specific pathways.
 #' @param layout Network layout; defualt is Fruchterman-Reingold ('layout.fruchterman.reingold'). Refer to the igraph package for more information. Note: an error would be raised if the selected layout do not apply to the graph.
 #' @param LR.label To show which label on the node representing LR interactions. Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label); default is NA
 #' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
@@ -1625,11 +1809,11 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, diff.path.da
 #' @importFrom plyr rbind.fill mapvalues
 #' @return Net plot showing the activated pathways and associated LR interactions
 #' @export
-pathNetPlot <- function(object, select.ident, plot='upstream', ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label='LR', pathway.label=TRUE, edge.arrow.size=0.2, edge.color='gray75', vertex.label.cex.LR=0.5,vertex.label.cex.path=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+pathNetPlot <- function(object, select.ident, plot='upstream', ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", select.path='all', layout="layout.auto", LR.label='LR', pathway.label=TRUE, edge.arrow.size=0.2, edge.color='gray75', vertex.label.cex.LR=0.5,vertex.label.cex.path=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
 	if(plot=='upstream'){
-		pathNetPlot.upstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, edge.color=edge.color, vertex.label.cex.LR=vertex.label.cex.LR, vertex.label.cex.path=vertex.label.cex.path, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
+		pathNetPlot.upstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, select.path=select.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, edge.color=edge.color, vertex.label.cex.LR=vertex.label.cex.LR, vertex.label.cex.path=vertex.label.cex.path, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
 	}else if(plot=='downstream'){
-		pathNetPlot.downstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, edge.color=edge.color, vertex.label.cex.LR=vertex.label.cex.LR, vertex.label.cex.path=vertex.label.cex.path, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
+		pathNetPlot.downstream(object=object, select.ident=select.ident, ident.col=ident.col, vert.size.attr=vert.size.attr, vert.size.LR=vert.size.LR, vert.size.path.adj=vert.size.path.adj, top.n.path=top.n.path, select.path=select.path, path.order=path.order, layout=layout, LR.label=LR.label, pathway.label=pathway.label, edge.arrow.size=edge.arrow.size, edge.color=edge.color, vertex.label.cex.LR=vertex.label.cex.LR, vertex.label.cex.path=vertex.label.cex.path, vertex.label.color=vertex.label.color, vertex.label.family=vertex.label.family, vertex.frame.color=vertex.frame.color, node.pie=node.pie, return.net=return.net, return.data=return.data)
 	}else{
 		stop('Wrong "plot" parameter! Available options: upstream (to show the network of activated pathways and the upstream LR interactions) or downstream (to show the network of activated pathways and the downstream LR interactions)')
 	}
@@ -1644,6 +1828,7 @@ pathNetPlot <- function(object, select.ident, plot='upstream', ident.col=NULL, v
 #' @param vert.size.path.adj pseudocount to adjust the size of node representing pathways
 #' @param top.n.path Top n activated pathways in the selected cluster of interest; if NULL, slelect all activated pathways
 #' @param path.order Sort criteria used to select the top n pathways, either "P.val" or "P.val.adj", which represent the original and adjusted p values, or "diff" which represents the mean (in t test) or median (in wilcox test) difference; default is "P.val.adj". This parameter would be masked if top.n.path is set as NULL.
+#' @param select.path Vector of pathways for which users want to present a chain plot; default is all, which means to plot all pathways. The parameters top.n.path and path.order would be masked if this one is set with specific pathways.
 #' @param layout Network layout; defualt is Fruchterman-Reingold ('layout.fruchterman.reingold'). Refer to the igraph package for more information. Note: an error would be raised if the selected layout do not apply to the graph.
 #' @param LR.label To show which label on the node representing LR interactions. Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label); default is NA
 #' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
@@ -1661,7 +1846,7 @@ pathNetPlot <- function(object, select.ident, plot='upstream', ident.col=NULL, v
 #' @importFrom plyr rbind.fill mapvalues
 #' @return Net plot showing the activated pathways and associated LR interactions
 #' @export
-pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label='LR', pathway.label=TRUE, edge.arrow.size=0.2,  edge.color='gray75', vertex.label.cex.LR=0.5, vertex.label.cex.path=0.5,vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", select.path='all', layout="layout.auto", LR.label='LR', pathway.label=TRUE, edge.arrow.size=0.2,  edge.color='gray75', vertex.label.cex.LR=0.5, vertex.label.cex.path=0.5,vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
 	options(stringsAsFactors=F)
 
 	path.net.dat <- object@pathway.net$upstream
@@ -1684,26 +1869,41 @@ pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size
 	}
 	node.path$type <- 'Pathway'
 
-	### select the top n pathways
-	if (is.null(top.n.path)){
-		top.n.path <- nrow(node.path)
-	}else if (is.numeric(top.n.path) & (top.n.path%%1==0)){
-		if (path.order=='P.val.adj'){
-			node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'stat']),]
-		}else if(path.order=='P.val'){
-			node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'stat']),]
-		}else if(path.order=='diff'){
-			node.path <- node.path[order(-node.path[,'diff'], node.path[,'P.val.adj.path']),]
+	### select the user-defined pathways, with the select.path parameter
+	if (length(select.path) > 1 | (length(select.path)==1 & select.path[1]!='all')){
+		path.num.plot <- which(node.path$ID %in% select.path)
+		if (length(path.num.plot) > 0){
+			node.path <- node.path[path.num.plot, ]
+		}else{
+			stop('All pathways selected are not up-regulatged in the selected cluster. Set return.data as TRUE to retrieve all up-regulatged pathways.')
 		}
 
-		if (top.n.path > nrow(node.path)){
-			warning(paste0('There is(are) ', nrow(node.path),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
-			top.n.path <- nrow(node.path)
+		ident.missed <- select.path[which(!(select.path %in% node.path$ID))]
+		if (length(ident.missed) > 0){
+			warning(paste0('These pathways are not up-regulatged in the selected cluster: ', pasteIdent(ident.missed), '. Set return.data as TRUE to retrieve all up-regulatged pathways.'))
 		}
 	}else{
-		stop('Wrong "top.n.path" parameter! Input an positive integer to select the corresponding number of up-regulatged pathway(s)')
+		### select the top n pathways
+		if (is.null(top.n.path)){
+			top.n.path <- nrow(node.path)
+		}else if (is.numeric(top.n.path) & (top.n.path%%1==0)){
+			if (path.order=='P.val.adj'){
+				node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'stat']),]
+			}else if(path.order=='P.val'){
+				node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'stat']),]
+			}else if(path.order=='diff'){
+				node.path <- node.path[order(-node.path[,'diff'], node.path[,'P.val.adj.path']),]
+			}
+
+			if (top.n.path > nrow(node.path)){
+				warning(paste0('There is(are) ', nrow(node.path),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+				top.n.path <- nrow(node.path)
+			}
+		}else{
+			stop('Wrong "top.n.path" parameter! Input an positive integer to select the corresponding number of up-regulatged pathway(s)')
+		}
+		node.path <- node.path[1:top.n.path, ]
 	}
-	node.path <- node.path[1:top.n.path, ]
 	node.path$stat <- NULL
 	path.curcell.dat <- path.curcell.dat[which(path.curcell.dat$path.contain.rep.unfold %in% node.path$ID), ]
 
@@ -1802,7 +2002,9 @@ pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size
 	
 	### pie chart composition
 	pie.comp.path <- as.data.frame.array(table(path.curcell.dat[,c('cell.from','path.contain.rep.unfold')]))
+	pie.comp.path$rownames <- rownames(pie.comp.path)
 	pie.comp.path <- pie.comp.path[vert.cluster.ident, ]
+	pie.comp.path$rownames <- NULL
 	pie.comp.node <- as.data.frame.array(table(node.dat[,c('cell.from','ID')]))
 	pie.comp.node <- pie.comp.node[vert.cluster.ident, node.dat$ID]
 
@@ -1838,6 +2040,7 @@ pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size
 #' @param vert.size.path.adj pseudocount to adjust the size of node representing pathways
 #' @param top.n.path Top n activated pathways in the selected cluster of interest; if NULL, slelect all activated pathways
 #' @param path.order Sort criteria used to select the top n pathways, either "P.val" or "P.val.adj", which represent the original and adjusted p values, or "diff" which represents the mean (in t test) or median (in wilcox test) difference; default is "P.val.adj". This parameter would be masked if top.n.path is set as NULL.
+#' @param select.path Vector of pathways for which users want to present a chain plot; default is all, which means to plot all pathways. The parameters top.n.path and path.order would be masked if this one is set with specific pathways.
 #' @param layout Network layout; defualt is Fruchterman-Reingold ('layout.fruchterman.reingold'). Refer to the igraph package for more information. Note: an error would be raised if the selected layout do not apply to the graph.
 #' @param LR.label To show which label on the node representing LR interactions. Available options: LR (to show both the ligand and receptor label), L (to show only the ligand label), R (to show only the receptor label), or NA (no label); default is NA
 #' @param pathway.label Logical value indicating to display the label of pathways or not; default is TRUE
@@ -1855,7 +2058,7 @@ pathNetPlot.upstream <- function(object, select.ident, ident.col=NULL, vert.size
 #' @importFrom plyr rbind.fill mapvalues
 #' @return Net plot showing the activated pathways and associated LR interactions
 #' @export
-pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", layout="layout.auto", LR.label='LR', pathway.label=TRUE, edge.arrow.size=0.2, edge.color='gray75', vertex.label.cex.LR=0.5, vertex.label.cex.path=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
+pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.size.attr="degree", vert.size.LR=0.5, vert.size.path.adj=5, top.n.path=NULL, path.order="P.val.adj", select.path='all', layout="layout.auto", LR.label='LR', pathway.label=TRUE, edge.arrow.size=0.2, edge.color='gray75', vertex.label.cex.LR=0.5, vertex.label.cex.path=0.5, vertex.label.color="black", vertex.label.family="Helvetica", vertex.frame.color="#ffffff", node.pie=TRUE, return.net=FALSE, return.data=FALSE){
 	options(stringsAsFactors=F)
 
 	path.net.dat <- object@pathway.net$downstream
@@ -1878,26 +2081,41 @@ pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.si
 	}
 	node.path$type <- 'Pathway'
 
-	### select the top n pathways
-	if (is.null(top.n.path)){
-		top.n.path <- nrow(node.path)
-	}else if (is.numeric(top.n.path) & (top.n.path%%1==0)){
-		if (path.order=='P.val.adj'){
-			node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'stat']),]
-		}else if(path.order=='P.val'){
-			node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'stat']),]
-		}else if(path.order=='diff'){
-			node.path <- node.path[order(-node.path[,'diff'], node.path[,'P.val.adj.path']),]
+	### select the user-defined pathways, with the select.path parameter
+	if (length(select.path) > 1 | (length(select.path)==1 & select.path[1]!='all')){
+		path.num.plot <- which(node.path$ID %in% select.path)
+		if (length(path.num.plot) > 0){
+			node.path <- node.path[path.num.plot, ]
+		}else{
+			stop('All pathways selected are not up-regulatged in the selected cluster. Set return.data as TRUE to retrieve all up-regulatged pathways.')
 		}
 
-		if (top.n.path > nrow(node.path)){
-			warning(paste0('There is(are) ', nrow(node.path),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
-			top.n.path <- nrow(node.path)
+		ident.missed <- select.path[which(!(select.path %in% node.path$ID))]
+		if (length(ident.missed) > 0){
+			warning(paste0('These pathways are not up-regulatged in the selected cluster: ', pasteIdent(ident.missed), '. Set return.data as TRUE to retrieve all up-regulatged pathways.'))
 		}
 	}else{
-		stop('Wrong "top.n.path" parameter! Input an positive integer to select the corresponding number of up-regulatged pathway(s)')
-	}	
-	node.path <- node.path[1:top.n.path, ]
+		### select the top n pathways
+		if (is.null(top.n.path)){
+			top.n.path <- nrow(node.path)
+		}else if (is.numeric(top.n.path) & (top.n.path%%1==0)){
+			if (path.order=='P.val.adj'){
+				node.path <- node.path[order(node.path[,'P.val.adj.path'], -node.path[,'stat']),]
+			}else if(path.order=='P.val'){
+				node.path <- node.path[order(node.path[,'P.val.path'], -node.path[,'stat']),]
+			}else if(path.order=='diff'){
+				node.path <- node.path[order(-node.path[,'diff'], node.path[,'P.val.adj.path']),]
+			}
+
+			if (top.n.path > nrow(node.path)){
+				warning(paste0('There is(are) ', nrow(node.path),' significant pathway(s) for the selected ident, and the input top.n.path is ', top.n.path))
+				top.n.path <- nrow(node.path)
+			}
+		}else{
+			stop('Wrong "top.n.path" parameter! Input an positive integer to select the corresponding number of up-regulatged pathway(s)')
+		}	
+		node.path <- node.path[1:top.n.path, ]
+	}
 	node.path$stat <- NULL
 	path.curcell.dat <- path.curcell.dat[which(path.curcell.dat$path.contain.lig.unfold %in% node.path$ID), ]
 
@@ -1996,7 +2214,9 @@ pathNetPlot.downstream <- function(object, select.ident, ident.col=NULL, vert.si
 	
 	### pie chart composition
 	pie.comp.path <- as.data.frame.array(table(path.curcell.dat[,c('cell.to','path.contain.lig.unfold')]))
+	pie.comp.path$rownames <- rownames(pie.comp.path)
 	pie.comp.path <- pie.comp.path[vert.cluster.ident, ]
+	pie.comp.path$rownames <- NULL
 	pie.comp.node <- as.data.frame.array(table(node.dat[,c('cell.to','ID')]))
 	pie.comp.node <- pie.comp.node[vert.cluster.ident, node.dat$ID]
 
