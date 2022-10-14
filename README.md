@@ -229,7 +229,7 @@ dev.off()
 
 In the above network graph, the pie charts represent the activated pathways in the selected  cells (here Endothelial cells) and the scatter points represent the LR pairs of which the receptors are included in the genesets of the linked pathways. Colors of scatter points indicate the upstream clusters releasing the corresponding ligands. Sizes of pie charts indicate their total in-degree and the proportions indicate the in-degree from different upstream clusters. This plot would provide lots of important and detailed information of signaling pathways and the relevant LR interactions along the communication chains. To ensure the flexibility and interpretability, CommPath functions provide multiple optional arguments for selecting and limiting pathways and LR pairs to depict. 
 ```
-To order and limit pathways by statistics from differential activation tests for pathways
+To select the top 5 significantly upregulated pathways in Endothelial cells
 pdf('pathNet.upstream.Endothelial.top5.pdf',width=6,heigh=6)
 set.seed(1234)
 pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "upstream",
@@ -240,7 +240,7 @@ pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "upstream",
 dev.off()
 ```
 
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.top5.png" height=600, width=780>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.top5.png" height=265, width=350>
 
 ```
 To select and show pathways of interest in the diagram by names of pathways directly
@@ -254,7 +254,7 @@ pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "upstream",
 dev.off()
 ```
 
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.selectpathway.png" height=600, width=780>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.selectpathway.png" height=300, width=350>
 
 ```
 # Also to visualize the pathways and the associated downstream LR interactions in a network plot
@@ -304,18 +304,21 @@ dev.off()
 
 In the above line plot, the widths of lines between ***Upstream*** cluster and ***Receptor*** represent the overall interaction intensity between the upstream  cluster and Endothelial cells via the specific receptors; the sizes and colors of dots in the ***Receptor*** column represent the average *log2FC* and *-log10(P)* from differential expression tests comparing the receptor  expression in Endothelial cells to that in all other cells; the lengths and colors of bars in the ***Pathway annotation*** column represent the mean difference and *-log10(P)* form differential activation tests comparing the pathway scores in Endothelial cells to those in all other cells.
 ```
-# To select self-defind cluster for the  central cell population and select pathways of interest by names 
+# To select self-defind cluster for the  central cell population
+# And select pathways of interest by names
+# Also select the top N receptors by interaction intensity 
 select.ident = 'Endothelial'
-pdf('pathPlot.Endothelial.selectpathway.pdf',height=6,width=10)
+pdf('pathPlot.Endothelial.selectpathway.pdf',height=4,width=10)
 pathPlot(object = tumor.obj, 
     select.ident = select.ident, 
     up.ident = c("Treg","Myeloid","Endothelial","Fibroblast","Hepatocyte"),
     select.path = c("JAK-STAT signaling pathway", "MAPK signaling pathway", "Ras signaling pathway", "PI3K-Akt signaling pathway", "AMPK signaling pathway"),
+    top.n.receptor = 5,
     acti.path.dat = acti.path.filtered.dat)
 dev.off()
 ```
 
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot.Endothelial.selectpathway.png" height=300, width=400>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathPlot.Endothelial.selectpathway.png" height=200, width=400>
 
 
 ```
@@ -363,7 +366,8 @@ Then we compare the differentially activated pathways and the cell-cell communic
 pdf('pathPlot.compare.Endothelial.pdf',height=6,width=10)
 pathPlot.compare(object.1 = tumor.obj, 
 		object.2 = normal.obj, 
-		select.ident = select.ident, 
+		select.ident = select.ident,
+		up.ident = c("Treg","Myeloid","Endothelial","Fibroblast","Hepatocyte"),
 		diff.path.dat = diff.path.dat)
 dev.off()
 ```
@@ -378,6 +382,9 @@ pdf('pathChainPlot.compare.Endothelial.pdf',height=6,width=14)
 pathChainPlot.compare(object.1 = tumor.obj, 
 		object.2 = normal.obj, 
 		select.ident = select.ident, 
+		up.ident = c("Myeloid","Endothelial","Fibroblast","Hepatocyte"),
+    down.ident = c("CD8 T","CD4 T","Treg","NK","Endothelial","Fibroblast","Hepatocyte"),
+    select.path = c("Gastric cancer", "Relaxin signaling pathway", "Axon guidance"),
 		diff.path.dat = diff.path.dat)
 dev.off()
 ```
