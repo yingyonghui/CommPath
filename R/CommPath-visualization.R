@@ -716,7 +716,7 @@ pathPlot <- function(object, select.ident, up.ident=NULL, acti.path.dat=NULL, to
 	up.uniq.ident <- up.uniq.ident[order(up.uniq.ident, decreasing=TRUE)]
 	n.up.ident <- length(up.uniq.ident)
 	if (is.null(dot.ident.col)){
-		dot.ident.col <- rev(scales::hue_pal(c=100)(length(ident.label)))
+		dot.ident.col <- scales::hue_pal(c=100)(length(ident.label))
 		names(dot.ident.col) <- ident.label
 	}else{
 		dot.ident.names.col <- names(dot.ident.col)
@@ -974,7 +974,7 @@ pathPlot.compare <- function(object.1, object.2, select.ident, up.ident=NULL, di
 	n.up.ident <- length(up.uniq.ident)
 	### color for dots representing ident
 	if (is.null(dot.ident.col)){
-		dot.ident.col <- rev(scales::hue_pal(c=100)(length(ident.label)))
+		dot.ident.col <- scales::hue_pal(c=100)(length(ident.label))
 		names(dot.ident.col) <- ident.label
 	}else{
 		dot.ident.names.col <- names(dot.ident.col)
@@ -1281,7 +1281,7 @@ pathChainPlot <- function(object, select.ident, up.ident=NULL, down.ident=NULL, 
 	### n.up.ident is also the n.down.ident
 	n.up.ident <- length(up.uniq.ident)
 	if (is.null(dot.ident.col)){
-		dot.ident.col <- rev(scales::hue_pal(c=100)(length(ident.label)))
+		dot.ident.col <- scales::hue_pal(c=100)(length(ident.label))
 		names(dot.ident.col) <- ident.label
 	}else{
 		dot.ident.names.col <- names(dot.ident.col)
@@ -1667,7 +1667,7 @@ pathChainPlot.compare <- function(object.1, object.2, select.ident, up.ident=NUL
 	n.up.ident <- length(up.uniq.ident)
 	### color for dots representing ident
 	if (is.null(dot.ident.col)){
-		dot.ident.col <- rev(scales::hue_pal(c=100)(length(ident.label)))
+		dot.ident.col <- scales::hue_pal(c=100)(length(ident.label))
 		names(dot.ident.col) <- ident.label
 	}else{
 		dot.ident.names.col <- names(dot.ident.col)
