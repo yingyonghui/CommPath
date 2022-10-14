@@ -240,7 +240,7 @@ pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "upstream",
 dev.off()
 ```
 
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.top5.png" height=265, width=350>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.top5.png" height=340, width=450>
 
 ```
 To select and show pathways of interest in the diagram by names of pathways directly
@@ -254,7 +254,7 @@ pathNetPlot(object = tumor.obj, select.ident =  select.ident, plot = "upstream",
 dev.off()
 ```
 
-<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.selectpathway.png" height=300, width=350>
+<img src="https://github.com/yingyonghui/SupplementaryData/blob/main/CommPath/tutorial_pic/pathNet.upstream.Endothelial.selectpathway.png" height=390, width=450>
 
 ```
 # Also to visualize the pathways and the associated downstream LR interactions in a network plot
