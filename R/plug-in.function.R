@@ -1,7 +1,6 @@
 #' This is a plug-in function, aimming to paste a vector of idents into a ',' separated string
 #' @param ident.missed Vector of idents
 #' @return String with idents pasted
-#' @export
 pasteIdent <- function(ident.missed){
 	if (length(ident.missed) > 1){ 
 		ident.missed <- paste0(paste(ident.missed[1:(length(ident.missed)-1)], collapse=', '), ' and ', ident.missed[length(ident.missed)])
@@ -13,7 +12,6 @@ pasteIdent <- function(ident.missed){
 #' @param pvalues pvalues
 #' @param scale scale
 #' @return p values with inf adjusted
-#' @export
 p.remove.inf <- function(pvalues, scale=0.1){
 	if (all(is.infinite(pvalues))){ 
 		pvalues <- rep(0, length(pvalues))
@@ -28,7 +26,6 @@ p.remove.inf <- function(pvalues, scale=0.1){
 #' @param LRpvalue pvalues of ligands or receptors
 #' @param user.set.col colors set by user
 #' @return Colors matching each p value
-#' @export
 LRcolor <- function(LRpvalue, user.set.col){
 	if (length(LRpvalue) > 1){
 		if (is.null(user.set.col)){
@@ -51,7 +48,6 @@ LRcolor <- function(LRpvalue, user.set.col){
 #' @param logfc logfc of ligands or receptors
 #' @param user.set.col colors set by user
 #' @return Colors matching each p value
-#' @export
 LRcolor.up.down <- function(logfc, user.set.col){
 	if (is.null(user.set.col)){
 		dot.col <- ifelse(logfc > 0, 'red', 'green')
@@ -68,7 +64,6 @@ LRcolor.up.down <- function(logfc, user.set.col){
 #' @param all.ident Vector of all idents that present in the dataset
 #' @param order Vector of the specified order of idents by users
 #' @return if all idents are not contained, stop the procedure
-#' @export
 orderCheck <- function(all.ident, order){
 	if (all(all.ident %in% order)){
 		order.overlap <- order[which(order %in% all.ident)]
@@ -85,7 +80,6 @@ orderCheck <- function(all.ident, order){
 #' @param x data.frame with columns named as Cell.From and Cell.To
 #' @param column which column
 #' @return data.frame with variables converted to character
-#' @export
 factor.to.character <- function(x, column=c(1, 2)){
 	for (each.col in column){
 		x[, each.col] <- as.character(x[, each.col])
@@ -97,7 +91,6 @@ factor.to.character <- function(x, column=c(1, 2)){
 #' @param object CommPath object
 #' @param ident.keep idents to keep
 #' @return a subset CommPath object
-#' @export
 subsetCommPath <- function(object, ident.keep){
 	cell.info <- object@cell.info
 	cell.info <- subset(cell.info, Cluster %in% ident.keep)
@@ -112,7 +105,6 @@ subsetCommPath <- function(object, ident.keep){
 #' To extract information from ident.path.dat
 #' @param ident.path.dat ident.path.dat
 #' @return data.frame
-#' @export
 extract.info <- function(ident.path.dat){
 	up.ident <- as.vector(unlist(sapply(ident.path.dat$cell.up, function(x){ strsplit(x, split=';') })))
 	cur.rep <- as.vector(unlist(sapply(ident.path.dat$receptor.in.path, function(x){ strsplit(x, split=';') })))
@@ -127,7 +119,6 @@ extract.info <- function(ident.path.dat){
 #' @param x vector of elements with names
 #' @param n top a
 #' @return top n elements in x
-#' @export
 order.and.top <- function(x, n){
 	x <- x[order(x, decreasing=TRUE)]
 	return(x[1:n])
@@ -141,7 +132,6 @@ order.and.top <- function(x, n){
 #' @param ident.label ident.label
 #' @param find find
 #' @return matrix of clusters * genes, elements are interaction intensity between genes and clusters
-#' @export
 cluster.lr.inten <- function(top.rep.name, object, select.ident, ident.label, find) {
 	if(find=='ligand'){
 		top.rep.LR.inten <- sapply(top.rep.name, function(eachrep){
@@ -167,7 +157,6 @@ cluster.lr.inten <- function(top.rep.name, object, select.ident, ident.label, fi
 #' To transform LR intensity to line width
 #' @param x LR intensity
 #' @return Line width
-#' @export
 LRinten.to.width <- function(x){ return(x/max(x) + 1) }
 
 #' To set up the hjust and vjust of text on axises
@@ -175,7 +164,6 @@ LRinten.to.width <- function(x){ return(x/max(x) + 1) }
 #' @param position 'x' or 'y' axis
 #' @importFrom ggplot2 element_text
 #' @return Theme element_text
-#' @export
 rotated.axis.element.text <- function(angle,position='x'){
 	angle <- angle[1]
 	position <- position[1]
@@ -192,7 +180,6 @@ rotated.axis.element.text <- function(angle,position='x'){
 #' To set up the hjust and vjust of text on axises
 #' @param x numeric vector
 #' @return scaled x with minimum equal to 1 and maximum equal to 2
-#' @export
 scale_1 <- function(x){
 	if (length(which(!is.na(x)))==1) {
 		x.scale <- rep(NA, length(x))
@@ -208,7 +195,6 @@ scale_1 <- function(x){
 #' To retrieve the available statistical measures for pathways
 #' @param object CommPath object
 #' @return print available statistical measures for pathways
-#' @export
 getPathAttr <- function(object){
 	if(is.null(object@pathway.net)){
 		stop('Please run "pathNet" before run getPathAttr')
@@ -227,7 +213,6 @@ getPathAttr <- function(object){
 #' @param row.select rows slected
 #' @param col.select columns selected
 #' @return subset of the matrix
-#' @export
 subsetMatrix <- function(mat, row.select=NULL, col.select=NULL){
 	if (is.null(row.select)){ row.select <- rownames(mat) }
 	if (is.null(col.select)){ col.select <- colnames(mat) }
