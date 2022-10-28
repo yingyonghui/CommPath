@@ -2,7 +2,7 @@
 % Please edit documentation in R/plug-in.function.R
 \name{scale_1}
 \alias{scale_1}
-\title{To set up the hjust and vjust of text on axises}
+\title{To scale x with minimum equal to 1 and maximum equal to 2}
 \usage{
 scale_1(x)
 }
@@ -13,5 +13,5 @@ scale_1(x)
 scaled x with minimum equal to 1 and maximum equal to 2
 }
 \description{
-To set up the hjust and vjust of text on axises
+To scale x with minimum equal to 1 and maximum equal to 2
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plug-in.function.R
 \name{p.remove.inf}
 \alias{p.remove.inf}
-\title{This is a plug-in function, aiming to adjust those p values==0}
+\title{To adjust those p values==0}
 \usage{
 p.remove.inf(pvalues, scale = 0.1)
 }
@@ -15,5 +15,5 @@ p.remove.inf(pvalues, scale = 0.1)
 p values with inf adjusted
 }
 \description{
-This is a plug-in function, aiming to adjust those p values==0
+To adjust those p values==0
 }

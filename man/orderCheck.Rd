@@ -2,7 +2,7 @@
 % Please edit documentation in R/plug-in.function.R
 \name{orderCheck}
 \alias{orderCheck}
-\title{This is a plug-in function, aimming to check whether the specified order of idents by users contain all idents that present in the dataset}
+\title{To check whether the specified order of idents by users contain all idents that present in the dataset}
 \usage{
 orderCheck(all.ident, order)
 }
@@ -15,5 +15,5 @@ orderCheck(all.ident, order)
 if all idents are not contained, stop the procedure
 }
 \description{
-This is a plug-in function, aimming to check whether the specified order of idents by users contain all idents that present in the dataset
+To check whether the specified order of idents by users contain all idents that present in the dataset
 }

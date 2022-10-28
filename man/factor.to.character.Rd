@@ -2,7 +2,7 @@
 % Please edit documentation in R/plug-in.function.R
 \name{factor.to.character}
 \alias{factor.to.character}
-\title{This is a plug-in function, aimming to convert the variables in a data.frame from factor to character}
+\title{To convert the variables in a data.frame from factor to character}
 \usage{
 factor.to.character(x, column = c(1, 2))
 }
@@ -15,5 +15,5 @@ factor.to.character(x, column = c(1, 2))
 data.frame with variables converted to character
 }
 \description{
-This is a plug-in function, aimming to convert the variables in a data.frame from factor to character
+To convert the variables in a data.frame from factor to character
 }

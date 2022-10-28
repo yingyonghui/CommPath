@@ -2,7 +2,7 @@
 % Please edit documentation in R/plug-in.function.R
 \name{pasteIdent}
 \alias{pasteIdent}
-\title{This is a plug-in function, aimming to paste a vector of idents into a ',' separated string}
+\title{To paste a vector of idents into a ',' separated string}
 \usage{
 pasteIdent(ident.missed)
 }
@@ -13,5 +13,5 @@ pasteIdent(ident.missed)
 String with idents pasted
 }
 \description{
-This is a plug-in function, aimming to paste a vector of idents into a ',' separated string
+To paste a vector of idents into a ',' separated string
 }

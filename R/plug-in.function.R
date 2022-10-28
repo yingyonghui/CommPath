@@ -1,4 +1,4 @@
-#' This is a plug-in function, aimming to paste a vector of idents into a ',' separated string
+#' To paste a vector of idents into a ',' separated string
 #' @param ident.missed Vector of idents
 #' @return String with idents pasted
 pasteIdent <- function(ident.missed){
@@ -8,7 +8,7 @@ pasteIdent <- function(ident.missed){
 	return(ident.missed)
 }
 
-#' This is a plug-in function, aiming to adjust those p values==0
+#' To adjust those p values==0
 #' @param pvalues pvalues
 #' @param scale scale
 #' @return p values with inf adjusted
@@ -22,7 +22,7 @@ p.remove.inf <- function(pvalues, scale=0.1){
 	return(pvalues)
 }
 
-#' This is a plug-in function, aiming to get the color for the dots representing receptors and ligands
+#' To get the color for the dots representing receptors and ligands
 #' @param LRpvalue pvalues of ligands or receptors
 #' @param user.set.col colors set by user
 #' @return Colors matching each p value
@@ -44,23 +44,7 @@ LRcolor <- function(LRpvalue, user.set.col){
 	return(dot.col)
 }
 
-#' This is a plug-in function, aiming to get the color for the dots representing receptors and ligands
-#' @param logfc logfc of ligands or receptors
-#' @param user.set.col colors set by user
-#' @return Colors matching each p value
-LRcolor.up.down <- function(logfc, user.set.col){
-	if (is.null(user.set.col)){
-		dot.col <- ifelse(logfc > 0, 'red', 'green')
-	}else if(length(user.set.col)==1){
-		dot.col <- ifelse(logfc > 0, user.set.col, 'green')
-	}else{
-		dot.col <- ifelse(logfc > 0, user.set.col[1], user.set.col[length(user.set.col)])
-	}
-	return(dot.col)
-}
-
-
-#' This is a plug-in function, aimming to check whether the specified order of idents by users contain all idents that present in the dataset
+#' To check whether the specified order of idents by users contain all idents that present in the dataset
 #' @param all.ident Vector of all idents that present in the dataset
 #' @param order Vector of the specified order of idents by users
 #' @return if all idents are not contained, stop the procedure
@@ -76,7 +60,7 @@ orderCheck <- function(all.ident, order){
 	}
 }
 
-#' This is a plug-in function, aimming to convert the variables in a data.frame from factor to character
+#' To convert the variables in a data.frame from factor to character
 #' @param x data.frame with columns named as Cell.From and Cell.To
 #' @param column which column
 #' @return data.frame with variables converted to character
@@ -123,7 +107,6 @@ order.and.top <- function(x, n){
 	x <- x[order(x, decreasing=TRUE)]
 	return(x[1:n])
 }
-
 
 #' To get interaction intensity between clusters and receptors
 #' @param top.rep.name top.rep.name
@@ -177,7 +160,7 @@ rotated.axis.element.text <- function(angle,position='x'){
 	return(element_text(angle=angle,vjust=vjust,hjust=hjust))
 }
 
-#' To set up the hjust and vjust of text on axises
+#' To scale x with minimum equal to 1 and maximum equal to 2
 #' @param x numeric vector
 #' @return scaled x with minimum equal to 1 and maximum equal to 2
 scale_1 <- function(x){
