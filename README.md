@@ -438,4 +438,4 @@ loaded via a namespace (and not attached):
 [64] colorspace_1.4-1     memoise_1.1.0        
 ```
 ## Citation
-Hao Lu, et al., CommPath: An R package for inference and analysis of pathway-mediated cell-cell communication chain from single-cell transcriptomics, Computational and Structural Biotechnology Journal, 2022. [link](https://www.sciencedirect.com/science/article/pii/S2001037022004755)
+[Lu H, Ping J, Zhou G, et al. CommPath: An R package for inference and analysis of pathway-mediated cell-cell communication chain from single-cell transcriptomics. Comput Struct Biotechnol J. 2022;20:5978-5983.](https://www.sciencedirect.com/science/article/pii/S2001037022004755)
