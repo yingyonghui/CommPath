@@ -48,8 +48,9 @@ circosPlot <- function(object, plot='count', ident.col=NULL, filter=TRUE, select
 		}else{
 			colo.name <- names(ident.col)
 			ident.missed <- all.ident[which(!(all.ident %in% colo.name))]
-			ident.missed <- pasteIdent(ident.missed)
-			stop(paste0('The color of ',ident.missed,' may be missed in the input color'))
+			if (length(ident.missed)>0){
+				stop(paste0('The color of ',pasteIdent(ident.missed),' may be missed in the input color'))
+			}
 		}
 	}
 
