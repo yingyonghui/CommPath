@@ -260,7 +260,7 @@ findLRpath <- function(object, category='all', pathway=NULL){
 scorePath <- function (object, method = "gsva", min.size = 10, ...)
 {
     expr.mat <- object@data
-    path.list <- object@pathway$pathwayLR[1:3]
+    path.list <- object@pathway$pathwayLR
     if (is.null(path.list)) {
         stop("No pathway detected, run findLRpath befor scorePath")
     }
@@ -275,9 +275,7 @@ scorePath <- function (object, method = "gsva", min.size = 10, ...)
                 return(rep(NA, ncol(expr.mat)))
             }
             else {
-            	print(dim(expr.mat))
-            	print(overlap.gene)
-                return(colMeans(expr.mat[overlap.gene, ]))
+                return(colMeans(as.matrix(expr.mat[overlap.gene, ])))
             }
         })))
         rownames(acti.score) <- names(path.list)
