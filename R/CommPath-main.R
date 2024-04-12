@@ -269,7 +269,7 @@ scorePath <- function(object, method='gsva', min.size=10, ...){
 	}else if(method=='average'){
 		acti.score <- t(as.data.frame(lapply(path.list, function(eachPath){
 			overlap.gene <- intersect(eachPath, rownames(expr.mat))
-			if (length(overlap.gene) < 10){
+			if (length(overlap.gene) < min.size){
 				return(rep(NA, ncol(expr.mat)))
 			}else{
 				return(colMeans(expr.mat[overlap.gene, ]))
