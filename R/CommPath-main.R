@@ -257,34 +257,38 @@ findLRpath <- function(object, category='all', pathway=NULL){
 #' @param ... Extra parameters passed to gsva
 #' @return CommPath object with pathways activation scores stored in the slot pathway
 #' @export
-scorePath <- function(object, method='gsva', min.size=10, ...){
-	expr.mat <- object@data
-	path.list <- object@pathway$pathwayLR
-	if (is.null(path.list)){
-		stop("No pathway detected, run findLRpath befor scorePath")
-	}
-
-	if (method=='gsva'){
-		acti.score <- GSVA::gsva(expr.mat, path.list, min.sz=min.size, ...)
-	}else if(method=='average'){
-		acti.score <- t(as.data.frame(lapply(path.list, function(eachPath){
-			overlap.gene <- intersect(eachPath, rownames(expr.mat))
-			if (length(overlap.gene) < min.size){
-				return(rep(NA, ncol(expr.mat)))
-			}else{
-				return(colMeans(expr.mat[overlap.gene, ]))
-			}
-		})))
-		rownames(acti.score) <- names(path.list)
-		acti.score <- acti.score[which(!is.na(acti.score[,1])), ]
-	}else{
-		stop('Select "gsva" or "average" for pathway scoring')
-	}
-	object@pathway$acti.score <- acti.score
-	object@pathway$method <- method
-	return(object)
+scorePath <- function (object, method = "gsva", min.size = 10, ...)
+{
+    expr.mat <- object@data
+    path.list <- object@pathway$pathwayLR[1:3]
+    if (is.null(path.list)) {
+        stop("No pathway detected, run findLRpath befor scorePath")
+    }
+    if (method == "gsva") {
+        acti.score <- GSVA::gsva(expr.mat, path.list, min.sz = min.size,
+            ...)
+    }
+    else if (method == "average") {
+        acti.score <- t(as.data.frame(lapply(path.list, function(eachPath) {
+            overlap.gene <- intersect(eachPath, rownames(expr.mat))
+            if (length(overlap.gene) < min.size) {
+                return(rep(NA, ncol(expr.mat)))
+            }
+            else {
+                return(colMeans(expr.mat[overlap.gene, ]))
+            }
+        })))
+        rownames(acti.score) <- names(path.list)
+        acti.score <- acti.score[which(!is.na(acti.score[, 1])),
+            ]
+    }
+    else {
+        stop("Select \"gsva\" or \"average\" for pathway scoring")
+    }
+    object@pathway$acti.score <- acti.score
+    object@pathway$method <- method
+    return(object)
 }
-
 
 #' To find different enriched pathway between two group cells
 #' @param object CommPath object
