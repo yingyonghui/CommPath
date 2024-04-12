@@ -258,7 +258,7 @@ findLRpath <- function(object, category='all', pathway=NULL){
 #' @return CommPath object with pathways activation scores stored in the slot pathway
 #' @export
 scorePath <- function(object, method='gsva', min.size=10, ...){
-	expr.mat <- as.matrix(object@data)
+	expr.mat <- object@data
 	path.list <- object@pathway$pathwayLR
 	if (is.null(path.list)){
 		stop("No pathway detected, run findLRpath befor scorePath")
