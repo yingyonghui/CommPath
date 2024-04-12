@@ -275,6 +275,8 @@ scorePath <- function (object, method = "gsva", min.size = 10, ...)
                 return(rep(NA, ncol(expr.mat)))
             }
             else {
+            	print(dim(expr.mat))
+            	print(overlap.gene)
                 return(colMeans(expr.mat[overlap.gene, ]))
             }
         })))
