@@ -399,6 +399,8 @@ R version 4.4.3 (2025-02-28)
 Platform: x86_64-conda-linux-gnu
 Running under: Ubuntu 22.04.4 LTS
 
+Matrix products: default
+
 locale:
  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C
  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8
@@ -414,9 +416,9 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base
 
 other attached packages:
-[1] GSVA_2.0.5      CommPath_1.1.0  igraph_2.1.4    Matrix_1.7-2
-[5] ggplot2_3.5.1   dplyr_1.1.4     plyr_1.8.9      reshape2_1.4.4
-[9] circlize_0.4.16
+ [1] GSVA_2.0.5      UCell_2.10.1    CommPath_1.1.0  igraph_2.1.4
+ [5] Matrix_1.7-2    ggplot2_3.5.1   dplyr_1.1.4     plyr_1.8.9
+ [9] reshape2_1.4.4  circlize_0.4.16
 
 loaded via a namespace (and not attached):
  [1] tidyselect_1.2.1            blob_1.2.4
@@ -426,40 +428,41 @@ loaded via a namespace (and not attached):
  [9] KEGGREST_1.46.0             RSQLite_2.3.9
 [11] magrittr_2.0.3              compiler_4.4.3
 [13] rlang_1.1.5                 tools_4.4.3
-[15] S4Arrays_1.6.0              bit_4.5.0.1
-[17] DelayedArray_0.32.0         abind_1.4-8
-[19] BiocParallel_1.40.0         HDF5Array_1.34.0
-[21] withr_3.0.2                 BiocGenerics_0.52.0
-[23] grid_4.4.3                  stats4_4.4.3
-[25] beachmat_2.22.0             xtable_1.8-4
-[27] colorspace_2.1-1            Rhdf5lib_1.28.0
-[29] scales_1.3.0                SummarizedExperiment_1.36.0
-[31] cli_3.6.4                   crayon_1.5.3
-[33] generics_0.1.3              rjson_0.2.23
-[35] httr_1.4.7                  DBI_1.2.3
-[37] cachem_1.1.0                rhdf5_2.50.2
-[39] stringr_1.5.1               zlibbioc_1.52.0
-[41] parallel_4.4.3              AnnotationDbi_1.68.0
-[43] XVector_0.46.0              matrixStats_1.5.0
-[45] vctrs_0.6.5                 jsonlite_1.9.1
-[47] BiocSingular_1.22.0         IRanges_2.40.1
-[49] S4Vectors_0.44.0            bit64_4.6.0-1
-[51] irlba_2.3.5.1               GSEABase_1.68.0
-[53] magick_2.8.5                annotate_1.84.0
-[55] glue_1.8.0                  codetools_0.2-20
-[57] stringi_1.8.4               shape_1.4.6.1
-[59] gtable_0.3.6                GenomeInfoDb_1.42.3
-[61] GenomicRanges_1.58.0        UCSC.utils_1.2.0
-[63] ScaledMatrix_1.14.0         munsell_0.5.1
-[65] tibble_3.2.1                pillar_1.10.1
-[67] rhdf5filters_1.18.0         graph_1.84.1
-[69] GenomeInfoDbData_1.2.13     R6_2.6.1
-[71] sparseMatrixStats_1.18.0    lattice_0.22-6
-[73] Biobase_2.66.0              png_0.1-8
-[75] SpatialExperiment_1.16.0    memoise_2.0.1
-[77] Rcpp_1.0.14                 SparseArray_1.6.2
-[79] MatrixGenerics_1.18.1       pkgconfig_2.0.3
-[81] GlobalOptions_0.1.2       
+[15] data.table_1.17.0           S4Arrays_1.6.0
+[17] bit_4.5.0.1                 DelayedArray_0.32.0
+[19] abind_1.4-8                 BiocParallel_1.40.0
+[21] HDF5Array_1.34.0            withr_3.0.2
+[23] BiocGenerics_0.52.0         grid_4.4.3
+[25] stats4_4.4.3                beachmat_2.22.0
+[27] xtable_1.8-4                colorspace_2.1-1
+[29] Rhdf5lib_1.28.0             scales_1.3.0
+[31] SummarizedExperiment_1.36.0 cli_3.6.4
+[33] crayon_1.5.3                generics_0.1.3
+[35] rjson_0.2.23                httr_1.4.7
+[37] DBI_1.2.3                   cachem_1.1.0
+[39] rhdf5_2.50.2                stringr_1.5.1
+[41] zlibbioc_1.52.0             parallel_4.4.3
+[43] AnnotationDbi_1.68.0        XVector_0.46.0
+[45] matrixStats_1.5.0           vctrs_0.6.5
+[47] jsonlite_1.9.1              BiocSingular_1.22.0
+[49] BiocNeighbors_2.0.1         IRanges_2.40.1
+[51] S4Vectors_0.44.0            bit64_4.6.0-1
+[53] irlba_2.3.5.1               GSEABase_1.68.0
+[55] magick_2.8.5                annotate_1.84.0
+[57] glue_1.8.0                  codetools_0.2-20
+[59] stringi_1.8.4               shape_1.4.6.1
+[61] gtable_0.3.6                GenomeInfoDb_1.42.3
+[63] GenomicRanges_1.58.0        UCSC.utils_1.2.0
+[65] ScaledMatrix_1.14.0         munsell_0.5.1
+[67] tibble_3.2.1                pillar_1.10.1
+[69] rhdf5filters_1.18.0         graph_1.84.1
+[71] GenomeInfoDbData_1.2.13     R6_2.6.1
+[73] sparseMatrixStats_1.18.0    lattice_0.22-6
+[75] Biobase_2.66.0              png_0.1-8
+[77] SpatialExperiment_1.16.0    memoise_2.0.1
+[79] Rcpp_1.0.14                 SparseArray_1.6.2
+[81] MatrixGenerics_1.18.1       pkgconfig_2.0.3
+[83] GlobalOptions_0.1.2     
 ```
 ## Citation
 [Lu H, Ping J, Zhou G, et al. CommPath: An R package for inference and analysis of pathway-mediated cell-cell communication chain from single-cell transcriptomics. Comput Struct Biotechnol J. 2022;20:5978-5983.](https://www.sciencedirect.com/science/article/pii/S2001037022004755)
