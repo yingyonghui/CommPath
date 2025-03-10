@@ -92,8 +92,8 @@ tumor.obj <- findLRpath(object = tumor.obj, category = "kegg")
 Now genesets showing overlap with the marker ligands and receptors are stored  in ***tumor.obj@pathway[['pathwayLR']]***. Then we score the pathways to measure the activation levels for each pathway in each cell.
 
 ```
-# To compute pathway activation score by the gsva algorithm or in an average manner
-# For more information about the gsva algorithm, see the GSVA package (PMID23323831)
+# To compute pathway activation score by the gsva algorithm. For more information about the gsva algorithm, see the GSVA package (PMID: 23323831)
+# Since the GSVA algorithm is time-consuming on large datasets, we also provide the UCell algorithm (PMID: 34285779) as an alternative. In addition, you can also assess the pathway activity in an average manner.
 tumor.obj <- scorePath(object = tumor.obj, method = "gsva", min.size = 10)
 ```
 

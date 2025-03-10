@@ -252,7 +252,7 @@ findLRpath <- function(object, category='all', pathway=NULL){
 
 #' To find different enriched pathway between two group cells
 #' @param object CommPath object
-#' @param method Method used for scoring the pathways, either 'gsva' of 'average'
+#' @param method Method used for scoring the pathways, either 'gsva', 'UCell', or 'average'
 #' @param min.size Minimum size of overlaping genes between candidate pathways and the expression matrix
 #' @param ... Extra parameters passed to GSVA::gsvaParam
 #' @return CommPath object with pathways activation scores stored in the slot pathway
@@ -269,6 +269,11 @@ scorePath <- function (object, method = "gsva", min.size = 10, ...)
         acti.score <- GSVA::gsva(GSVA::gsvaParam(expr.mat, path.list, minSize=min.size, ...), verbose=FALSE)
         acti.score <- acti.score[1:nrow(acti.score), 1:ncol(acti.score)]
     }
+    else if (method == "UCell") {
+    	acti.score <- UCell::ScoreSignatures_UCell(expr.mat, features=path.list)
+    	acti.score <- t(acti.score)
+    	rownames(acti.score) <- sub(pattern='_UCell',replacement='',x=rownames(acti.score))
+    }
     else if (method == "average") {
         acti.score <- t(as.data.frame(lapply(path.list, function(eachPath) {
             overlap.gene <- intersect(eachPath, rownames(expr.mat))
@@ -284,7 +289,7 @@ scorePath <- function (object, method = "gsva", min.size = 10, ...)
             ]
     }
     else {
-        stop("Select \"gsva\" or \"average\" for pathway scoring")
+        stop("Select \"gsva\" or \"UCell\" or \"average\" for pathway scoring")
     }
     object@pathway$acti.score <- acti.score
     object@pathway$method <- method
@@ -900,7 +905,13 @@ comparePath <- function(object.1, object.2, select.ident, method='t.test', p.adj
   		score.mat.2 <- GSVA::gsva(GSVA::gsvaParam(obj.2.expr, uniq.path.set, minSize=min.size, ...), verbose=FALSE)
         score.mat.2 <- score.mat.2[1:nrow(score.mat.2), 1:ncol(score.mat.2)]
 
-	}else{
+	}
+	else if (obj.1@pathway$method == "UCell") {
+    	score.mat.2 <- UCell::ScoreSignatures_UCell(obj.2.expr, features=uniq.path.set)
+    	score.mat.2 <- t(score.mat.2)
+    	rownames(score.mat.2) <- sub(pattern='_UCell',replacement='',x=rownames(score.mat.2))
+    }
+	else{
 		score.mat.2 <- t(as.data.frame(lapply(uniq.path.set, function(eachPath){
 			overlap.gene <- intersect(eachPath, rownames(obj.2.expr))
 			if (length(overlap.gene) < min.size){
