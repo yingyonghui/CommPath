@@ -94,7 +94,7 @@ Now genesets showing overlap with the marker ligands and receptors are stored  i
 ```
 # To compute pathway activation score by the gsva algorithm or in an average manner
 # For more information about the gsva algorithm, see the GSVA package (PMID23323831)
-tumor.obj <- scorePath(object = tumor.obj, method = "gsva", min.size = 10, parallel.sz = 4)
+tumor.obj <- scorePath(object = tumor.obj, method = "gsva", min.size = 10)
 ```
 
 After that CommPath provides **diffAllPath** to perform pathway differential activation analysis for each cluster and find the receptors and ligands in each pathway:
@@ -395,47 +395,71 @@ The legend of the above line plot is generally the same to that of the previous 
 
 #### sessionInfo()
 ```
-R version 3.6.0 (2019-04-26)
-Platform: x86_64-apple-darwin15.6.0 (64-bit)
-Running under: macOS Mojave 10.14.2
-
-Matrix products: default
-BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib
-LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+R version 4.4.3 (2025-02-28)
+Platform: x86_64-conda-linux-gnu
+Running under: Ubuntu 22.04.4 LTS
 
 locale:
-[1] zh_CN.UTF-8/zh_CN.UTF-8/zh_CN.UTF-8/C/zh_CN.UTF-8/zh_CN.UTF-8
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C
+
+time zone: Asia/Shanghai
+tzcode source: system (glibc)
 
 attached base packages:
-[1] stats     graphics  grDevices utils     datasets  methods   base     
+[1] stats     graphics  grDevices utils     datasets  methods   base
 
 other attached packages:
-[1] CommPath_1.0.0  igraph_1.2.4.1  Matrix_1.2-17   ggplot2_3.3.2  
-[5] dplyr_1.0.7     plyr_1.8.4      reshape2_1.4.3  circlize_0.4.13
+[1] GSVA_2.0.5      CommPath_1.1.0  igraph_2.1.4    Matrix_1.7-2
+[5] ggplot2_3.5.1   dplyr_1.1.4     plyr_1.8.9      reshape2_1.4.4
+[9] circlize_0.4.16
 
 loaded via a namespace (and not attached):
- [1] Rcpp_1.0.1           lattice_0.20-38      digest_0.6.19       
- [4] packrat_0.7.0        utf8_1.1.4           mime_0.6            
- [7] R6_2.4.0             stats4_3.6.0         RSQLite_2.1.1       
-[10] pillar_1.6.4         GlobalOptions_0.1.2  rlang_0.4.12        
-[13] rstudioapi_0.10      annotate_1.62.0      blob_1.1.1          
-[16] S4Vectors_0.22.0     shinythemes_1.2.0    labeling_0.3        
-[19] geneplotter_1.62.0   stringr_1.4.0        RCurl_1.95-4.12     
-[22] bit_1.1-14           munsell_0.5.0        shiny_1.3.2         
-[25] GSVA_1.32.0          compiler_3.6.0       httpuv_1.5.1        
-[28] pkgconfig_2.0.2      BiocGenerics_0.32.0  shape_1.4.4         
-[31] htmltools_0.3.6      tidyselect_1.1.1     tibble_3.1.6        
-[34] IRanges_2.18.1       XML_3.98-1.19        fansi_0.4.0         
-[37] crayon_1.3.4         withr_2.4.3          later_0.8.0         
-[40] bitops_1.0-6         grid_3.6.0           xtable_1.8-4        
-[43] GSEABase_1.46.0      gtable_0.3.0         lifecycle_1.0.1     
-[46] DBI_1.0.0            magrittr_1.5         scales_1.1.0        
-[49] graph_1.62.0         stringi_1.4.3        farver_2.0.3        
-[52] promises_1.0.1       ellipsis_0.3.2       generics_0.0.2      
-[55] vctrs_0.3.8          RColorBrewer_1.1-2   tools_3.6.0         
-[58] bit64_0.9-7          Biobase_2.44.0       glue_1.6.0          
-[61] purrr_0.3.4          parallel_3.6.0       AnnotationDbi_1.48.0
-[64] colorspace_1.4-1     memoise_1.1.0        
+ [1] tidyselect_1.2.1            blob_1.2.4
+ [3] Biostrings_2.74.1           fastmap_1.2.0
+ [5] SingleCellExperiment_1.28.1 XML_3.99-0.17
+ [7] rsvd_1.0.5                  lifecycle_1.0.4
+ [9] KEGGREST_1.46.0             RSQLite_2.3.9
+[11] magrittr_2.0.3              compiler_4.4.3
+[13] rlang_1.1.5                 tools_4.4.3
+[15] S4Arrays_1.6.0              bit_4.5.0.1
+[17] DelayedArray_0.32.0         abind_1.4-8
+[19] BiocParallel_1.40.0         HDF5Array_1.34.0
+[21] withr_3.0.2                 BiocGenerics_0.52.0
+[23] grid_4.4.3                  stats4_4.4.3
+[25] beachmat_2.22.0             xtable_1.8-4
+[27] colorspace_2.1-1            Rhdf5lib_1.28.0
+[29] scales_1.3.0                SummarizedExperiment_1.36.0
+[31] cli_3.6.4                   crayon_1.5.3
+[33] generics_0.1.3              rjson_0.2.23
+[35] httr_1.4.7                  DBI_1.2.3
+[37] cachem_1.1.0                rhdf5_2.50.2
+[39] stringr_1.5.1               zlibbioc_1.52.0
+[41] parallel_4.4.3              AnnotationDbi_1.68.0
+[43] XVector_0.46.0              matrixStats_1.5.0
+[45] vctrs_0.6.5                 jsonlite_1.9.1
+[47] BiocSingular_1.22.0         IRanges_2.40.1
+[49] S4Vectors_0.44.0            bit64_4.6.0-1
+[51] irlba_2.3.5.1               GSEABase_1.68.0
+[53] magick_2.8.5                annotate_1.84.0
+[55] glue_1.8.0                  codetools_0.2-20
+[57] stringi_1.8.4               shape_1.4.6.1
+[59] gtable_0.3.6                GenomeInfoDb_1.42.3
+[61] GenomicRanges_1.58.0        UCSC.utils_1.2.0
+[63] ScaledMatrix_1.14.0         munsell_0.5.1
+[65] tibble_3.2.1                pillar_1.10.1
+[67] rhdf5filters_1.18.0         graph_1.84.1
+[69] GenomeInfoDbData_1.2.13     R6_2.6.1
+[71] sparseMatrixStats_1.18.0    lattice_0.22-6
+[73] Biobase_2.66.0              png_0.1-8
+[75] SpatialExperiment_1.16.0    memoise_2.0.1
+[77] Rcpp_1.0.14                 SparseArray_1.6.2
+[79] MatrixGenerics_1.18.1       pkgconfig_2.0.3
+[81] GlobalOptions_0.1.2       
 ```
 ## Citation
 [Lu H, Ping J, Zhou G, et al. CommPath: An R package for inference and analysis of pathway-mediated cell-cell communication chain from single-cell transcriptomics. Comput Struct Biotechnol J. 2022;20:5978-5983.](https://www.sciencedirect.com/science/article/pii/S2001037022004755)

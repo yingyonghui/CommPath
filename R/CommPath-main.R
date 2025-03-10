@@ -266,7 +266,7 @@ scorePath <- function (object, method = "gsva", min.size = 10, ...)
     }
     if (method == "gsva") {
         #acti.score <- GSVA::gsva(expr.mat, path.list, min.sz = min.size, ...)
-        acti.score <- GSVA::gsva(gsvaParam(expr.mat, path.list, minSize=min.size, ...), verbose=FALSE)
+        acti.score <- GSVA::gsva(GSVA::gsvaParam(expr.mat, path.list, minSize=min.size, ...), verbose=FALSE)
         acti.score <- acti.score[1:nrow(acti.score), 1:ncol(acti.score)]
     }
     else if (method == "average") {
@@ -897,7 +897,7 @@ comparePath <- function(object.1, object.2, select.ident, method='t.test', p.adj
 	obj.2.expr <- as.matrix(obj.2@data)
 	if (obj.1@pathway$method=='gsva'){
 		# score.mat.2 <- GSVA::gsva(obj.2.expr, uniq.path.set, min.sz=min.size, ...)
-  		score.mat.2 <- GSVA::gsva(gsvaParam(obj.2.expr, uniq.path.set, minSize=min.size, ...), verbose=FALSE)
+  		score.mat.2 <- GSVA::gsva(GSVA::gsvaParam(obj.2.expr, uniq.path.set, minSize=min.size, ...), verbose=FALSE)
         score.mat.2 <- score.mat.2[1:nrow(score.mat.2), 1:ncol(score.mat.2)]
 
 	}else{
