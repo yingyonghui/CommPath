@@ -9,11 +9,11 @@ scorePath(object, method = "gsva", min.size = 10, ...)
 \arguments{
 \item{object}{CommPath object}
 
-\item{method}{Method used for scoring the pathways, either 'gsva' of 'average'}
+\item{method}{Method used for scoring the pathways, either 'gsva', 'UCell', or 'average'}
 
 \item{min.size}{Minimum size of overlaping genes between candidate pathways and the expression matrix}
 
-\item{...}{Extra parameters passed to gsva}
+\item{...}{Extra parameters passed to GSVA::gsvaParam}
 }
 \value{
 CommPath object with pathways activation scores stored in the slot pathway

@@ -33,7 +33,7 @@ comparePath(
 
 \item{only.sig}{only p_val_adj < 0.05}
 
-\item{...}{Extra parameters passed to gsva}
+\item{...}{Extra parameters passed to GSVA::gsvaParam}
 }
 \value{
 Data frame of differentially activated pathways between the same clusters in two CommPath object
